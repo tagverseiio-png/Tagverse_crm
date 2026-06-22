@@ -2,27 +2,27 @@
 import { useTheme } from '@/components/ThemeProvider';
 
 const pageInfo: Record<string, { title: string; sub: string }> = {
-  dashboard:    { title: 'Dashboard', sub: 'Overview of your pipeline, revenue & automation' },
-  activity:     { title: 'Activity Feed', sub: 'Real-time log of all CRM actions and events' },
-  leads:        { title: 'Contacts & Leads', sub: 'Manage all contacts, lead scoring and sources' },
-  pipeline:     { title: 'Pipeline', sub: 'Deal stages from New Enquiry to Closed Win' },
-  deals:        { title: 'Deals', sub: 'All active and historical deals' },
-  quotes:       { title: 'Quotes', sub: 'Create and send proposals with line items' },
-  invoices:     { title: 'Invoices', sub: 'Track billing, payment status and overdue' },
-  contracts:    { title: 'Contracts', sub: 'Manage signed contracts and e-signatures' },
-  payments:     { title: 'Payments', sub: 'Payment history and Stripe integration' },
-  email:        { title: 'Email Marketing', sub: 'Cold outreach, templates and drip sequences' },
-  social:       { title: 'Social & Content', sub: 'Schedule posts across all platforms' },
-  seo:          { title: 'SEO / AEO', sub: 'Keyword rankings and AI answer engine visibility' },
-  tasks:        { title: 'Task Manager', sub: 'All assigned and automated tasks' },
-  calendar:     { title: 'Calendar', sub: 'Appointments, deadlines and team schedule' },
-  team:         { title: 'Team', sub: 'Manage team members, roles and permissions' },
-  analytics:    { title: 'Analytics', sub: 'Pipeline funnels, revenue charts and lead sources' },
-  reports:      { title: 'Reports', sub: 'Weekly auto-generated performance reports' },
-  automation:   { title: 'Automation (n8n)', sub: 'Lead ingestion, routing and trigger workflows' },
+  dashboard: { title: 'Dashboard', sub: 'Overview of your pipeline, revenue & automation' },
+  activity: { title: 'Activity Feed', sub: 'Real-time log of all CRM actions and events' },
+  leads: { title: 'Leads', sub: 'Manage all lead scoring and sources' },
+  pipeline: { title: 'Pipeline', sub: 'Deal stages from New Enquiry to Closed Win' },
+  deals: { title: 'Deals', sub: 'All active and historical deals' },
+  quotes: { title: 'Quotes', sub: 'Create and send proposals with line items' },
+  invoices: { title: 'Invoices', sub: 'Track billing, payment status and overdue' },
+  contracts: { title: 'Contracts', sub: 'Manage signed contracts and e-signatures' },
+  payments: { title: 'Payments', sub: 'Payment history and Stripe integration' },
+  email: { title: 'Email Marketing', sub: 'Cold outreach, templates and drip sequences' },
+  social: { title: 'Social & Content', sub: 'Schedule posts across all platforms' },
+  seo: { title: 'SEO / AEO', sub: 'Keyword rankings and AI answer engine visibility' },
+  tasks: { title: 'Task Manager', sub: 'All assigned and automated tasks' },
+  calendar: { title: 'Calendar', sub: 'Appointments, deadlines and team schedule' },
+  team: { title: 'Team', sub: 'Manage team members, roles and permissions' },
+  analytics: { title: 'Analytics', sub: 'Pipeline funnels, revenue charts and lead sources' },
+  reports: { title: 'Reports', sub: 'Weekly auto-generated performance reports' },
+  automation: { title: 'Automation (n8n)', sub: 'Lead ingestion, routing and trigger workflows' },
   integrations: { title: 'Integrations', sub: 'Connected apps, social APIs, and payment gateways' },
-  webhooks:     { title: 'Webhooks', sub: 'Inbound and outbound webhook management' },
-  settings:     { title: 'Settings', sub: 'Account, team and notification preferences' },
+  webhooks: { title: 'Webhooks', sub: 'Inbound and outbound webhook management' },
+  settings: { title: 'Settings', sub: 'Account, team and notification preferences' },
 };
 
 interface Props { activePage: string; }
@@ -68,9 +68,7 @@ export default function Topbar({ activePage }: Props) {
           <span style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, background: 'var(--rose)', borderRadius: '50%', border: '1px solid var(--bg-secondary)' }} />
         </button>
 
-        <button className="btn btn-primary">
-          + New Lead
-        </button>
+
       </div>
     </div>
   );
