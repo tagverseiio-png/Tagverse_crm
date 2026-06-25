@@ -441,7 +441,7 @@ export default function MarketingCalendarPage() {
                 {timelineData.stories.length === 0 ? (
                   <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 15, fontWeight: 500 }}>No campaigns found in this time range.</div>
                 ) : (
-                  timelineData.stories.map((evt, idx) => (
+                  timelineData.stories.map((evt, idx) => !evt ? null : (
                     <div key={idx} style={{ display: 'flex', alignItems: 'center', position: 'relative', zIndex: 1 }} className="timeline-row">
                       <div style={{ width: 240, flexShrink: 0, paddingRight: 20 }}>
                         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>{evt.title}</div>

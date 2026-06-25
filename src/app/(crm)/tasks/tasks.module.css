@@ -1,0 +1,242 @@
+.taskManagerLayout {
+  display: flex;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .taskManagerLayout {
+    flex-direction: column;
+  }
+}
+
+.filterSidebar {
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .filterSidebar {
+    width: 100%;
+  }
+}
+
+.filterSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filterHeader {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.filterBtn {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all var(--transition);
+}
+
+.filterBtn:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.filterBtnActive {
+  composes: filterBtn;
+  background: var(--purple-dim) !important;
+  color: var(--purple-light) !important;
+  font-weight: 700;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.inlineAddBar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.inputField {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  flex: 1;
+  min-width: 180px;
+}
+
+.selectField {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+
+.taskGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.taskGroupBadge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+.priorityUrgent {
+  background: var(--rose-dim);
+  color: var(--rose-light);
+  border-color: var(--rose);
+}
+
+.priorityHigh {
+  background: var(--amber-dim);
+  color: var(--amber-light);
+  border-color: var(--amber);
+}
+
+.priorityNormal {
+  background: var(--blue-dim);
+  color: var(--blue-light);
+  border-color: var(--blue);
+}
+
+.priorityLow {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
+.taskList {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.taskItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.taskItem:last-child {
+  border-bottom: none;
+}
+
+.taskItem:hover {
+  background: var(--bg-card-hover);
+}
+
+.taskLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.taskCheckbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  accent-color: var(--purple);
+  cursor: pointer;
+}
+
+.taskTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.taskTitleDone {
+  composes: taskTitle;
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.taskRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.projectBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.dueBadge {
+  font-size: 11px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dueBadgeOverdue {
+  composes: dueBadge;
+  background: var(--rose-dim);
+  border-color: var(--rose);
+  color: var(--rose-light);
+  font-weight: 700;
+}

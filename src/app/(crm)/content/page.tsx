@@ -322,7 +322,7 @@ export default function ContentHubPage() {
               { id: 'pipeline', label: 'Pipeline', icon: 'ti-layout-kanban' },
               { id: 'library', label: 'Library', icon: 'ti-folder' },
               { id: 'approvals', label: 'Approvals', icon: 'ti-check', badge: inReviewCount > 0 ? inReviewCount : null },
-            ] as const).map(tab => (
+            ] as Array<{id: "pipeline" | "library" | "approvals", label: string, icon: string, badge?: number | null}>).map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 style={{
                   background: activeTab === tab.id ? 'var(--bg-card)' : 'transparent',
