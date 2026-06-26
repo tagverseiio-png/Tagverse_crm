@@ -45,12 +45,12 @@ interface AnalyticsState {
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 const initialLayout: LayoutItem[] = [
-  { i: 'w1', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-  { i: 'w2', x: 3, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-  { i: 'w3', x: 6, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-  { i: 'w4', x: 9, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-  { i: 'w5', x: 0, y: 3, w: 6, h: 8, minW: 4, minH: 6 },
-  { i: 'w6', x: 6, y: 3, w: 6, h: 8, minW: 4, minH: 6 },
+  { i: 'w1', x: 0, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
+  { i: 'w2', x: 3, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
+  { i: 'w3', x: 6, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
+  { i: 'w4', x: 9, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
+  { i: 'w5', x: 0, y: 4, w: 6, h: 11, minW: 4, minH: 8 },
+  { i: 'w6', x: 6, y: 4, w: 6, h: 11, minW: 4, minH: 8 },
 ];
 
 const initialWidgets: Widget[] = [
@@ -81,8 +81,15 @@ export const useAnalyticsStore = create<AnalyticsState>((set) => ({
       title: `New ${type.toUpperCase()} Widget`,
       config: { module: 'Deals', metric: 'count', colorTheme: 'blue' }
     };
+    
+    // Set proper defaults based on type
+    const w = type === 'kpi' ? 3 : 6;
+    const h = type === 'kpi' ? 4 : 11;
+    const minW = type === 'kpi' ? 2 : 4;
+    const minH = type === 'kpi' ? 3 : 8;
+
     const newLayoutItem: LayoutItem = {
-      i: id, x, y, w: type === 'kpi' ? 3 : 6, h: type === 'kpi' ? 3 : 8, minW: 2, minH: 2
+      i: id, x, y, w, h, minW, minH
     };
     return {
       widgets: [...state.widgets, newWidget],

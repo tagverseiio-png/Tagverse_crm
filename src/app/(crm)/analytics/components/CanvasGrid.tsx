@@ -27,12 +27,12 @@ export function CanvasGrid() {
   };
 
   return (
-    <div id="grid-container" className="w-full h-full min-h-[500px]">
+    <div id="grid-container" style={{ width: '100%', height: '100%', minHeight: 500 }}>
       <GridLayout
         className={`layout ${isEditMode ? 'edit-mode' : ''}`}
         layout={layout}
         cols={12}
-        rowHeight={40}
+        rowHeight={30} // Finer grid control, 30px per row
         width={width}
         onLayoutChange={handleLayoutChange}
         isDraggable={isEditMode}
