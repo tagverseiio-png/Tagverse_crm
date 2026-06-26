@@ -3,17 +3,54 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 
 /* ─── Data ─── */
 const pipelines = [
-  { id: 'main', label: 'Main Sales Pipeline', icon: '🛤️', deals: 12 },
-  { id: 'enterprise', label: 'Enterprise Pipeline', icon: '🏢', deals: 5 },
-  { id: 'smb', label: 'SMB Pipeline', icon: '🏪', deals: 8 },
-  { id: 'partnerships', label: 'Partnerships Pipeline', icon: '🤝', deals: 3 },
+  { id: 'web_dev', label: 'Web Dev / Website Projects', icon: '🌐', deals: 4 },
+  { id: 'marketing', label: 'Marketing Retainer', icon: '📈', deals: 5 },
+  { id: 'saas', label: 'SaaS / Product', icon: '💻', deals: 2 },
+  { id: 'influencer', label: 'Influencer / Content', icon: '✨', deals: 3 },
 ];
+
+const pipelineStageConfig: Record<string, Record<string, { label: string; color: string; headerColor: string; defaultProbability: number; isClosing?: boolean; isWon?: boolean }>> = {
+  web_dev: {
+    new_enquiry: { label: 'New Enquiry', color: 'new', headerColor: '#3b82f6', defaultProbability: 10 },
+    discovery: { label: 'Discovery Call', color: 'engaged', headerColor: '#7c5cbf', defaultProbability: 25 },
+    proposal: { label: 'Proposal Sent', color: 'proposal', headerColor: '#6366f1', defaultProbability: 65 },
+    negotiation: { label: 'Negotiation', color: 'negotiation', headerColor: '#f97316', defaultProbability: 85 },
+    won: { label: 'Closed Win', color: 'won', headerColor: '#10b981', defaultProbability: 100, isClosing: true, isWon: true },
+    lost: { label: 'Closed Lost', color: 'lost', headerColor: '#f43f5e', defaultProbability: 0, isClosing: true, isWon: false },
+  },
+  marketing: {
+    lead: { label: 'Lead', color: 'new', headerColor: '#3b82f6', defaultProbability: 10 },
+    qualified: { label: 'Qualified', color: 'qualified', headerColor: '#f59e0b', defaultProbability: 40 },
+    pitch: { label: 'Pitch/Strategy Call', color: 'engaged', headerColor: '#7c5cbf', defaultProbability: 50 },
+    proposal: { label: 'Proposal Sent', color: 'proposal', headerColor: '#6366f1', defaultProbability: 65 },
+    negotiation: { label: 'Negotiation', color: 'negotiation', headerColor: '#f97316', defaultProbability: 85 },
+    won: { label: 'Onboarded', color: 'won', headerColor: '#10b981', defaultProbability: 100, isClosing: true, isWon: true },
+    lost: { label: 'Lost', color: 'lost', headerColor: '#f43f5e', defaultProbability: 0, isClosing: true, isWon: false },
+  },
+  saas: {
+    demo_req: { label: 'Demo Requested', color: 'new', headerColor: '#3b82f6', defaultProbability: 10 },
+    demo_done: { label: 'Demo Done', color: 'engaged', headerColor: '#7c5cbf', defaultProbability: 30 },
+    trial: { label: 'Trial', color: 'qualified', headerColor: '#f59e0b', defaultProbability: 50 },
+    negotiation: { label: 'Negotiation', color: 'negotiation', headerColor: '#f97316', defaultProbability: 85 },
+    won: { label: 'Subscribed', color: 'won', headerColor: '#10b981', defaultProbability: 100, isClosing: true, isWon: true },
+    lost: { label: 'Churned/Lost', color: 'lost', headerColor: '#f43f5e', defaultProbability: 0, isClosing: true, isWon: false },
+  },
+  influencer: {
+    enquiry: { label: 'Enquiry', color: 'new', headerColor: '#3b82f6', defaultProbability: 10 },
+    brief: { label: 'Brief Shared', color: 'engaged', headerColor: '#7c5cbf', defaultProbability: 40 },
+    quote: { label: 'Quote Sent', color: 'proposal', headerColor: '#6366f1', defaultProbability: 65 },
+    negotiation: { label: 'Negotiation', color: 'negotiation', headerColor: '#f97316', defaultProbability: 85 },
+    won: { label: 'Confirmed', color: 'won', headerColor: '#10b981', defaultProbability: 100, isClosing: true, isWon: true },
+    lost: { label: 'Lost', color: 'lost', headerColor: '#f43f5e', defaultProbability: 0, isClosing: true, isWon: false },
+  }
+};
 
 type Deal = {
   id: number;
   name: string;
   client: string;
   value: number;
+  pipelineId: string;
   stage: string;
   owner: string;
   ownerFull: string;
@@ -22,33 +59,21 @@ type Deal = {
   daysInStage: number;
   nextFollowUp: string;
   source: string;
+  serviceType: string;
+  expectedClose: string;
+  lastContact: string;
+  notes: string;
   created: string;
 };
 
 const initialDeals: Deal[] = [
-  { id: 1, name: 'Website Redesign Project', client: 'BloomAds', value: 450000, stage: 'qualified', owner: 'JS', ownerFull: 'Jose L.', tags: ['SEO', 'Web Dev'], probability: 65, daysInStage: 3, nextFollowUp: 'Tomorrow', source: 'Meta Ads', created: '2d ago' },
-  { id: 2, name: 'Social Media Campaign', client: 'GrowthLab', value: 180000, stage: 'proposal', owner: 'SA', ownerFull: 'Sarah A.', tags: ['Social', 'Content'], probability: 80, daysInStage: 5, nextFollowUp: 'Today', source: 'Referral', created: '5d ago' },
-  { id: 3, name: 'Full CRM Implementation', client: 'NexaDigital', value: 720000, stage: 'negotiation', owner: 'JS', ownerFull: 'Jose L.', tags: ['CRM', 'Enterprise'], probability: 90, daysInStage: 8, nextFollowUp: 'Jun 25', source: 'LinkedIn', created: '12d ago' },
-  { id: 4, name: 'Email Marketing Suite', client: 'MediaCo', value: 95000, stage: 'new', owner: 'AM', ownerFull: 'Alex M.', tags: ['Email', 'Automation'], probability: 20, daysInStage: 1, nextFollowUp: 'Today', source: 'Cold Email', created: '1d ago' },
-  { id: 5, name: 'Brand Identity Package', client: 'BrandNest', value: 310000, stage: 'engaged', owner: 'SA', ownerFull: 'Sarah A.', tags: ['Design', 'Branding'], probability: 45, daysInStage: 4, nextFollowUp: 'Jun 26', source: 'Website Form', created: '6d ago' },
-  { id: 6, name: 'SEO Audit & Strategy', client: 'ScaleUp', value: 165000, stage: 'won', owner: 'JS', ownerFull: 'Jose L.', tags: ['SEO', 'Analytics'], probability: 100, daysInStage: 0, nextFollowUp: '—', source: 'Referral', created: '18d ago' },
-  { id: 7, name: 'Video Production Campaign', client: 'ClickFarm', value: 520000, stage: 'proposal', owner: 'AM', ownerFull: 'Alex M.', tags: ['Video', 'Content'], probability: 70, daysInStage: 6, nextFollowUp: 'Jun 24', source: 'Meta Ads', created: '8d ago' },
-  { id: 8, name: 'PPC Management', client: 'AdSphere', value: 280000, stage: 'qualified', owner: 'JS', ownerFull: 'Jose L.', tags: ['PPC', 'Ads'], probability: 55, daysInStage: 2, nextFollowUp: 'Jun 27', source: 'LinkedIn DM', created: '3d ago' },
-  { id: 9, name: 'Content Strategy Retainer', client: 'BoldMark', value: 420000, stage: 'won', owner: 'SA', ownerFull: 'Sarah A.', tags: ['Content', 'Strategy'], probability: 100, daysInStage: 0, nextFollowUp: '—', source: 'Referral', created: '21d ago' },
-  { id: 10, name: 'App Development MVP', client: 'SprintCo', value: 890000, stage: 'lost', owner: 'AM', ownerFull: 'Alex M.', tags: ['Dev', 'Mobile'], probability: 0, daysInStage: 15, nextFollowUp: '—', source: 'Cold Email', created: '25d ago' },
-  { id: 11, name: 'Analytics Dashboard', client: 'FreshBrand', value: 210000, stage: 'engaged', owner: 'JS', ownerFull: 'Jose L.', tags: ['Analytics', 'Dashboard'], probability: 40, daysInStage: 3, nextFollowUp: 'Jun 28', source: 'Website Form', created: '4d ago' },
-  { id: 12, name: 'Influencer Campaign', client: 'TechVibe', value: 340000, stage: 'new', owner: 'SA', ownerFull: 'Sarah A.', tags: ['Social', 'Influencer'], probability: 15, daysInStage: 0, nextFollowUp: 'Today', source: 'Meta Ads', created: '6h ago' },
+  { id: 1, name: 'Website Redesign Project', client: 'BloomAds', value: 450000, pipelineId: 'web_dev', stage: 'proposal', owner: 'JS', ownerFull: 'Jose L.', tags: ['SEO', 'Web Dev'], probability: 65, daysInStage: 3, nextFollowUp: 'Tomorrow', source: 'Meta Ads', serviceType: 'Web Dev / Website Projects', expectedClose: 'Jul 15', lastContact: '1d ago', notes: 'Eager to start.', created: '2d ago' },
+  { id: 2, name: 'Social Media Campaign', client: 'GrowthLab', value: 180000, pipelineId: 'marketing', stage: 'proposal', owner: 'SA', ownerFull: 'Sarah A.', tags: ['Social', 'Content'], probability: 65, daysInStage: 16, nextFollowUp: 'Today', source: 'Referral', serviceType: 'Marketing Retainer', expectedClose: 'Jun 30', lastContact: '2w ago', notes: 'Stuck in legal.', created: '5d ago' },
+  { id: 3, name: 'Full CRM Implementation', client: 'NexaDigital', value: 720000, pipelineId: 'saas', stage: 'negotiation', owner: 'JS', ownerFull: 'Jose L.', tags: ['CRM', 'Enterprise'], probability: 85, daysInStage: 8, nextFollowUp: 'Jun 25', source: 'LinkedIn', serviceType: 'SaaS / Product', expectedClose: 'Aug 01', lastContact: '3d ago', notes: 'Reviewing contracts.', created: '12d ago' },
+  { id: 4, name: 'Email Marketing Suite', client: 'MediaCo', value: 95000, pipelineId: 'marketing', stage: 'lead', owner: 'AM', ownerFull: 'Alex M.', tags: ['Email', 'Automation'], probability: 10, daysInStage: 1, nextFollowUp: 'Today', source: 'Cold Email', serviceType: 'Marketing Retainer', expectedClose: 'Sep 10', lastContact: 'Just now', notes: '', created: '1d ago' },
+  { id: 5, name: 'Brand Identity Package', client: 'BrandNest', value: 310000, pipelineId: 'web_dev', stage: 'discovery', owner: 'SA', ownerFull: 'Sarah A.', tags: ['Design', 'Branding'], probability: 25, daysInStage: 4, nextFollowUp: 'Jun 26', source: 'Website Form', serviceType: 'Web Dev / Website Projects', expectedClose: 'Jul 20', lastContact: '2d ago', notes: '', created: '6d ago' },
+  { id: 6, name: 'SEO Audit & Strategy', client: 'ScaleUp', value: 165000, pipelineId: 'marketing', stage: 'won', owner: 'JS', ownerFull: 'Jose L.', tags: ['SEO', 'Analytics'], probability: 100, daysInStage: 0, nextFollowUp: '—', source: 'Referral', serviceType: 'Marketing Retainer', expectedClose: 'Closed', lastContact: '1w ago', notes: '', created: '18d ago' },
 ];
-
-const stageConfig: Record<string, { label: string; color: string; headerColor: string }> = {
-  new: { label: 'New Enquiry', color: 'new', headerColor: '#3b82f6' },
-  engaged: { label: 'Engaged', color: 'engaged', headerColor: '#7c5cbf' },
-  qualified: { label: 'Qualified', color: 'qualified', headerColor: '#f59e0b' },
-  proposal: { label: 'Proposal Sent', color: 'proposal', headerColor: '#6366f1' },
-  negotiation: { label: 'Negotiation', color: 'negotiation', headerColor: '#f97316' },
-  won: { label: 'Closed Win', color: 'won', headerColor: '#10b981' },
-  lost: { label: 'Closed Lose', color: 'lost', headerColor: '#f43f5e' },
-};
 
 const notifications = [
   { id: 1, type: 'deal', text: 'Raj Verma moved to Negotiation stage', time: '5m ago', read: false },
@@ -347,9 +372,10 @@ function UserProfileDropdown({ open, ref: dropRef }: { open: boolean; ref: React
 
 /* ─── Deal Form Modal (Create / Edit) ─── */
 const emptyDealForm = {
-  name: '', client: '', value: '', stage: 'new',
+  name: '', client: '', value: '', pipelineId: 'web_dev', stage: 'new_enquiry',
   owner: 'JS', ownerFull: 'Jose L.',
-  tags: '', probability: 50, source: 'Meta Ads',
+  tags: '', probability: 10, source: 'Meta Ads',
+  serviceType: 'Web Dev / Website Projects', expectedClose: '', lastContact: '', notes: '',
   nextFollowUp: '',
 };
 type DealFormState = typeof emptyDealForm;
@@ -387,6 +413,24 @@ function DealFormModal({
     cursor: 'pointer',
   };
 
+  const handlePipelineChange = (newPipeline: string) => {
+    onChange('pipelineId', newPipeline);
+    const pLabel = pipelines.find(p => p.id === newPipeline)?.label || '';
+    onChange('serviceType', pLabel);
+    const firstStage = Object.keys(pipelineStageConfig[newPipeline] || {})[0] || '';
+    onChange('stage', firstStage);
+    const prob = pipelineStageConfig[newPipeline]?.[firstStage]?.defaultProbability || 0;
+    onChange('probability', prob);
+  };
+
+  const handleStageChange = (newStage: string) => {
+    onChange('stage', newStage);
+    const prob = pipelineStageConfig[form.pipelineId]?.[newStage]?.defaultProbability || 0;
+    onChange('probability', prob);
+  };
+
+  const currentStages = pipelineStageConfig[form.pipelineId] || {};
+
   return (
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, zIndex: 2000,
@@ -395,7 +439,7 @@ function DealFormModal({
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: 16, padding: 0, width: 560, maxWidth: '95vw',
+        borderRadius: 16, padding: 0, width: 620, maxWidth: '95vw',
         maxHeight: '90vh', overflowY: 'auto',
         boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
         animation: 'fadeIn 0.25s ease',
@@ -438,12 +482,31 @@ function DealFormModal({
               onChange={e => onChange('value', e.target.value)} />
             {errors.value && <span style={{ fontSize: 11, color: 'var(--rose-light)' }}>{errors.value}</span>}
           </div>
+          
+          {/* Pipeline */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={labelStyle}>Pipeline</label>
+            <select style={selectStyle} value={form.pipelineId} onChange={e => handlePipelineChange(e.target.value)}>
+              {pipelines.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+            </select>
+          </div>
           {/* Stage */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={labelStyle}>Pipeline Stage</label>
-            <select style={selectStyle} value={form.stage} onChange={e => onChange('stage', e.target.value)}>
-              {Object.entries(stageConfig).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+            <label style={labelStyle}>Stage</label>
+            <select style={selectStyle} value={form.stage} onChange={e => handleStageChange(e.target.value)}>
+              {Object.entries(currentStages).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
+          </div>
+
+          {/* Probability */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={labelStyle}>Win Probability (%)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input type="range" min={0} max={100} value={form.probability}
+                onChange={e => onChange('probability', Number(e.target.value))}
+                style={{ flex: 1, accentColor: 'var(--purple)' }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', minWidth: 32, textAlign: 'right' }}>{form.probability}%</span>
+            </div>
           </div>
           {/* Source */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -452,6 +515,7 @@ function DealFormModal({
               {sourceOptions.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
+
           {/* Tags */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={labelStyle}>Tags (comma-separated)</label>
@@ -464,21 +528,36 @@ function DealFormModal({
             <input style={inputStyle('owner')} value={form.owner} placeholder="JS"
               onChange={e => onChange('owner', e.target.value)} />
           </div>
-          {/* Probability */}
+
+          {/* Expected Close */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={labelStyle}>Win Probability (0–100)</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input type="range" min={0} max={100} value={form.probability}
-                onChange={e => onChange('probability', Number(e.target.value))}
-                style={{ flex: 1, accentColor: 'var(--purple)' }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', minWidth: 32, textAlign: 'right' }}>{form.probability}%</span>
-            </div>
+            <label style={labelStyle}>Expected Close Date</label>
+            <input style={inputStyle('expectedClose')} value={form.expectedClose} placeholder="e.g. Jul 15"
+              onChange={e => onChange('expectedClose', e.target.value)} />
           </div>
+          {/* Last Contact */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={labelStyle}>Last Contact Date</label>
+            <input style={inputStyle('lastContact')} value={form.lastContact} placeholder="e.g. 2 days ago"
+              onChange={e => onChange('lastContact', e.target.value)} />
+          </div>
+
           {/* Follow-up */}
-          <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={labelStyle}>Next Follow-up</label>
-            <input style={inputStyle('nextFollowUp')} value={form.nextFollowUp} placeholder="e.g. Tomorrow, Jun 25"
+            <input style={inputStyle('nextFollowUp')} value={form.nextFollowUp} placeholder="e.g. Tomorrow"
               onChange={e => onChange('nextFollowUp', e.target.value)} />
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ flex: 1 }}></div>
+          </div>
+
+          {/* Notes */}
+          <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={labelStyle}>Notes / Activity Log</label>
+            <textarea style={{...inputStyle('notes'), height: 60, resize: 'vertical'}} value={form.notes} placeholder="Add activity log or notes here..."
+              onChange={e => onChange('notes', e.target.value)} />
           </div>
         </div>
 
@@ -494,7 +573,7 @@ function DealFormModal({
 
 /* ─── View Deal Detail Drawer ─── */
 function ViewDealDrawer({ deal, onClose, onEdit }: { deal: Deal; onClose: () => void; onEdit: () => void }) {
-  const stg = stageConfig[deal.stage];
+  const stg = pipelineStageConfig[deal.pipelineId]?.[deal.stage] || { label: deal.stage, color: 'new' };
   const fields = [
     { icon: '🏢', label: 'Client', value: deal.client },
     { icon: '💰', label: 'Value', value: fmtVal(deal.value) },
@@ -502,7 +581,9 @@ function ViewDealDrawer({ deal, onClose, onEdit }: { deal: Deal; onClose: () => 
     { icon: '🎯', label: 'Probability', value: `${deal.probability}%` },
     { icon: '👤', label: 'Owner', value: deal.ownerFull },
     { icon: '📥', label: 'Source', value: deal.source },
-    { icon: '📅', label: 'Created', value: deal.created },
+    { icon: '📈', label: 'Service Type', value: deal.serviceType },
+    { icon: '📅', label: 'Expected Close', value: deal.expectedClose || '—' },
+    { icon: '📞', label: 'Last Contact', value: deal.lastContact || '—' },
     { icon: '⏰', label: 'Next Follow-up', value: deal.nextFollowUp },
     { icon: '🕐', label: 'Days in Stage', value: `${deal.daysInStage} days` },
   ];
@@ -611,6 +692,12 @@ function ViewDealDrawer({ deal, onClose, onEdit }: { deal: Deal; onClose: () => 
               </div>
             </div>
           ))}
+          {deal.notes && (
+            <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: 8, marginTop: 8, border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4 }}>Notes / Activity</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{deal.notes}</div>
+            </div>
+          )}
         </div>
 
         {/* Footer Actions */}
@@ -685,7 +772,7 @@ function DeleteConfirmModal({ deal, onConfirm, onClose }: { deal: Deal; onConfir
    MAIN DEALS PAGE
    ═══════════════════════════════════════════ */
 export default function DealsPage() {
-  const [selectedPipeline, setSelectedPipeline] = useState('main');
+  const [selectedPipeline, setSelectedPipeline] = useState('web_dev');
   const [deals, setDeals] = useState<Deal[]>(initialDeals);
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
@@ -707,6 +794,27 @@ export default function DealsPage() {
   const [dealForm, setDealForm] = useState<DealFormState>({ ...emptyDealForm });
   const [dealFormErrors, setDealFormErrors] = useState<Record<string, string>>({});
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+
+  const openEdit = (d: Deal) => {
+    setEditingDeal(d);
+    setDealForm({
+      name: d.name, client: d.client, value: String(d.value), pipelineId: d.pipelineId, stage: d.stage,
+      owner: d.owner, ownerFull: d.ownerFull, tags: d.tags.join(', '), probability: d.probability,
+      source: d.source, nextFollowUp: d.nextFollowUp, serviceType: d.serviceType, expectedClose: d.expectedClose, lastContact: d.lastContact, notes: d.notes
+    });
+    setDealFormErrors({});
+    setShowDealForm(true);
+  };
+
+  const handleSaveDeal = () => {
+    const v = Number(dealForm.value);
+    if (editingDeal) {
+      setDeals(prev => prev.map(d => d.id === editingDeal.id ? { ...d, ...dealForm, value: v, tags: dealForm.tags.split(',').map(t => t.trim()).filter(Boolean) } as Deal : d));
+    } else {
+      setDeals(prev => [{ ...dealForm, id: Date.now(), value: v, tags: dealForm.tags.split(',').map(t => t.trim()).filter(Boolean), daysInStage: 0, created: 'just now' } as Deal, ...prev]);
+    }
+    setShowDealForm(false);
+  };
 
   // View detail
   const [viewDeal, setViewDeal] = useState<Deal | null>(null);
@@ -731,6 +839,7 @@ export default function DealsPage() {
 
   // Filtering
   const filtered = deals.filter(d => {
+    if (d.pipelineId !== selectedPipeline) return false;
     const matchStage = stageFilter === 'all' || d.stage === stageFilter;
     const q = search.toLowerCase();
     const matchSearch = !q ||
@@ -739,22 +848,35 @@ export default function DealsPage() {
       d.tags.some(t => t.toLowerCase().includes(q)) ||
       d.owner.toLowerCase().includes(q) ||
       d.ownerFull.toLowerCase().includes(q) ||
-      d.stage.toLowerCase().includes(q);
+      (pipelineStageConfig[d.pipelineId]?.[d.stage]?.label || d.stage).toLowerCase().includes(q);
     return matchStage && matchSearch;
   });
 
   // Search suggestions
   const suggestions = search.length >= 2 ? [
-    ...deals.filter(d => d.name.toLowerCase().includes(search.toLowerCase())).slice(0, 3).map(d => ({ type: 'Deal', label: d.name, sub: d.client })),
-    ...deals.filter(d => d.client.toLowerCase().includes(search.toLowerCase())).slice(0, 2).map(d => ({ type: 'Client', label: d.client, sub: fmtVal(d.value) })),
-    ...[...new Set(deals.flatMap(d => d.tags))].filter(t => t.toLowerCase().includes(search.toLowerCase())).slice(0, 2).map(t => ({ type: 'Tag', label: t, sub: `${deals.filter(d => d.tags.includes(t)).length} deals` })),
+    ...filtered.filter(d => d.name.toLowerCase().includes(search.toLowerCase())).slice(0, 3).map(d => ({ type: 'Deal', label: d.name, sub: d.client })),
+    ...filtered.filter(d => d.client.toLowerCase().includes(search.toLowerCase())).slice(0, 2).map(d => ({ type: 'Client', label: d.client, sub: fmtVal(d.value) })),
+    ...[...new Set(filtered.flatMap(d => d.tags))].filter(t => t.toLowerCase().includes(search.toLowerCase())).slice(0, 2).map(t => ({ type: 'Tag', label: t, sub: `${filtered.filter(d => d.tags.includes(t)).length} deals` })),
   ] : [];
 
   // KPIs
-  const totalValue = deals.reduce((a, d) => a + d.value, 0);
-  const wonValue = deals.filter(d => d.stage === 'won').reduce((a, d) => a + d.value, 0);
-  const activeDeals = deals.filter(d => !['won', 'lost'].includes(d.stage)).length;
-  const avgDeal = deals.length ? Math.round(totalValue / deals.length) : 0;
+  const pipelineDeals = deals.filter(d => d.pipelineId === selectedPipeline);
+  const openDeals = pipelineDeals.filter(d => {
+    const stg = pipelineStageConfig[d.pipelineId]?.[d.stage];
+    return !stg?.isClosing;
+  });
+  const totalValue = openDeals.reduce((a, d) => a + d.value, 0);
+  
+  const wonDealsThisMonth = pipelineDeals.filter(d => {
+    const stg = pipelineStageConfig[d.pipelineId]?.[d.stage];
+    return stg?.isWon;
+  });
+  const wonValue = wonDealsThisMonth.reduce((a, d) => a + d.value, 0);
+  
+  const closedDeals = pipelineDeals.filter(d => pipelineStageConfig[d.pipelineId]?.[d.stage]?.isClosing);
+  const winRate = closedDeals.length > 0 ? Math.round((wonDealsThisMonth.length / closedDeals.length) * 100) : 0;
+  
+  const followUpToday = pipelineDeals.filter(d => d.nextFollowUp.toLowerCase() === 'today' || d.nextFollowUp.toLowerCase() === 'overdue').length;
 
   // Delete
   const handleDelete = (id: number) => {
@@ -1051,9 +1173,9 @@ export default function DealsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>
         {[
           { label: 'Total Pipeline Value', value: fmtVal(totalValue), color: 'purple', icon: '💰' },
-          { label: 'Closed Won', value: fmtVal(wonValue), color: 'emerald', icon: '🏆' },
-          { label: 'Active Deals', value: String(activeDeals), color: 'blue', icon: '📊' },
-          { label: 'Avg. Deal Size', value: fmtVal(avgDeal), color: 'amber', icon: '📈' },
+          { label: 'Won Value (This Month)', value: fmtVal(wonValue), color: 'emerald', icon: '🏆' },
+          { label: 'Win Rate %', value: `${winRate}%`, color: 'blue', icon: '📈' },
+          { label: 'Deals Needing Follow-up', value: String(followUpToday), color: 'amber', icon: '⚡' },
         ].map(k => (
           <div key={k.label} className={`kpi-card ${k.color}`}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -1108,7 +1230,7 @@ export default function DealsPage() {
           </div>
         </div>
 
-        <button className="btn btn-primary">+ New Deal</button>
+        <button className="btn btn-primary" onClick={() => { setDealForm({...emptyDealForm, pipelineId: selectedPipeline, serviceType: selectedPipelineData.label, stage: Object.keys(pipelineStageConfig[selectedPipeline] || {})[0] || ""}); setEditingDeal(null); setShowDealForm(true); }}>+ New Deal</button>
       </div>
 
       {/* ════════════════════════════════════════
@@ -1135,7 +1257,7 @@ export default function DealsPage() {
               </thead>
               <tbody>
                 {filtered.map(d => {
-                  const stg = stageConfig[d.stage];
+                  const stg = pipelineStageConfig[d.pipelineId]?.[d.stage] || { label: d.stage, color: 'new' };
                   return (
                     <tr key={d.id}>
                       <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{highlight(d.name)}</td>
@@ -1169,9 +1291,12 @@ export default function DealsPage() {
                         </div>
                       </td>
                       <td style={{
-                        fontSize: 12,
-                        color: d.daysInStage > 10 ? 'var(--rose-light)' : 'var(--text-muted)',
-                      }}>{d.daysInStage}d</td>
+                        fontSize: 12, fontWeight: d.daysInStage >= 14 ? 600 : 400,
+                        color: d.daysInStage >= 14 ? 'var(--rose-light)' : 'var(--text-muted)',
+                      }}>
+                        {d.daysInStage >= 14 && <span style={{ marginRight: 4 }} title="Deal is rotting">⚠️</span>}
+                        {d.daysInStage}d
+                      </td>
                       <td style={{
                         fontSize: 12,
                         color: d.nextFollowUp === 'Today' ? 'var(--amber-light)' : d.nextFollowUp === 'Tomorrow' ? 'var(--blue-light)' : 'var(--text-muted)',
@@ -1191,7 +1316,8 @@ export default function DealsPage() {
                       <td><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.source}</span></td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-                          <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 11 }}>View</button>
+                          <button className="btn btn-ghost" onClick={() => setViewDeal(d)} style={{ padding: '4px 10px', fontSize: 11 }}>View</button>
+                          <button className="btn btn-ghost" onClick={() => openEdit(d)} style={{ padding: '4px 10px', fontSize: 11 }}>Edit</button>
                           <button
                             onClick={() => handleDelete(d.id)}
                             style={{
@@ -1220,7 +1346,7 @@ export default function DealsPage() {
       {view === 'kanban' && (
         <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
           <div style={{ display: 'flex', gap: 12, minWidth: 'max-content' }}>
-            {Object.entries(stageConfig).map(([stageId, cfg]) => {
+            {Object.entries(pipelineStageConfig[selectedPipeline] || {}).map(([stageId, cfg]) => {
               const stageDeals = filtered.filter(d => d.stage === stageId);
               const stageValue = stageDeals.reduce((a, d) => a + d.value, 0);
               return (
@@ -1272,7 +1398,10 @@ export default function DealsPage() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--emerald-light)' }}>{fmtVal(d.value)}</span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 10, color: d.daysInStage > 10 ? 'var(--rose-light)' : 'var(--text-muted)' }}>{d.daysInStage}d</span>
+                            <span style={{ fontSize: 10, fontWeight: d.daysInStage >= 14 ? 600 : 400, color: d.daysInStage >= 14 ? 'var(--rose-light)' : 'var(--text-muted)' }}>
+                              {d.daysInStage >= 14 && <span style={{ marginRight: 2 }}>⚠️</span>}
+                              {d.daysInStage}d
+                            </span>
                             <div style={{
                               width: 22, height: 22, borderRadius: '50%',
                               background: 'linear-gradient(135deg, var(--purple), var(--blue))',
@@ -1292,7 +1421,7 @@ export default function DealsPage() {
                         >✕</button>
                       </div>
                     ))}
-                    <button style={{
+                    <button onClick={() => { setDealForm({...emptyDealForm, pipelineId: selectedPipeline, serviceType: selectedPipelineData.label, stage: stageId, probability: cfg.defaultProbability}); setEditingDeal(null); setShowDealForm(true); }} style={{
                       border: '1px dashed var(--border)',
                       borderRadius: 8, padding: '8px',
                       fontSize: 11, color: 'var(--text-muted)',
