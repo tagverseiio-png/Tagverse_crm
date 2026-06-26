@@ -90,9 +90,9 @@ export default function Sidebar() {
   };
 
   return (
-    <aside 
+    <aside
       className="sidebar"
-      style={{ 
+      style={{
         background: '#0078d4',
         color: '#f8fafc',
         '--sidebar-width': isCollapsed ? '72px' : '240px',
@@ -121,7 +121,7 @@ export default function Sidebar() {
           <div className="logo-text">Tagverse</div>
           <div className="logo-sub">CRM Platform</div>
         </div>
-        <button 
+        <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           style={{
             marginLeft: isCollapsed ? 0 : 'auto',
@@ -142,7 +142,7 @@ export default function Sidebar() {
           className="hover-bg"
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
-          {isCollapsed ? '»' : '«'} 
+          {isCollapsed ? '»' : '«'}
         </button>
       </div>
 
@@ -159,7 +159,7 @@ export default function Sidebar() {
                 title={isCollapsed ? item.label : undefined}
               >
                 <span className="icon">{item.icon}</span>
-                <span style={{ 
+                <span style={{
                   opacity: isCollapsed ? 0 : 1,
                   maxWidth: isCollapsed ? 0 : 200,
                   overflow: 'hidden',
@@ -177,7 +177,7 @@ export default function Sidebar() {
           return (
             <div key={group.id} className="sidebar-group" style={{ marginBottom: 8 }}>
               <button
-                onClick={() => { 
+                onClick={() => {
                   if (isCollapsed) {
                     setIsCollapsed(false);
                     setOpenGroups(prev => ({ ...prev, [group.id]: true }));
@@ -203,7 +203,7 @@ export default function Sidebar() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: isCollapsed ? 'center' : 'flex-start', width: '100%' }}>
                   <span className="icon" style={{ fontSize: 16 }}>{group.icon}</span>
-                  <span style={{ 
+                  <span style={{
                     fontWeight: 600,
                     opacity: isCollapsed ? 0 : 1,
                     maxWidth: isCollapsed ? 0 : 200,
@@ -267,7 +267,7 @@ export default function Sidebar() {
       <div className="sidebar-footer">
         <Link href="/settings" className="sidebar-item" style={{ textDecoration: 'none', marginBottom: 12, justifyContent: isCollapsed ? 'center' : 'flex-start', color: '#ffffff' }} title={isCollapsed ? "Settings" : undefined}>
           <span className="icon">⚙</span>
-          <span style={{ 
+          <span style={{
             opacity: isCollapsed ? 0 : 1,
             maxWidth: isCollapsed ? 0 : 200,
             overflow: 'hidden',

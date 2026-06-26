@@ -1,6 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { WidgetConfig } from '../../store';
+import { mockAnalyticsData } from '../../mockData';
 
 interface DonutChartWidgetProps {
   title: string;
@@ -8,12 +9,8 @@ interface DonutChartWidgetProps {
 }
 
 export function DonutChartWidget({ title, config }: DonutChartWidgetProps) {
-  const data = [
-    { name: 'Organic Search', value: 400 },
-    { name: 'Direct', value: 300 },
-    { name: 'Social', value: 300 },
-    { name: 'Referral', value: 200 },
-  ];
+  const moduleData = mockAnalyticsData[config.module as keyof typeof mockAnalyticsData];
+  const data = moduleData?.donut || [];
 
   const getColors = () => {
     return ['var(--blue)', 'var(--purple-light)', 'var(--emerald)', 'var(--rose)'];

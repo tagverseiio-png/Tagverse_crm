@@ -1,6 +1,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { WidgetConfig } from '../../store';
+import { mockAnalyticsData } from '../../mockData';
 
 interface BarChartWidgetProps {
   title: string;
@@ -8,13 +9,8 @@ interface BarChartWidgetProps {
 }
 
 export function BarChartWidget({ title, config }: BarChartWidgetProps) {
-  const data = [
-    { name: 'Meta Ads', spend: 4000, revenue: 8000 },
-    { name: 'LinkedIn', spend: 3000, revenue: 5500 },
-    { name: 'Google Ads', spend: 2000, revenue: 9800 },
-    { name: 'TikTok', spend: 2780, revenue: 3908 },
-    { name: 'Email', spend: 1890, revenue: 4800 },
-  ];
+  const moduleData = mockAnalyticsData[config.module as keyof typeof mockAnalyticsData];
+  const data = moduleData?.bar || [];
 
   const getColor = () => {
     switch(config.colorTheme) {

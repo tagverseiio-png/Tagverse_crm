@@ -1,6 +1,7 @@
 import React from 'react';
 import { WidgetConfig } from '../../store';
 import { ArrowUpRight, ArrowDownRight, DollarSign, Users, Target, Activity } from 'lucide-react';
+import { mockAnalyticsData } from '../../mockData';
 
 interface KPIWidgetProps {
   title: string;
@@ -8,9 +9,14 @@ interface KPIWidgetProps {
 }
 
 export function KPIWidget({ title, config }: KPIWidgetProps) {
-  const mockValue = config.metric === 'sum' ? '$85,420' : '142';
-  const mockDelta = '+12.5%';
-  const isUp = true;
+  // Use config to dynamically pull from mock data
+  const moduleData = mockAnalyticsData[config.module as keyof typeof mockAnalyticsData];
+  const metricData = moduleData?.kpi[config.metric as keyof typeof moduleData.kpi];
+
+  // Fallbacks if data doesn't exist
+  const mockValue = metricData?.value || '0';
+  const mockDelta = metricData?.delta || '0%';
+  const isUp = metricData?.isUp ?? true;
   
   const getIcon = () => {
     switch (config.colorTheme) {
