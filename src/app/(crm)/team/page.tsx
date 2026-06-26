@@ -126,7 +126,7 @@ export default function TeamPage() {
                   <span className={styles.projectsLabel}>Associated Projects</span>
                   <div className={styles.projectPills}>
                     {activeProjects.map(p => (
-                      <Link href={`/projects`} key={p.id} passHref legacyBehavior>
+                      <Link href={`/projects`} key={p.id} style={{ textDecoration: 'none' }}>
                         <span
                           className={styles.projectPill}
                           style={{
