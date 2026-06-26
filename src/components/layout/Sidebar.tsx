@@ -93,7 +93,7 @@ export default function Sidebar() {
     <aside 
       className="sidebar"
       style={{ 
-        background: '#0b1120',
+        background: '#0078d4',
         color: '#f8fafc',
         '--sidebar-width': isCollapsed ? '72px' : '240px',
         transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -127,7 +127,7 @@ export default function Sidebar() {
             marginLeft: isCollapsed ? 0 : 'auto',
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
-            color: 'var(--text-secondary)',
+            color: '#ffffff',
             cursor: 'pointer',
             width: 24,
             height: 24,
@@ -155,7 +155,7 @@ export default function Sidebar() {
                 key={item.id}
                 href={item.path}
                 className={`sidebar-item ${isActive ? 'active' : ''}`}
-                style={{ textDecoration: 'none', justifyContent: isCollapsed ? 'center' : 'flex-start' }}
+                style={{ textDecoration: 'none', justifyContent: isCollapsed ? 'center' : 'flex-start', color: '#ffffff' }}
                 title={isCollapsed ? item.label : undefined}
               >
                 <span className="icon">{item.icon}</span>
@@ -177,7 +177,14 @@ export default function Sidebar() {
           return (
             <div key={group.id} className="sidebar-group" style={{ marginBottom: 8 }}>
               <button
-                onClick={() => { if (!isCollapsed) toggleGroup(group.id); }}
+                onClick={() => { 
+                  if (isCollapsed) {
+                    setIsCollapsed(false);
+                    setOpenGroups(prev => ({ ...prev, [group.id]: true }));
+                  } else {
+                    toggleGroup(group.id);
+                  }
+                }}
                 className="sidebar-item"
                 style={{
                   width: '100%',
@@ -189,8 +196,8 @@ export default function Sidebar() {
                   justifyContent: isCollapsed ? 'center' : 'space-between',
                   padding: '10px',
                   borderRadius: '8px',
-                  cursor: isCollapsed ? 'default' : 'pointer',
-                  color: isOpen && !isCollapsed ? 'var(--text-primary)' : 'var(--text-secondary)'
+                  cursor: 'pointer',
+                  color: '#ffffff'
                 }}
                 title={isCollapsed ? group.label : undefined}
               >
@@ -234,7 +241,7 @@ export default function Sidebar() {
                         style={{
                           textDecoration: 'none',
                           fontSize: 12,
-                          color: isActive ? 'var(--blue-light)' : 'var(--text-secondary)',
+                          color: isActive ? 'var(--blue-light)' : '#ffffff',
                           padding: '6px 8px',
                           borderRadius: 6,
                           background: isActive ? 'var(--blue-dim)' : 'transparent',
@@ -258,7 +265,7 @@ export default function Sidebar() {
       </div>
 
       <div className="sidebar-footer">
-        <Link href="/settings" className="sidebar-item" style={{ textDecoration: 'none', marginBottom: 12, justifyContent: isCollapsed ? 'center' : 'flex-start' }} title={isCollapsed ? "Settings" : undefined}>
+        <Link href="/settings" className="sidebar-item" style={{ textDecoration: 'none', marginBottom: 12, justifyContent: isCollapsed ? 'center' : 'flex-start', color: '#ffffff' }} title={isCollapsed ? "Settings" : undefined}>
           <span className="icon">⚙</span>
           <span style={{ 
             opacity: isCollapsed ? 0 : 1,
