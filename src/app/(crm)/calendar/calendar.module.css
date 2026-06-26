@@ -1,3 +1,44 @@
+/* ============================================================
+   Day / Week / Month View Toggle  (pill-style, matches reference)
+   ============================================================ */
+.viewToggle {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.viewToggleBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 5px 16px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  letter-spacing: 0.01em;
+}
+
+.viewToggleBtn:hover {
+  color: var(--text-primary);
+  background: rgba(124, 92, 191, 0.08);
+}
+
+.viewToggleBtnActive {
+  composes: viewToggleBtn;
+  background: var(--purple);
+  color: #fff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(124, 92, 191, 0.35);
+}
+
+/* ============================================================
+   Calendar Layout
+   ============================================================ */
 .calendarLayout {
   display: grid;
   grid-template-columns: 3fr 1fr;
@@ -10,11 +51,16 @@
   }
 }
 
+/* ============================================================
+   Month Header & Navigation
+   ============================================================ */
 .monthHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: 0 0 14px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
 }
 
 .navigationControls {
@@ -23,7 +69,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 2px;
-  gap: 4px;
+  gap: 2px;
   align-items: center;
 }
 
@@ -36,6 +82,10 @@
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .navBtn:hover {
@@ -43,109 +93,217 @@
   color: var(--text-primary);
 }
 
+/* ============================================================
+   Grid Header (day names row)
+   ============================================================ */
 .gridHeader {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.gridHeaderCell {
+  padding: 8px 0;
   text-align: center;
   font-size: 11px;
   font-weight: 700;
   color: var(--text-muted);
-  margin-bottom: 8px;
+  letter-spacing: 0.05em;
 }
 
+/* ============================================================
+   Days Grid  — true bordered-table look
+   ============================================================ */
 .daysGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  background: var(--border);
-  padding: 4px;
-  border-radius: var(--radius-lg);
+  /* rows will be auto-created; we want 6 rows */
+  grid-template-rows: repeat(6, minmax(110px, 1fr));
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
 }
 
+/* ============================================================
+   Individual Day Cell
+   ============================================================ */
 .cell {
-  background: var(--bg-secondary);
-  min-height: 86px;
-  padding: 6px;
-  border-radius: var(--radius);
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 8px 6px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 3px;
   cursor: pointer;
-  transition: all var(--transition);
+  transition: background 0.12s ease;
+  min-height: 110px;
+  overflow: hidden;
+  position: relative;
 }
 
 .cell:hover {
-  background: var(--bg-card-hover);
+  background: var(--bg-card-hover, rgba(124, 92, 191, 0.04));
 }
 
 .cellActive {
   composes: cell;
   background: var(--purple-dim) !important;
-  box-shadow: 0 0 0 2px var(--purple) inset;
 }
 
-.cellToday {
+.cellActive::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--purple);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cellOutside {
   composes: cell;
+  background: var(--bg-secondary);
+  opacity: 0.7;
+}
+
+/* ============================================================
+   Day number chip
+   ============================================================ */
+.cellDateRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 2px;
 }
 
 .todayNum {
   background: var(--purple);
-  color: white;
-  width: 20px;
-  height: 20px;
+  color: #fff;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 
 .cellNum {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cellNumOutside {
   font-size: 12px;
+  font-weight: 400;
   color: var(--text-muted);
-  opacity: 0.4;
+  opacity: 0.45;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* ============================================================
+   Event / Task Pills inside cells
+   ============================================================ */
 .indicatorList {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin-top: 6px;
+  gap: 2px;
+  flex: 1;
   overflow: hidden;
-  max-height: 52px;
 }
 
-.indicatorPill {
-  font-size: 9px;
-  font-weight: 700;
-  padding: 1px 4px;
-  border-radius: 4px;
+/* Base pill shared by eventPill and taskPill */
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 5px;
+  border-radius: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-left: 2px solid transparent;
+  width: 100%;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.pillDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.pillLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.pillTime {
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-left: 2px;
 }
 
 .eventPill {
-  composes: indicatorPill;
-  background: rgba(255, 255, 255, 0.05);
+  composes: pill;
+  background: rgba(124, 92, 191, 0.10);
+  color: var(--text-primary);
 }
 
 .taskPill {
-  composes: indicatorPill;
-  background: var(--blue-dim);
-  color: var(--blue-light);
-  border-left-color: var(--blue);
+  composes: pill;
+  background: rgba(59, 130, 246, 0.10);
+  color: var(--text-primary);
 }
 
-/* Agenda Panel */
+.overduePill {
+  composes: pill;
+  background: rgba(239, 68, 68, 0.10);
+  color: #ef4444;
+}
+
+/* "N more" expand link */
+.moreLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 1px 2px;
+  border-radius: 3px;
+  transition: color 0.12s ease;
+  width: fit-content;
+}
+
+.moreLink:hover {
+  color: var(--purple);
+}
+
+/* ============================================================
+   Agenda Panel (right sidebar)
+   ============================================================ */
 .agendaPanel {
   display: flex;
   flex-direction: column;
@@ -171,4 +329,546 @@
 .agendaMeta {
   font-size: 11px;
   color: var(--text-muted);
+}
+
+/* ============================================================
+   Modal
+   ============================================================ */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalContent {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  width: 480px;
+  max-width: 95vw;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+/* ============================================================
+   Time Grid  (Week & Day Views)
+   ============================================================ */
+.timeGrid {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Column header row (day names + numbers) */
+.timeGridHeader {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.timeGutter {
+  width: 72px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+}
+
+.timeColHeader {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  border-right: 1px solid var(--border);
+}
+
+.timeColHeader:last-child {
+  border-right: none;
+}
+
+.timeColHeader:hover {
+  background: var(--bg-card-hover, rgba(124, 92, 191, 0.04));
+}
+
+.timeColDay {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.timeColNum {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Today badge (smaller, for week/day header) */
+.todayNumSm {
+  background: var(--purple);
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ── All-Day row */
+.timeGridAllDay {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  background: var(--bg-secondary);
+  min-height: 36px;
+}
+
+.timeAllDayCell {
+  flex: 1;
+  border-right: 1px solid var(--border);
+  padding: 3px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timeAllDayCell:last-child {
+  border-right: none;
+}
+
+/* ── Time slot label (gutter) */
+.timeGutterLabel {
+  width: 72px;
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: right;
+  padding-right: 10px;
+  padding-top: 2px;
+  border-right: 1px solid var(--border);
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* ── Scrollable area */
+.timeSlotScroll {
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+/* ── Each hour row */
+.timeRow {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  min-height: 52px;
+}
+
+.timeRow:last-child {
+  border-bottom: none;
+}
+
+/* ── Individual time cell */
+.timeSlotCell {
+  flex: 1;
+  border-right: 1px solid var(--border);
+  padding: 2px 4px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 52px;
+}
+
+.timeSlotCell:last-child {
+  border-right: none;
+}
+
+.timeSlotCell:hover {
+  background: rgba(124, 92, 191, 0.04);
+}
+
+/* ── Event block inside a time slot */
+.timeEventBlock {
+  border-left: 3px solid;
+  padding: 3px 6px;
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: filter 0.12s ease;
+}
+
+.timeEventBlock:hover {
+  filter: brightness(1.08);
+}
+
+/* ============================================================
+   Event Detail Popup  (click-to-open card)
+   ============================================================ */
+.popupBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(4px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.popupCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  width: 440px;
+  max-width: 100%;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.popupAccentBar {
+  height: 5px;
+  width: 100%;
+}
+
+.popupHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 20px 0;
+}
+
+.popupTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.popupBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.popupClose {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.popupClose:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.popupDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 16px 20px;
+}
+
+.popupDetailRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.popupDetailRow:last-child {
+  border-bottom: none;
+}
+
+.popupDetailIcon {
+  font-size: 18px;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.popupDetailLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.popupDetailValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.popupAttendee {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.popupAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+  letter-spacing: 0;
+}
+
+.popupFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  gap: 8px;
+}
+
+.popupDeleteBtn {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.popupDeleteBtn:hover {
+  background: rgba(239, 68, 68, 0.16);
+}
+
+.popupCancelBtn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.popupCancelBtn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.popupRescheduleBtn {
+  border: none;
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.01em;
+}
+
+.popupRescheduleBtn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================
+   Reschedule / Create Edit Modal
+   ============================================================ */
+.editModal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  width: 520px;
+  max-width: 96vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.editModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.editModalTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.editModalSub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.editModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.editModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* ── Form fields ── */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.fieldInput {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.fieldInput:focus {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px var(--purple-dim);
+}
+
+.fieldSelect {
+  composes: fieldInput;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+/* ── Attendee list in modals ── */
+.attendeeList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.attendeeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.attendeeRow:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+}
+
+.attendeeCheck {
+  accent-color: var(--purple);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
 }

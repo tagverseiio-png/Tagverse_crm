@@ -57,6 +57,8 @@ interface WorkspaceContextType {
   toggleTaskDone: (id: string) => void;
   addProject: (project: Omit<Project, 'id' | 'progress'>) => void;
   addEvent: (event: Omit<CalendarEvent, 'id'>) => void;
+  updateEvent: (event: CalendarEvent) => void;
+  deleteEvent: (id: string) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -180,6 +182,14 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     setEvents(prev => [...prev, newEvent]);
   };
 
+  const updateEvent = (updatedEvent: CalendarEvent) => {
+    setEvents(prev => prev.map(e => (e.id === updatedEvent.id ? updatedEvent : e)));
+  };
+
+  const deleteEvent = (id: string) => {
+    setEvents(prev => prev.filter(e => e.id !== id));
+  };
+
   return (
     <WorkspaceContext.Provider
       value={{
@@ -193,6 +203,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         toggleTaskDone,
         addProject,
         addEvent,
+        updateEvent,
+        deleteEvent,
       }}
     >
       {children}

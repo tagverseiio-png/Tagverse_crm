@@ -1,448 +1,790 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useWorkspace, CalendarEvent, Task } from '@/context/WorkspaceContext';
 import styles from './calendar.module.css';
 
+// ─── Constants ─────────────────────────────────────────────────────────────────
+const MAX_VISIBLE_PILLS = 3;
+const TODAY = '2026-06-25';
+
+const HOURS: string[] = [];
+for (let h = 8; h <= 20; h++) {
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const disp = h <= 12 ? h : h - 12;
+  HOURS.push(`${String(disp).padStart(2, '0')}:00 ${ampm}`);
+}
+
+type ViewMode = 'day' | 'week' | 'month';
+
+const WEEK_DAYS_SHORT = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+function toDateStr(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function weekStart(dateStr: string): Date {
+  const d = new Date(dateStr);
+  const diff = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - diff);
+  return d;
+}
+
+function getWeekDays(anchorDate: string) {
+  const monday = weekStart(anchorDate);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return { dateStr: toDateStr(d), dayNum: d.getDate(), dayLabel: WEEK_DAYS_SHORT[i], isWeekend: i >= 5 };
+  });
+}
+
+function eventHour(time: string): number {
+  return parseInt(time.split(':')[0], 10);
+}
+
+function formatDisplayTime(time: string): string {
+  if (!time) return '';
+  const [hStr, mStr] = time.split(':');
+  const h = parseInt(hStr, 10);
+  const m = mStr || '00';
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const disp = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${String(disp).padStart(2, '0')}:${m} ${ampm}`;
+}
+
+// ─── Sub-components ────────────────────────────────────────────────────────────
+
+/** Event detail popup shown when an event pill/block is clicked */
+function EventDetailPopup({
+  event,
+  members,
+  projects,
+  onClose,
+  onReschedule,
+  onDelete,
+}: {
+  event: CalendarEvent;
+  members: ReturnType<typeof useWorkspace>['members'];
+  projects: ReturnType<typeof useWorkspace>['projects'];
+  onClose: () => void;
+  onReschedule: () => void;
+  onDelete: () => void;
+}) {
+  const linkedProject = event.linkedRecord?.type === 'project'
+    ? projects.find(p => p.id === event.linkedRecord?.id)
+    : null;
+
+  const attendeeMembers = event.attendees
+    .map(id => members.find(m => m.id === id))
+    .filter(Boolean) as typeof members;
+
+  // Format date nicely
+  const dateObj = new Date(event.date);
+  const dateFormatted = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  return (
+    <div className={styles.popupBackdrop} onClick={onClose}>
+      <div className={styles.popupCard} onClick={e => e.stopPropagation()}>
+        {/* Color accent bar */}
+        <div className={styles.popupAccentBar} style={{ background: event.color }} />
+
+        {/* Header */}
+        <div className={styles.popupHeader}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span className={styles.popupBadge} style={{ background: `${event.color}22`, color: event.color, borderColor: `${event.color}44` }}>
+                📅 Event
+              </span>
+              {linkedProject && (
+                <span className={styles.popupBadge} style={{ background: `${linkedProject.color}18`, color: linkedProject.color, borderColor: `${linkedProject.color}30` }}>
+                  🔗 {linkedProject.name}
+                </span>
+              )}
+            </div>
+            <h2 className={styles.popupTitle}>{event.title}</h2>
+          </div>
+          <button className={styles.popupClose} onClick={onClose}>✕</button>
+        </div>
+
+        {/* Details grid */}
+        <div className={styles.popupDetails}>
+          <div className={styles.popupDetailRow}>
+            <span className={styles.popupDetailIcon}>📆</span>
+            <div>
+              <div className={styles.popupDetailLabel}>Date</div>
+              <div className={styles.popupDetailValue}>{dateFormatted}</div>
+            </div>
+          </div>
+          <div className={styles.popupDetailRow}>
+            <span className={styles.popupDetailIcon}>⏰</span>
+            <div>
+              <div className={styles.popupDetailLabel}>Time</div>
+              <div className={styles.popupDetailValue}>{formatDisplayTime(event.time)}</div>
+            </div>
+          </div>
+          {linkedProject && (
+            <div className={styles.popupDetailRow}>
+              <span className={styles.popupDetailIcon}>📂</span>
+              <div>
+                <div className={styles.popupDetailLabel}>Linked Project</div>
+                <div className={styles.popupDetailValue} style={{ color: linkedProject.color }}>{linkedProject.name}</div>
+              </div>
+            </div>
+          )}
+          <div className={styles.popupDetailRow} style={{ alignItems: 'flex-start' }}>
+            <span className={styles.popupDetailIcon}>👥</span>
+            <div style={{ flex: 1 }}>
+              <div className={styles.popupDetailLabel}>Attendees ({attendeeMembers.length})</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+                {attendeeMembers.map(m => (
+                  <div key={m.id} className={styles.popupAttendee}>
+                    <span className={styles.popupAvatar} style={{ background: event.color + '22', color: event.color }}>{m.avatar}</span>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{m.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.role} · {m.department}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer actions */}
+        <div className={styles.popupFooter}>
+          <button className={styles.popupDeleteBtn} onClick={onDelete}>🗑 Delete</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className={styles.popupCancelBtn} onClick={onClose}>Close</button>
+            <button className={styles.popupRescheduleBtn} style={{ background: event.color }} onClick={onReschedule}>
+              🔄 Reschedule
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Edit/Reschedule modal — pre-filled with existing event data */
+function RescheduleModal({
+  event,
+  members,
+  projects,
+  onSave,
+  onCancel,
+}: {
+  event: CalendarEvent;
+  members: ReturnType<typeof useWorkspace>['members'];
+  projects: ReturnType<typeof useWorkspace>['projects'];
+  onSave: (updated: CalendarEvent) => void;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState(event.title);
+  const [date, setDate] = useState(event.date);
+  const [time, setTime] = useState(event.time);
+  const [color, setColor] = useState(event.color);
+  const [linkedProject, setLinkedProject] = useState(event.linkedRecord?.id ?? '');
+  const [attendees, setAttendees] = useState<string[]>(event.attendees);
+
+  const toggleAttendee = (id: string) =>
+    setAttendees(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+  const handleSave = () => {
+    if (!title.trim()) { alert('Title is required'); return; }
+    const proj = projects.find(p => p.id === linkedProject);
+    onSave({
+      ...event,
+      title: title.trim(),
+      date,
+      time,
+      color: proj ? proj.color : color,
+      attendees,
+      linkedRecord: linkedProject ? { type: 'project', id: linkedProject } : null,
+    });
+  };
+
+  const PRESET_COLORS = ['#7c5cbf', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#ec4899'];
+
+  return (
+    <div className={styles.popupBackdrop} onClick={onCancel}>
+      <div className={styles.editModal} onClick={e => e.stopPropagation()}>
+        {/* Modal header */}
+        <div className={styles.editModalHeader}>
+          <div>
+            <h3 className={styles.editModalTitle}>Reschedule Event</h3>
+            <p className={styles.editModalSub}>Edit the details and save to update the calendar.</p>
+          </div>
+          <button className={styles.popupClose} onClick={onCancel}>✕</button>
+        </div>
+
+        <div className={styles.editModalBody}>
+          {/* Title */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Event Title</label>
+            <input
+              className={styles.fieldInput}
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Event title…"
+            />
+          </div>
+
+          {/* Date + Time row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className={styles.fieldGroup}>
+              <label className={styles.fieldLabel}>Date</label>
+              <input className={styles.fieldInput} type="date" value={date} onChange={e => setDate(e.target.value)} />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label className={styles.fieldLabel}>Time</label>
+              <input className={styles.fieldInput} type="time" value={time} onChange={e => setTime(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Link Project */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Link to Project</label>
+            <select
+              className={styles.fieldSelect}
+              value={linkedProject}
+              onChange={e => {
+                setLinkedProject(e.target.value);
+                const p = projects.find(x => x.id === e.target.value);
+                if (p) setColor(p.color);
+              }}
+            >
+              <option value="">No Project</option>
+              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+
+          {/* Color picker (only if no project linked) */}
+          {!linkedProject && (
+            <div className={styles.fieldGroup}>
+              <label className={styles.fieldLabel}>Event Color</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+                {PRESET_COLORS.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setColor(c)}
+                    style={{
+                      width: 28, height: 28, borderRadius: '50%', background: c, border: 'none',
+                      cursor: 'pointer', outline: color === c ? `3px solid ${c}` : '3px solid transparent',
+                      outlineOffset: 2, transition: 'outline 0.15s',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Attendees */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Attendees</label>
+            <div className={styles.attendeeList}>
+              {members.map(m => (
+                <label key={m.id} className={styles.attendeeRow}>
+                  <input
+                    type="checkbox"
+                    checked={attendees.includes(m.id)}
+                    onChange={() => toggleAttendee(m.id)}
+                    className={styles.attendeeCheck}
+                  />
+                  <span className={styles.popupAvatar} style={{ background: '#7c5cbf22', color: '#7c5cbf', fontSize: 10 }}>{m.avatar}</span>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{m.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.role}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className={styles.editModalFooter}>
+          <button className={styles.popupCancelBtn} onClick={onCancel}>Cancel</button>
+          <button
+            className={styles.popupRescheduleBtn}
+            style={{ background: color }}
+            onClick={handleSave}
+          >
+            ✓ Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
 export default function CalendarPage() {
-  const {
-    members,
-    projects,
-    tasks,
-    events,
-    addEvent,
-  } = useWorkspace();
+  const { members, projects, tasks, events, addEvent, updateEvent, deleteEvent } = useWorkspace();
 
-  // Current calendar view state
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [calendarYear, setCalendarYear] = useState(2026);
-  const [calendarMonth, setCalendarMonth] = useState(5); // June (0-indexed)
-  const [selectedDate, setSelectedDate] = useState('2026-06-25');
+  const [calendarMonth, setCalendarMonth] = useState(5);
+  const [selectedDate, setSelectedDate] = useState(TODAY);
 
-  // Modal State
-  const [eventModalOpen, setEventModalOpen] = useState(false);
+  // Event detail popup
+  const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
+  // Reschedule modal (set when user clicks "Reschedule" in detail popup)
+  const [rescheduleEvent, setRescheduleEvent] = useState<CalendarEvent | null>(null);
+
+  // Create event modal
+  const [createOpen, setCreateOpen] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
-  const [newEventDate, setNewEventDate] = useState('2026-06-25');
+  const [newEventDate, setNewEventDate] = useState(TODAY);
   const [newEventTime, setNewEventTime] = useState('10:00');
   const [newEventProject, setNewEventProject] = useState('');
   const [newEventAttendees, setNewEventAttendees] = useState<string[]>([]);
 
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  // ── Handlers ──
+  const openDetail = (ev: CalendarEvent, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDetailEvent(ev);
+  };
 
-  // Navigate Months
-  const handleMonthChange = (direction: number) => {
-    let nextMonth = calendarMonth + direction;
-    let nextYear = calendarYear;
+  const closeDetail = () => setDetailEvent(null);
 
-    if (nextMonth < 0) {
-      nextMonth = 11;
-      nextYear--;
-    } else if (nextMonth > 11) {
-      nextMonth = 0;
-      nextYear++;
+  const handleReschedule = () => {
+    if (detailEvent) {
+      setRescheduleEvent(detailEvent);
+      setDetailEvent(null);
     }
-
-    setCalendarMonth(nextMonth);
-    setCalendarYear(nextYear);
   };
 
-  const handleResetToday = () => {
-    setCalendarYear(2026);
-    setCalendarMonth(5);
-    setSelectedDate('2026-06-25');
+  const handleSaveReschedule = (updated: CalendarEvent) => {
+    updateEvent(updated);
+    setRescheduleEvent(null);
   };
 
-  // Generate calendar days
+  const handleDeleteEvent = () => {
+    if (detailEvent) {
+      deleteEvent(detailEvent.id);
+      setDetailEvent(null);
+    }
+  };
+
+  // ── Navigation ──
+  const handleNavigate = (dir: number) => {
+    if (viewMode === 'month') {
+      let m = calendarMonth + dir, y = calendarYear;
+      if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; }
+      setCalendarMonth(m); setCalendarYear(y);
+    } else if (viewMode === 'week') {
+      const d = new Date(selectedDate); d.setDate(d.getDate() + dir * 7);
+      setSelectedDate(toDateStr(d)); setCalendarMonth(d.getMonth()); setCalendarYear(d.getFullYear());
+    } else {
+      const d = new Date(selectedDate); d.setDate(d.getDate() + dir);
+      setSelectedDate(toDateStr(d)); setCalendarMonth(d.getMonth()); setCalendarYear(d.getFullYear());
+    }
+  };
+
+  const handleToday = () => { setCalendarYear(2026); setCalendarMonth(5); setSelectedDate(TODAY); };
+
+  const getHeaderLabel = () => {
+    if (viewMode === 'month') return `${MONTHS[calendarMonth]} ${calendarYear}`;
+    if (viewMode === 'week') {
+      const days = getWeekDays(selectedDate);
+      const fd = new Date(days[0].dateStr), ld = new Date(days[6].dateStr);
+      return `${String(fd.getDate()).padStart(2,'0')} ${MONTHS_SHORT[fd.getMonth()]} ${fd.getFullYear()} – ${String(ld.getDate()).padStart(2,'0')} ${MONTHS_SHORT[ld.getMonth()]} ${ld.getFullYear()}`;
+    }
+    const d = new Date(selectedDate);
+    return `${String(d.getDate()).padStart(2,'0')} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  // ── Month grid ──
   const getCalendarDays = () => {
-    const firstDayIndex = new Date(calendarYear, calendarMonth, 1).getDay();
-    const totalDaysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-    const prevMonthDays = new Date(calendarYear, calendarMonth, 0).getDate();
-
+    const firstDay = new Date(calendarYear, calendarMonth, 1);
+    const mondayOffset = (firstDay.getDay() + 6) % 7;
+    const totalDays = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+    const prevDays = new Date(calendarYear, calendarMonth, 0).getDate();
     const days: { dayNum: number; dateStr: string; isCurrentMonth: boolean }[] = [];
-
-    // Prev month padding cells
-    for (let i = firstDayIndex - 1; i >= 0; i--) {
-      const dayNum = prevMonthDays - i;
-      const prevMonth = calendarMonth === 0 ? 11 : calendarMonth - 1;
-      const prevYear = calendarMonth === 0 ? calendarYear - 1 : calendarYear;
-      const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-      days.push({ dayNum, dateStr, isCurrentMonth: false });
+    for (let i = mondayOffset - 1; i >= 0; i--) {
+      const n = prevDays - i;
+      const pm = calendarMonth === 0 ? 11 : calendarMonth - 1;
+      const py = calendarMonth === 0 ? calendarYear - 1 : calendarYear;
+      days.push({ dayNum: n, dateStr: `${py}-${String(pm+1).padStart(2,'0')}-${String(n).padStart(2,'0')}`, isCurrentMonth: false });
     }
-
-    // Current month cells
-    for (let day = 1; day <= totalDaysInMonth; day++) {
-      const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      days.push({ dayNum: day, dateStr, isCurrentMonth: true });
+    for (let d = 1; d <= totalDays; d++)
+      days.push({ dayNum: d, dateStr: `${calendarYear}-${String(calendarMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`, isCurrentMonth: true });
+    const remaining = 42 - days.length;
+    for (let d = 1; d <= remaining; d++) {
+      const nm = calendarMonth === 11 ? 0 : calendarMonth + 1;
+      const ny = calendarMonth === 11 ? calendarYear + 1 : calendarYear;
+      days.push({ dayNum: d, dateStr: `${ny}-${String(nm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`, isCurrentMonth: false });
     }
-
-    // Next month padding cells to complete grid
-    const totalSlots = 42; // 6 rows * 7 days
-    const remainingSlots = totalSlots - days.length;
-    for (let day = 1; day <= remainingSlots; day++) {
-      const nextMonth = calendarMonth === 11 ? 0 : calendarMonth + 1;
-      const nextYear = calendarMonth === 11 ? calendarYear + 1 : calendarYear;
-      const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      days.push({ dayNum: day, dateStr, isCurrentMonth: false });
-    }
-
     return days;
   };
 
   const calendarDays = getCalendarDays();
 
-  // Create Event action
-  const handleScheduleEvent = () => {
-    if (!newEventTitle.trim()) {
-      alert('Event Title is required!');
-      return;
-    }
-    if (newEventAttendees.length === 0) {
-      alert('Please select at least one attendee!');
-      return;
-    }
-
-    const linkedProj = projects.find(p => p.id === newEventProject);
-    const color = linkedProj ? linkedProj.color : '#7c5cbf';
-
-    addEvent({
-      title: newEventTitle.trim(),
-      date: newEventDate,
-      time: newEventTime,
-      attendees: newEventAttendees,
-      linkedRecord: newEventProject ? { type: 'project', id: newEventProject } : null,
-      color,
-    });
-
-    setNewEventTitle('');
-    setNewEventAttendees([]);
-    setEventModalOpen(false);
+  // ── Create event ──
+  const handleCreateEvent = () => {
+    if (!newEventTitle.trim()) { alert('Event title is required!'); return; }
+    if (newEventAttendees.length === 0) { alert('Select at least one attendee!'); return; }
+    const proj = projects.find(p => p.id === newEventProject);
+    addEvent({ title: newEventTitle.trim(), date: newEventDate, time: newEventTime, attendees: newEventAttendees, linkedRecord: newEventProject ? { type: 'project', id: newEventProject } : null, color: proj?.color ?? '#7c5cbf' });
+    setNewEventTitle(''); setNewEventAttendees([]); setCreateOpen(false);
   };
 
-  const handleAttendeeToggle = (memberId: string) => {
-    setNewEventAttendees(prev =>
-      prev.includes(memberId)
-        ? prev.filter(id => id !== memberId)
-        : [...prev, memberId]
-    );
-  };
-
-  // Filter items for selected date inspector
+  // ── Side panel ──
   const dayEvents = events.filter(e => e.date === selectedDate);
   const dayTasks = tasks.filter(t => t.due === selectedDate);
 
-  // Compute upcoming 7 days starting from fixed mock date 2026-06-25
   const getUpcomingEvents = () => {
-    const upcomingList: { dateLabel: string; event: CalendarEvent }[] = [];
-    const baseDate = new Date('2026-06-25');
-    
+    const list: { dateLabel: string; event: CalendarEvent }[] = [];
+    const base = new Date(TODAY);
     for (let i = 0; i < 7; i++) {
-      const walkDate = new Date(baseDate);
-      walkDate.setDate(baseDate.getDate() + i);
-      const walkStr = walkDate.toISOString().split('T')[0];
-      const matchEvents = events.filter(e => e.date === walkStr);
-      
-      const dateLabel = walkDate.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      });
-
-      matchEvents.forEach(ev => {
-        upcomingList.push({ dateLabel, event: ev });
-      });
+      const d = new Date(base); d.setDate(base.getDate() + i);
+      const s = toDateStr(d);
+      const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      events.filter(e => e.date === s).forEach(ev => list.push({ dateLabel: label, event: ev }));
     }
-    return upcomingList;
+    return list;
   };
 
-  const upcoming7Days = getUpcomingEvents();
+  // ── Week/Day columns ──
+  const timeCols = viewMode === 'week' ? getWeekDays(selectedDate) :
+    viewMode === 'day' ? [{ dateStr: selectedDate, dayNum: new Date(selectedDate).getDate(), dayLabel: WEEK_DAYS_SHORT[(new Date(selectedDate).getDay() + 6) % 7], isWeekend: [5,6].includes((new Date(selectedDate).getDay() + 6) % 7) }] : [];
 
+  const eventsForSlot = (dateStr: string, hourLabel: string) => {
+    const h = parseInt(hourLabel.split(':')[0], 10);
+    const hour24 = hourLabel.includes('PM') && h !== 12 ? h + 12 : (hourLabel.includes('AM') && h === 12 ? 0 : h);
+    return events.filter(e => e.date === dateStr && eventHour(e.time) === hour24);
+  };
+
+  const allDayForDate = (dateStr: string) => tasks.filter(t => t.due === dateStr);
+  const totalAllDay = timeCols.reduce((acc, col) => acc + allDayForDate(col.dateStr).length, 0);
+
+  // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      
-      {/* Top action row */}
+
+      {/* ── Top Bar ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Calendar Agenda</h2>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Track schedules, alignment sync meetings, and milestone due dates</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Track schedules, meetings, and milestone due dates</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setNewEventDate(selectedDate); setEventModalOpen(true); }}>
-          📅 Schedule Event
+
+        {/* Day / Week / Month toggle */}
+        <div className={styles.viewToggle}>
+          {(['day', 'week', 'month'] as ViewMode[]).map(v => (
+            <button
+              key={v}
+              className={viewMode === v ? styles.viewToggleBtnActive : styles.viewToggleBtn}
+              onClick={() => setViewMode(v)}
+            >
+              {v.charAt(0).toUpperCase() + v.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        <button className="btn btn-primary" onClick={() => { setNewEventDate(selectedDate); setCreateOpen(true); }}>
+          + Schedule Event
         </button>
       </div>
 
+      {/* ── Main Calendar + Side Panel ── */}
       <div className={styles.calendarLayout}>
-        {/* Left: Monthly Grid Calendar */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div className={styles.monthHeader}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>
-                {months[calendarMonth]} {calendarYear}
-              </h3>
-              <span className="badge blue">Month View</span>
-            </div>
 
+        {/* ════ Left: Calendar ════ */}
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+
+          {/* Sub-header */}
+          <div className={styles.monthHeader} style={{ padding: '14px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 16 }}>🗓</span>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{getHeaderLabel()}</h3>
+            </div>
             <div className={styles.navigationControls}>
-              <button className={styles.navBtn} onClick={() => handleMonthChange(-1)}>
-                ◀ Prev
-              </button>
-              <button className={styles.navBtn} onClick={handleResetToday}>
-                Today
-              </button>
-              <button className={styles.navBtn} onClick={() => handleMonthChange(1)}>
-                Next ▶
-              </button>
+              <button className={styles.navBtn} onClick={() => handleNavigate(-1)}>← Prev</button>
+              <button className={styles.navBtn} onClick={handleToday}>Today</button>
+              <button className={styles.navBtn} onClick={() => handleNavigate(1)}>Next →</button>
             </div>
           </div>
 
-          {/* Calendar Grid Header */}
-          <div className={styles.gridHeader}>
-            <div>SUN</div>
-            <div>MON</div>
-            <div>TUE</div>
-            <div>WED</div>
-            <div>THU</div>
-            <div>FRI</div>
-            <div>SAT</div>
-          </div>
+          {/* ════ MONTH VIEW ════ */}
+          {viewMode === 'month' && (<>
+            <div className={styles.gridHeader}>
+              {WEEK_DAYS_SHORT.map((d, i) => (
+                <div key={d} className={styles.gridHeaderCell} style={i >= 5 ? { color: '#e05252' } : undefined}>{d}</div>
+              ))}
+            </div>
+            <div className={styles.daysGrid}>
+              {calendarDays.map(({ dayNum, dateStr, isCurrentMonth }, idx) => {
+                const isSelected = dateStr === selectedDate;
+                const isToday = dateStr === TODAY;
+                const cellEvents = events.filter(e => e.date === dateStr);
+                const cellTasks = tasks.filter(t => t.due === dateStr);
+                const allItems = [
+                  ...cellEvents.map(e => ({ type: 'event' as const, data: e })),
+                  ...cellTasks.map(t => ({ type: 'task' as const, data: t })),
+                ];
+                const visible = allItems.slice(0, MAX_VISIBLE_PILLS);
+                const hidden = allItems.length - visible.length;
+                const col = idx % 7;
+                const isWeekend = col === 5 || col === 6;
 
-          {/* Calendar Cells */}
-          <div className={styles.daysGrid}>
-            {calendarDays.map(({ dayNum, dateStr, isCurrentMonth }, idx) => {
-              const isSelected = dateStr === selectedDate;
-              const isToday = dateStr === '2026-06-25'; // Mock today anchor
+                let cls = styles.cell;
+                if (isSelected) cls = styles.cellActive;
+                else if (!isCurrentMonth) cls = styles.cellOutside;
 
-              const cellEvents = events.filter(e => e.date === dateStr);
-              const cellTasks = tasks.filter(t => t.due === dateStr);
-
-              return (
-                <div
-                  key={idx}
-                  onClick={() => setSelectedDate(dateStr)}
-                  className={isSelected ? styles.cellActive : styles.cell}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    {isToday ? (
-                      <span className={styles.todayNum}>{dayNum}</span>
-                    ) : (
-                      <span className={isCurrentMonth ? styles.cellNum : styles.cellNumOutside}>
-                        {dayNum}
-                      </span>
-                    )}
-                    {(cellEvents.length + cellTasks.length > 0) && (
-                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--purple)' }} />
-                    )}
+                return (
+                  <div key={idx} onClick={() => setSelectedDate(dateStr)} className={cls}>
+                    <div className={styles.cellDateRow}>
+                      {isToday
+                        ? <span className={styles.todayNum}>{dayNum}</span>
+                        : <span className={isCurrentMonth ? styles.cellNum : styles.cellNumOutside}
+                            style={isWeekend && isCurrentMonth ? { color: '#e05252' } : undefined}>{dayNum}</span>
+                      }
+                    </div>
+                    <div className={styles.indicatorList}>
+                      {visible.map(({ type, data }) =>
+                        type === 'event' ? (
+                          <div
+                            key={(data as CalendarEvent).id}
+                            className={styles.eventPill}
+                            title={`${(data as CalendarEvent).title} — ${(data as CalendarEvent).time}`}
+                            onClick={e => openDetail(data as CalendarEvent, e)}
+                          >
+                            <span className={styles.pillDot} style={{ backgroundColor: (data as CalendarEvent).color }} />
+                            <span className={styles.pillLabel}>{(data as CalendarEvent).title}</span>
+                            {(data as CalendarEvent).time && <span className={styles.pillTime}>{formatDisplayTime((data as CalendarEvent).time)}</span>}
+                          </div>
+                        ) : (
+                          <div key={(data as Task).id} className={styles.taskPill} title={`Task: ${(data as Task).title}`}>
+                            <span className={styles.pillDot} style={{ backgroundColor: '#3b82f6' }} />
+                            <span className={styles.pillLabel}>{(data as Task).title}</span>
+                          </div>
+                        )
+                      )}
+                      {hidden > 0 && (
+                        <span className={styles.moreLink} onClick={e => { e.stopPropagation(); setSelectedDate(dateStr); }}>
+                          {hidden} More ▾
+                        </span>
+                      )}
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          </>)}
 
-                  <div className={styles.indicatorList}>
-                    {cellEvents.map(e => (
-                      <div
-                        key={e.id}
-                        title={`Event: ${e.title}`}
-                        className={styles.eventPill}
-                        style={{ borderLeftColor: e.color, color: e.color }}
-                      >
-                        {e.title}
+          {/* ════ WEEK / DAY VIEW ════ */}
+          {(viewMode === 'week' || viewMode === 'day') && (
+            <div className={styles.timeGrid}>
+              {/* Column headers */}
+              <div className={styles.timeGridHeader}>
+                <div className={styles.timeGutter} />
+                {timeCols.map(col => (
+                  <div
+                    key={col.dateStr}
+                    className={styles.timeColHeader}
+                    onClick={() => setSelectedDate(col.dateStr)}
+                    style={col.isWeekend ? { color: '#e05252' } : undefined}
+                  >
+                    <span className={styles.timeColDay}>{col.dayLabel}</span>
+                    <span className={col.dateStr === TODAY ? styles.todayNumSm : styles.timeColNum}
+                      style={col.dateStr === selectedDate && col.dateStr !== TODAY ? { background: 'var(--purple-dim)', borderRadius: '50%', padding: '1px 5px' } : undefined}>
+                      {col.dayNum}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* All-Day row */}
+              <div className={styles.timeGridAllDay}>
+                <div className={styles.timeGutterLabel}>All-Day ({totalAllDay})</div>
+                {timeCols.map(col => (
+                  <div key={col.dateStr} className={styles.timeAllDayCell}>
+                    {allDayForDate(col.dateStr).map(t => (
+                      <div key={t.id} className={styles.taskPill} style={{ marginBottom: 2 }}>
+                        <span className={styles.pillDot} style={{ backgroundColor: '#3b82f6' }} />
+                        <span className={styles.pillLabel}>{t.title}</span>
                       </div>
                     ))}
-                    {cellTasks.map(t => (
-                      <div
-                        key={t.id}
-                        title={`Task Due: ${t.title}`}
-                        className={styles.taskPill}
-                      >
-                        ✓ {t.title}
-                      </div>
-                    ))}
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+
+              {/* Time slots */}
+              <div className={styles.timeSlotScroll}>
+                {HOURS.map(hourLabel => (
+                  <div key={hourLabel} className={styles.timeRow}>
+                    <div className={styles.timeGutterLabel}>{hourLabel}</div>
+                    {timeCols.map(col => {
+                      const slotEvents = eventsForSlot(col.dateStr, hourLabel);
+                      return (
+                        <div
+                          key={col.dateStr}
+                          className={styles.timeSlotCell}
+                          onClick={() => { setSelectedDate(col.dateStr); setNewEventDate(col.dateStr); setNewEventTime(`${hourLabel.split(':')[0].padStart(2,'0')}:00`); setCreateOpen(true); }}
+                        >
+                          {slotEvents.map(ev => (
+                            <div
+                              key={ev.id}
+                              className={styles.timeEventBlock}
+                              style={{ borderLeftColor: ev.color, background: `${ev.color}18` }}
+                              onClick={e => openDetail(ev, e)}
+                              title={`${ev.title} — ${formatDisplayTime(ev.time)}`}
+                            >
+                              <span style={{ fontWeight: 700, fontSize: 11, color: ev.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</span>
+                              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{formatDisplayTime(ev.time)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Right: Selected Day Inspector & Upcoming Timeline */}
+        {/* ════ Right: Side Panel ════ */}
         <div className={styles.agendaPanel}>
-          {/* Day Inspector */}
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
-              <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                🗓️ Selected Day Schedules
-              </h4>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{selectedDate}</span>
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
+              <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>🗓️ Selected Day</h4>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{selectedDate}</span>
             </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '200px', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 220, overflowY: 'auto' }}>
               {dayEvents.map(ev => (
                 <div
                   key={ev.id}
                   className={styles.agendaItem}
-                  style={{ borderLeftColor: ev.color }}
+                  style={{ borderLeftColor: ev.color, cursor: 'pointer' }}
+                  onClick={() => setDetailEvent(ev)}
                 >
                   <span className={styles.agendaTitle}>{ev.title}</span>
-                  <span className={styles.agendaMeta}>⏱️ {ev.time}</span>
-                  <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                  <span className={styles.agendaMeta}>⏱ {formatDisplayTime(ev.time)}</span>
+                  <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
                     {ev.attendees.map(aId => {
                       const m = members.find(x => x.id === aId);
-                      return m ? (
-                        <span
-                          key={aId}
-                          title={m.name}
-                          style={{
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '50%',
-                            background: 'var(--bg-primary)',
-                            border: '1px solid var(--border)',
-                            fontSize: '8px',
-                            fontWeight: 700,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {m.avatar}
-                        </span>
-                      ) : null;
+                      return m ? <span key={aId} title={m.name} style={{ width: 16, height: 16, borderRadius: '50%', background: ev.color + '20', border: `1px solid ${ev.color}40`, fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', color: ev.color }}>{m.avatar}</span> : null;
                     })}
                   </div>
                 </div>
               ))}
-
               {dayTasks.map(tk => (
-                <div
-                  key={tk.id}
-                  className={styles.agendaItem}
-                  style={{ borderLeftColor: 'var(--blue)' }}
-                >
+                <div key={tk.id} className={styles.agendaItem} style={{ borderLeftColor: 'var(--blue)' }}>
                   <span className={styles.agendaTitle}>✓ {tk.title}</span>
-                  <span className={styles.agendaMeta}>Task Milestone Due</span>
+                  <span className={styles.agendaMeta}>Task Due</span>
                 </div>
               ))}
-
               {dayEvents.length === 0 && dayTasks.length === 0 && (
-                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '16px 0' }}>
-                  No meetings or tasks scheduled for this day.
-                </p>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '16px 0' }}>No events scheduled.</p>
               )}
             </div>
           </div>
 
-          {/* Upcoming 7 Days Agenda */}
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
-              📅 Upcoming 7 Days
-            </h4>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '250px', overflowY: 'auto' }}>
-              {upcoming7Days.map(({ dateLabel, event }) => (
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>📅 Upcoming 7 Days</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 260, overflowY: 'auto' }}>
+              {getUpcomingEvents().map(({ dateLabel, event }) => (
                 <div
                   key={event.id}
                   className={styles.agendaItem}
-                  style={{ borderLeftColor: event.color }}
+                  style={{ borderLeftColor: event.color, cursor: 'pointer' }}
+                  onClick={() => setDetailEvent(event)}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
-                    <span>{dateLabel}</span>
-                    <span>{event.time}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)' }}>
+                    <span>{dateLabel}</span><span>{formatDisplayTime(event.time)}</span>
                   </div>
                   <span className={styles.agendaTitle}>{event.title}</span>
                 </div>
               ))}
-
-              {upcoming7Days.length === 0 && (
-                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '16px 0' }}>
-                  No upcoming meetings over the next week.
-                </p>
+              {getUpcomingEvents().length === 0 && (
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '16px 0' }}>No upcoming events.</p>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal - Create Event */}
-      {eventModalOpen && (
-        <div className={styles.modalBackdrop} onClick={() => setEventModalOpen(false)}>
-          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Schedule New Event</h3>
-              <button onClick={() => setEventModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
-            </div>
+      {/* ── Event Detail Popup ── */}
+      {detailEvent && !rescheduleEvent && (
+        <EventDetailPopup
+          event={detailEvent}
+          members={members}
+          projects={projects}
+          onClose={closeDetail}
+          onReschedule={handleReschedule}
+          onDelete={handleDeleteEvent}
+        />
+      )}
 
-            <div>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Event Title</label>
-              <input
-                type="text"
-                placeholder="e.g. Design review alignment"
-                value={newEventTitle}
-                onChange={e => setNewEventTitle(e.target.value)}
-                style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', marginTop: '4px' }}
-              />
-            </div>
+      {/* ── Reschedule Modal ── */}
+      {rescheduleEvent && (
+        <RescheduleModal
+          event={rescheduleEvent}
+          members={members}
+          projects={projects}
+          onSave={handleSaveReschedule}
+          onCancel={() => setRescheduleEvent(null)}
+        />
+      )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      {/* ── Create Event Modal ── */}
+      {createOpen && (
+        <div className={styles.popupBackdrop} onClick={() => setCreateOpen(false)}>
+          <div className={styles.editModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.editModalHeader}>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Date</label>
-                <input
-                  type="date"
-                  value={newEventDate}
-                  onChange={e => setNewEventDate(e.target.value)}
-                  style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', marginTop: '4px' }}
-                />
+                <h3 className={styles.editModalTitle}>Schedule New Event</h3>
+                <p className={styles.editModalSub}>Add a new event to the calendar.</p>
               </div>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Time</label>
-                <input
-                  type="time"
-                  value={newEventTime}
-                  onChange={e => setNewEventTime(e.target.value)}
-                  style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', marginTop: '4px' }}
-                />
+              <button className={styles.popupClose} onClick={() => setCreateOpen(false)}>✕</button>
+            </div>
+            <div className={styles.editModalBody}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Event Title</label>
+                <input className={styles.fieldInput} type="text" placeholder="e.g. Design review…" value={newEventTitle} onChange={e => setNewEventTitle(e.target.value)} />
               </div>
-            </div>
-
-            <div>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Link To Project</label>
-              <select
-                value={newEventProject}
-                onChange={e => setNewEventProject(e.target.value)}
-                style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', marginTop: '4px', cursor: 'pointer' }}
-              >
-                <option value="">No Project Link</option>
-                {projects.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Attendees (Select multiple)</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px', maxHeight: '120px', overflowY: 'auto' }}>
-                {members.map(m => (
-                  <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
-                    <input
-                      type="checkbox"
-                      checked={newEventAttendees.includes(m.id)}
-                      onChange={() => handleAttendeeToggle(m.id)}
-                      style={{ cursor: 'pointer' }}
-                    />
-                    <span>{m.name} ({m.role})</span>
-                  </label>
-                ))}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel}>Date</label>
+                  <input className={styles.fieldInput} type="date" value={newEventDate} onChange={e => setNewEventDate(e.target.value)} />
+                </div>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel}>Time</label>
+                  <input className={styles.fieldInput} type="time" value={newEventTime} onChange={e => setNewEventTime(e.target.value)} />
+                </div>
+              </div>
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Link to Project</label>
+                <select className={styles.fieldSelect} value={newEventProject} onChange={e => setNewEventProject(e.target.value)}>
+                  <option value="">No Project</option>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Attendees</label>
+                <div className={styles.attendeeList}>
+                  {members.map(m => (
+                    <label key={m.id} className={styles.attendeeRow}>
+                      <input type="checkbox" checked={newEventAttendees.includes(m.id)} onChange={() => setNewEventAttendees(p => p.includes(m.id) ? p.filter(x => x !== m.id) : [...p, m.id])} className={styles.attendeeCheck} />
+                      <span className={styles.popupAvatar} style={{ background: '#7c5cbf22', color: '#7c5cbf', fontSize: 10 }}>{m.avatar}</span>
+                      <div><div style={{ fontWeight: 600, fontSize: 13 }}>{m.name}</div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.role}</div></div>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
-              <button className="btn btn-ghost" onClick={() => setEventModalOpen(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleScheduleEvent}>Schedule</button>
+            <div className={styles.editModalFooter}>
+              <button className={styles.popupCancelBtn} onClick={() => setCreateOpen(false)}>Cancel</button>
+              <button className={styles.popupRescheduleBtn} style={{ background: '#7c5cbf' }} onClick={handleCreateEvent}>+ Schedule</button>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }
