@@ -5,7 +5,7 @@ import { useState } from 'react';
 type ScheduledEvent = {
   id: number; date: number; title: string; channel: string; time: string;
   type: string; author: string; badgeChannel: string; badgeStatus: string;
-  status: string; color: string;
+  status: string; color: string; company?: string; client?: string;
 };
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ export default function MarketingCalendarPage() {
   const [toast, setToast] = useState('');
   const [toastColor, setToastColor] = useState('var(--emerald)');
 
-  const blankForm = { title: '', channel: 'LinkedIn', date: selectedDate, time: '09:00', author: 'Priya S.', type: 'Social' };
+  const blankForm = { title: '', channel: 'LinkedIn', date: selectedDate, time: '09:00', author: 'Priya S.', type: 'Social', company: '', client: '' };
   const [form, setForm] = useState(blankForm);
 
   const showToast = (msg: string, color = 'var(--emerald)') => {
@@ -124,7 +124,7 @@ export default function MarketingCalendarPage() {
     const newEvt: ScheduledEvent = {
       id: Date.now(), date: Number(form.date), title: form.title,
       channel: form.channel, time: to12h(form.time), type: form.type,
-      author: form.author,
+      author: form.author, company: form.company, client: form.client,
       badgeChannel: CHANNEL_BADGE[form.channel] || 'blue',
       badgeStatus: 'amber', status: 'Scheduled',
       color: CHANNEL_COLOR[form.channel] || 'var(--blue)',
@@ -145,7 +145,7 @@ export default function MarketingCalendarPage() {
       const h24 = ampm === 'PM' ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h);
       return `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
     };
-    setForm({ title: evt.title, channel: evt.channel, date: evt.date, time: to24h(evt.time), author: evt.author, type: evt.type });
+    setForm({ title: evt.title, channel: evt.channel, date: evt.date, time: to24h(evt.time), author: evt.author, type: evt.type, company: evt.company || '', client: evt.client || '' });
     setShowEditModal(true);
   };
 
@@ -154,6 +154,7 @@ export default function MarketingCalendarPage() {
     setEvents(prev => prev.map(e => e.id === editingEvent.id ? {
       ...e, title: form.title, channel: form.channel, date: Number(form.date),
       time: to12h(form.time), type: form.type, author: form.author,
+      company: form.company, client: form.client,
       badgeChannel: CHANNEL_BADGE[form.channel] || 'blue',
       color: CHANNEL_COLOR[form.channel] || 'var(--blue)',
     } : e));
@@ -171,6 +172,16 @@ export default function MarketingCalendarPage() {
       <div>
         <label style={labelStyle}>Post Title</label>
         <input style={inputStyle} placeholder="e.g. Q3 Product Launch Post" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div>
+          <label style={labelStyle}>Company</label>
+          <input style={inputStyle} placeholder="e.g. Acme Corp" value={form.company} onChange={e => setForm(f => ({ ...f, company: e.target.value }))} />
+        </div>
+        <div>
+          <label style={labelStyle}>Client</label>
+          <input style={inputStyle} placeholder="e.g. Jane Doe" value={form.client} onChange={e => setForm(f => ({ ...f, client: e.target.value }))} />
+        </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div>

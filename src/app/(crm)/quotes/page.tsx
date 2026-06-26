@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 
 type Quote = {
   id: string; client: string; amount: number; sentOn: string;
-  expires: string; status: 'Draft' | 'Sent' | 'Accepted' | 'Expired';
+  expires: string; status: 'Draft' | 'Sent' | 'Accepted' | 'Expired' | 'Invoiced';
 };
 
 const INITIAL_QUOTES: Quote[] = [
@@ -25,6 +25,7 @@ const STATUS_BADGE: Record<string, string> = {
   Sent: 'badge amber',
   Accepted: 'badge emerald',
   Expired: 'badge rose',
+  Invoiced: 'badge blue',
 };
 
 export default function QuotesPage() {
@@ -37,6 +38,11 @@ export default function QuotesPage() {
   const [mAmount, setMAmount] = useState('');
   const [mStatus, setMStatus] = useState<Quote['status']>('Draft');
   const [mExpires, setMExpires] = useState('');
+
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [invQuoteId, setInvQuoteId] = useState<string | null>(null);
+  const [invClient, setInvClient] = useState('');
+  const [invAmount, setInvAmount] = useState('');
 
   const filtered = useMemo(() => quotes.filter(q => {
     const ms = q.client.toLowerCase().includes(search.toLowerCase()) || q.id.toLowerCase().includes(search.toLowerCase());
@@ -71,6 +77,19 @@ export default function QuotesPage() {
   };
   const handleDelete = (id: string) => { setQuotes(p => p.filter(q => q.id !== id)); setIsModalOpen(false); };
 
+  const openInvoice = (q: Quote) => {
+    setInvClient(q.client);
+    setInvAmount(String(q.amount));
+    setInvQuoteId(q.id);
+    setIsInvoiceModalOpen(true);
+  };
+
+  const handleCreateInvoice = () => {
+    if (invQuoteId) {
+      setQuotes(p => p.map(q => q.id === invQuoteId ? { ...q, client: invClient, amount: Number(invAmount), status: 'Invoiced' } : q));
+    }
+    setIsInvoiceModalOpen(false);
+  };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Header */}
@@ -111,7 +130,7 @@ export default function QuotesPage() {
         </div>
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
           style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 13, outline: 'none' }}>
-          {['All', 'Draft', 'Sent', 'Accepted', 'Expired'].map(s => <option key={s}>{s}</option>)}
+          {['All', 'Draft', 'Sent', 'Accepted', 'Expired', 'Invoiced'].map(s => <option key={s}>{s}</option>)}
         </select>
       </div>
 
@@ -138,7 +157,7 @@ export default function QuotesPage() {
                       <i className="ti ti-edit"></i> Edit
                     </button>
                     {q.status === 'Accepted' && (
-                      <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--blue)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <button className="btn btn-ghost" onClick={(e) => { e.stopPropagation(); openInvoice(q); }} style={{ padding: '4px 10px', fontSize: 12, color: 'var(--blue)', display: 'flex', alignItems: 'center', gap: 4 }}>
                         <i className="ti ti-file-invoice"></i> Invoice
                       </button>
                     )}
@@ -200,6 +219,37 @@ export default function QuotesPage() {
                 <button className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancel</button>
                 <button className="btn btn-primary" onClick={handleSave}>{editingId ? 'Save Changes' : 'Create Quote'}</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Modal */}
+      {isInvoiceModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ width: 400, padding: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Convert to Invoice</h3>
+              <button onClick={() => setIsInvoiceModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Review the details before moving this quote to invoices.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Client</label>
+                <input type="text" value={invClient} onChange={e => setInvClient(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Amount (₹)</label>
+                <input type="number" value={invAmount} onChange={e => setInvAmount(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
+              <button className="btn btn-ghost" onClick={() => setIsInvoiceModalOpen(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleCreateInvoice} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <i className="ti ti-file-invoice"></i> Move to Invoice
+              </button>
             </div>
           </div>
         </div>
