@@ -176,56 +176,6 @@ export default function FunnelPage() {
         {/* Right Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-          {/* AI Optimization */}
-          <div style={{ background: 'var(--blue-dim)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: 12, padding: 20 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, margin: 0, color: 'var(--blue)', display: 'flex', alignItems: 'center', gap: 8 }}>
-              💡 AI Optimization
-            </h3>
-            <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '4px 0 20px 0' }}>Generated based on Q3 pipeline trends</p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {aiInsights.map((insight, i) => (
-                <div key={i} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <div style={{ fontSize: 14, marginTop: 2 }}>{insight.type === 'warning' ? '⚠' : '📈'}</div>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>{insight.title}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 10 }}>{insight.text}</div>
-                      <a href="#" style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none' }}>View Detailed Analytics</a>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Drop-off Distribution */}
-          <div className="card">
-            <h3 style={{ fontSize: 14, fontWeight: 600, margin: '0 0 4px 0', color: 'var(--text-primary)' }}>Drop-off Distribution</h3>
-            <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 20px 0' }}>Frequency of deals exiting the funnel</p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, position: 'relative' }}>
-              {/* Grid lines */}
-              <div style={{ position: 'absolute', top: 0, left: 80, right: 0, bottom: 0, display: 'flex', justifyContent: 'space-between', zIndex: 0 }}>
-                {[1, 2, 3, 4].map(line => <div key={line} style={{ width: 1, height: '100%', background: 'var(--border)', borderStyle: 'dashed' }} />)}
-              </div>
-
-              {[
-                { stage: 'Leads', pct: 90 },
-                { stage: 'Qualified', pct: 60 },
-                { stage: 'Proposal', pct: 40 },
-                { stage: 'Negotiation', pct: 25 },
-                { stage: 'Closing', pct: 15 },
-              ].map((item) => (
-                <div key={item.stage} style={{ display: 'flex', alignItems: 'center', zIndex: 1 }}>
-                  <div style={{ width: 80, fontSize: 11, color: 'var(--text-secondary)' }}>{item.stage}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ height: 16, width: `${item.pct}%`, background: 'var(--blue)', borderRadius: 2 }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Win/Loss Ratio */}
           <div className="card">

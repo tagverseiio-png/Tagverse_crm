@@ -1319,7 +1319,7 @@ export default function DealsPage() {
                           <button className="btn btn-ghost" onClick={() => setViewDeal(d)} style={{ padding: '4px 10px', fontSize: 11 }}>View</button>
                           <button className="btn btn-ghost" onClick={() => openEdit(d)} style={{ padding: '4px 10px', fontSize: 11 }}>Edit</button>
                           <button
-                            onClick={() => handleDelete(d.id)}
+                            onClick={() => setDeleteDeal(d)}
                             style={{
                               padding: '4px 10px', fontSize: 11,
                               background: 'rgba(239,68,68,0.1)',
@@ -1412,7 +1412,7 @@ export default function DealsPage() {
                         </div>
                         {/* Delete */}
                         <button
-                          onClick={() => handleDelete(d.id)}
+                          onClick={() => setDeleteDeal(d)}
                           style={{
                             position: 'absolute', top: 4, right: 4,
                             background: 'transparent', border: 'none',
@@ -1437,6 +1437,34 @@ export default function DealsPage() {
       )}
 
       {/* ═══ Drawers & Modals ═══ */}
+      {showDealForm && (
+        <DealFormModal
+          title={editingDeal ? "Edit Deal" : "New Deal"}
+          form={dealForm}
+          errors={dealFormErrors}
+          onChange={(k, v) => setDealForm(prev => ({ ...prev, [k]: v as string | number }))}
+          onSubmit={handleSaveDeal}
+          onClose={() => setShowDealForm(false)}
+          submitLabel={editingDeal ? "Save Changes" : "Create Deal"}
+        />
+      )}
+
+      {viewDeal && (
+        <ViewDealDrawer
+          deal={viewDeal}
+          onClose={() => setViewDeal(null)}
+          onEdit={() => { setViewDeal(null); openEdit(viewDeal); }}
+        />
+      )}
+
+      {deleteDeal && (
+        <DeleteConfirmModal
+          deal={deleteDeal}
+          onClose={() => setDeleteDeal(null)}
+          onConfirm={() => { handleDelete(deleteDeal.id); setDeleteDeal(null); }}
+        />
+      )}
+      
       <NotificationDrawer open={showNotifications} onClose={() => setShowNotifications(false)} />
       <HelpPanel open={showHelp} onClose={() => setShowHelp(false)} />
 
