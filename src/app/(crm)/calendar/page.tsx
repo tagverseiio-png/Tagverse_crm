@@ -88,63 +88,98 @@ function EventDetailPopup({
   return (
     <div className={styles.popupBackdrop} onClick={onClose}>
       <div className={styles.popupCard} onClick={e => e.stopPropagation()}>
-        {/* Color accent bar */}
-        <div className={styles.popupAccentBar} style={{ background: event.color }} />
+        {/* Gradient accent bar */}
+        <div className={styles.popupAccentBar} style={{ background: `linear-gradient(90deg, ${event.color}, ${event.color}aa)` }} />
 
         {/* Header */}
         <div className={styles.popupHeader}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <span className={styles.popupBadge} style={{ background: `${event.color}22`, color: event.color, borderColor: `${event.color}44` }}>
-                📅 Event
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+              <span className={styles.popupBadge} style={{ background: `${event.color}18`, color: event.color, borderColor: `${event.color}40` }}>
+                <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Event
               </span>
               {linkedProject && (
-                <span className={styles.popupBadge} style={{ background: `${linkedProject.color}18`, color: linkedProject.color, borderColor: `${linkedProject.color}30` }}>
-                  🔗 {linkedProject.name}
+                <span className={styles.popupBadge} style={{ background: `${linkedProject.color}15`, color: linkedProject.color, borderColor: `${linkedProject.color}35` }}>
+                  <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  {linkedProject.name}
                 </span>
               )}
             </div>
             <h2 className={styles.popupTitle}>{event.title}</h2>
           </div>
-          <button className={styles.popupClose} onClick={onClose}>✕</button>
+          <button className={styles.popupClose} onClick={onClose} aria-label="Close">
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
 
         {/* Details grid */}
         <div className={styles.popupDetails}>
+          {/* Date */}
           <div className={styles.popupDetailRow}>
-            <span className={styles.popupDetailIcon}>📆</span>
+            <span className={styles.popupDetailIcon}>
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={event.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </span>
             <div>
               <div className={styles.popupDetailLabel}>Date</div>
               <div className={styles.popupDetailValue}>{dateFormatted}</div>
             </div>
           </div>
+          {/* Time */}
           <div className={styles.popupDetailRow}>
-            <span className={styles.popupDetailIcon}>⏰</span>
+            <span className={styles.popupDetailIcon}>
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={event.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </span>
             <div>
               <div className={styles.popupDetailLabel}>Time</div>
               <div className={styles.popupDetailValue}>{formatDisplayTime(event.time)}</div>
             </div>
           </div>
+          {/* Linked project */}
           {linkedProject && (
             <div className={styles.popupDetailRow}>
-              <span className={styles.popupDetailIcon}>📂</span>
+              <span className={styles.popupDetailIcon}>
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={linkedProject.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+              </span>
               <div>
                 <div className={styles.popupDetailLabel}>Linked Project</div>
                 <div className={styles.popupDetailValue} style={{ color: linkedProject.color }}>{linkedProject.name}</div>
               </div>
             </div>
           )}
+          {/* Attendees */}
           <div className={styles.popupDetailRow} style={{ alignItems: 'flex-start' }}>
-            <span className={styles.popupDetailIcon}>👥</span>
+            <span className={styles.popupDetailIcon} style={{ marginTop: 2 }}>
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={event.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
             <div style={{ flex: 1 }}>
-              <div className={styles.popupDetailLabel}>Attendees ({attendeeMembers.length})</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+              <div className={styles.popupDetailLabel} style={{ marginBottom: 8 }}>
+                Attendees
+                <span style={{ marginLeft: 6, background: `${event.color}22`, color: event.color, border: `1px solid ${event.color}40`, borderRadius: 20, padding: '1px 7px', fontSize: 9, fontWeight: 700 }}>
+                  {attendeeMembers.length}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {attendeeMembers.map(m => (
                   <div key={m.id} className={styles.popupAttendee}>
-                    <span className={styles.popupAvatar} style={{ background: event.color + '22', color: event.color }}>{m.avatar}</span>
+                    <span className={styles.popupAvatar} style={{ background: event.color + '20', color: event.color }}>{m.avatar}</span>
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{m.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.role} · {m.department}</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{m.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>{m.role} · {m.department}</div>
                     </div>
                   </div>
                 ))}
@@ -155,11 +190,20 @@ function EventDetailPopup({
 
         {/* Footer actions */}
         <div className={styles.popupFooter}>
-          <button className={styles.popupDeleteBtn} onClick={onDelete}>🗑 Delete</button>
+          <button className={styles.popupDeleteBtn} onClick={onDelete}>
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+            </svg>
+            Delete
+          </button>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className={styles.popupCancelBtn} onClick={onClose}>Close</button>
-            <button className={styles.popupRescheduleBtn} style={{ background: event.color }} onClick={onReschedule}>
-              🔄 Reschedule
+            <button className={styles.popupRescheduleBtn} style={{ background: `linear-gradient(135deg, ${event.color}, ${event.color}cc)` }} onClick={onReschedule}>
+              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Reschedule
             </button>
           </div>
         </div>
