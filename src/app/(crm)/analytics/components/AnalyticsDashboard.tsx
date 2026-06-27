@@ -12,11 +12,11 @@ export function AnalyticsDashboard() {
   const [showAddModal, setShowAddModal] = useState(false);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       <TopBar onAddClick={() => setShowAddModal(true)} />
       
-      <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
+      <div style={{ display: 'flex', flex: 1, marginTop: 16 }}>
+        <div style={{ flex: 1, padding: '0 8px' }}>
           <CanvasGrid />
         </div>
         

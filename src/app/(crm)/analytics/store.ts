@@ -74,10 +74,10 @@ const initialWidgets: Widget[] = [
   { id: 'w2', type: 'kpi', title: 'Active Clients', config: { module: 'Accounts', metric: 'count', colorTheme: 'purple' } },
   { id: 'w3', type: 'kpi', title: 'Avg ROI', config: { module: 'Campaigns', metric: 'avg', colorTheme: 'emerald' } },
   { id: 'w4', type: 'kpi', title: 'Churn Rate', config: { module: 'Accounts', metric: 'avg', colorTheme: 'rose' } },
-  
+
   { id: 'w5', type: 'area', title: 'Revenue Trend (YoY)', config: { module: 'Deals', metric: 'sum', colorTheme: 'blue' } },
   { id: 'w6', type: 'donut', title: 'Leads by Source', config: { module: 'Leads', metric: 'count', colorTheme: 'purple' } },
-  
+
   { id: 'w7', type: 'funnel', title: 'Sales Pipeline Conversion', config: { module: 'Deals', metric: 'count', colorTheme: 'emerald' } },
   { id: 'w8', type: 'bar', title: 'Platform ROI Analysis', config: { module: 'Campaigns', metric: 'sum', colorTheme: 'rose' } },
   { id: 'w9', type: 'pie', title: 'Account Distribution', config: { module: 'Accounts', metric: 'count', colorTheme: 'amber' } },
@@ -99,13 +99,13 @@ export const useAnalyticsStore = create<AnalyticsState>()(
       },
 
       setEditMode: (isEdit) => set({ isEditMode: isEdit, selectedWidgetId: null }),
-      
-      setGlobalFilters: (filters) => set((state) => ({ 
-        globalFilters: { ...state.globalFilters, ...filters } 
+
+      setGlobalFilters: (filters) => set((state) => ({
+        globalFilters: { ...state.globalFilters, ...filters }
       })),
 
       setLayout: (layout) => set({ layout }),
-      
+
       addWidget: (type, x = 0, y = 100) => set((state) => {
         const id = `w_${generateId()}`;
         const newWidget: Widget = {
@@ -114,7 +114,7 @@ export const useAnalyticsStore = create<AnalyticsState>()(
           title: `New ${type.toUpperCase()} Widget`,
           config: { module: 'Deals', metric: 'count', colorTheme: 'blue' }
         };
-        
+
         const w = type === 'kpi' ? 3 : 6;
         const h = type === 'kpi' ? 4 : 11;
         const minW = type === 'kpi' ? 2 : 4;

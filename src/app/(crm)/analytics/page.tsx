@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function AnalyticsPage() {
   return (
-    <div style={{ height: 'calc(100vh - 80px)', padding: '24px' }}>
+    <div style={{ padding: '24px' }}>
       <AnalyticsDashboard />
     </div>
   );

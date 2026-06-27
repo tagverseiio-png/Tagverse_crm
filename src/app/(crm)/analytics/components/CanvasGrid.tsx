@@ -44,7 +44,7 @@ export function CanvasGrid() {
         className={`layout ${isEditMode ? 'edit-mode' : ''}`}
         layout={layout}
         cols={12}
-        rowHeight={30}
+        rowHeight={15}
         width={width}
         onLayoutChange={handleLayoutChange}
         isDraggable={isEditMode}
