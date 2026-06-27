@@ -15,6 +15,12 @@ export const mockAnalyticsData = {
       { name: 'Enterprise', value: 45 },
       { name: 'Mid-Market', value: 30 },
       { name: 'SMB', value: 25 },
+    ],
+    funnel: [
+      { name: 'Leads', value: 1200, fill: 'var(--blue)' },
+      { name: 'Qualified', value: 850, fill: 'var(--purple)' },
+      { name: 'Proposal', value: 420, fill: 'var(--emerald)' },
+      { name: 'Won', value: 150, fill: 'var(--rose)' }
     ]
   },
   Accounts: {
@@ -33,6 +39,12 @@ export const mockAnalyticsData = {
       { name: 'Active', value: 142 },
       { name: 'Inactive', value: 12 },
       { name: 'Churned', value: 5 },
+    ],
+    funnel: [
+      { name: 'Total Accounts', value: 500, fill: 'var(--blue)' },
+      { name: 'Active', value: 350, fill: 'var(--purple)' },
+      { name: 'Engaged', value: 200, fill: 'var(--emerald)' },
+      { name: 'Expanding', value: 80, fill: 'var(--rose)' }
     ]
   },
   Campaigns: {
@@ -52,6 +64,12 @@ export const mockAnalyticsData = {
       { name: 'Social', value: 45 },
       { name: 'Search', value: 35 },
       { name: 'Email', value: 20 },
+    ],
+    funnel: [
+      { name: 'Impressions', value: 50000, fill: 'var(--blue)' },
+      { name: 'Clicks', value: 12000, fill: 'var(--purple)' },
+      { name: 'Signups', value: 3000, fill: 'var(--emerald)' },
+      { name: 'Purchases', value: 800, fill: 'var(--rose)' }
     ]
   },
   Leads: {
@@ -71,6 +89,12 @@ export const mockAnalyticsData = {
       { name: 'Direct', value: 300 },
       { name: 'Social', value: 300 },
       { name: 'Referral', value: 200 },
+    ],
+    funnel: [
+      { name: 'Raw Leads', value: 2500, fill: 'var(--blue)' },
+      { name: 'MQLs', value: 1200, fill: 'var(--purple)' },
+      { name: 'SQLs', value: 600, fill: 'var(--emerald)' },
+      { name: 'Opportunities', value: 250, fill: 'var(--rose)' }
     ]
   }
 };

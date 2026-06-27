@@ -58,15 +58,26 @@ export default function Topbar({ activePage }: Props) {
         <div style={{ position: 'relative' }}>
           <div 
             className="user-pill" 
-            style={{ marginLeft: '12px', cursor: 'pointer' }}
+            style={{
+              marginLeft: '12px',
+              cursor: 'pointer',
+              background: 'rgba(123, 47, 255, 0.18)',
+              border: '1px solid rgba(155, 48, 255, 0.35)',
+              borderRadius: '999px',
+              padding: '5px 12px 5px 6px',
+            }}
             onClick={() => setIsProfileOpen(!isProfileOpen)}
           >
-            <div className="user-avatar">JL</div>
+            <div className="user-avatar" style={{
+              background: 'linear-gradient(135deg, #7B2FFF, #9B30FF)',
+              boxShadow: '0 0 10px rgba(155, 48, 255, 0.5)',
+              border: '2px solid rgba(255,255,255,0.25)',
+            }}>JL</div>
             <div className="user-info">
-              <div className="name">Jose L.</div>
-              <div className="role">Administrator</div>
+              <div className="name" style={{ color: '#FFFFFF', fontSize: 13, fontWeight: 600 }}>Jose L.</div>
+              <div className="role" style={{ color: 'rgba(224, 208, 255, 0.7)', fontSize: 10 }}>Administrator</div>
             </div>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: '8px', transform: isProfileOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+            <span style={{ fontSize: 10, color: 'rgba(224,208,255,0.6)', marginLeft: '8px', transform: isProfileOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
           </div>
 
           {isProfileOpen && (

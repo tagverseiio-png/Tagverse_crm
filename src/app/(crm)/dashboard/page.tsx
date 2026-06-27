@@ -54,12 +54,12 @@ const pipelineStages = [
 ];
 
 const funnel = [
-  { stage: 'New Enquiry', count: 186, pct: 100, color: '#3b82f6' },
-  { stage: 'Engaged', count: 124, pct: 67, color: '#7c5cbf' },
-  { stage: 'Qualified', count: 82, pct: 44, color: '#f59e0b' },
-  { stage: 'Proposal', count: 45, pct: 24, color: '#6366f1' },
-  { stage: 'Negotiation', count: 28, pct: 15, color: '#f97316' },
-  { stage: 'Closed Win', count: 19, pct: 10, color: '#10b981' },
+  { stage: 'New Enquiry', count: 186, pct: 100, color: 'var(--blue)' },
+  { stage: 'Engaged', count: 124, pct: 67, color: 'var(--purple)' },
+  { stage: 'Qualified', count: 82, pct: 44, color: 'var(--amber)' },
+  { stage: 'Proposal', count: 45, pct: 24, color: 'var(--purple)' },
+  { stage: 'Negotiation', count: 28, pct: 15, color: 'var(--amber)' },
+  { stage: 'Closed Win', count: 19, pct: 10, color: 'var(--emerald)' },
 ];
 
 const activities = [

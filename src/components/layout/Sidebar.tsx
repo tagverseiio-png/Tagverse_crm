@@ -3,77 +3,85 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import {
+  Hexagon, LineChart, Bell, Users, Target, Contact, GitBranch, Handshake, Filter,
+  CircleDollarSign, FileText, Receipt, PenTool, CreditCard, Megaphone, Edit3,
+  FolderOpen, Rocket, CalendarDays, Smartphone, Briefcase, Building, CheckSquare,
+  Calendar, UsersRound, BarChart2, TrendingUp, ClipboardList, Settings, Bot,
+  Link as LinkIcon, DoorOpen, Cpu
+} from 'lucide-react';
+
 const topNavItems = [
-  { id: 'dashboard', icon: '⬡', label: 'Dashboard', path: '/dashboard' },
-  { id: 'overview', icon: '📈', label: 'Overview', path: '/overview' },
-  { id: 'activity', icon: '🔔', label: 'Activity Feed', path: '/activity' },
+  { id: 'dashboard', icon: <Hexagon size={18} />, label: 'Dashboard', path: '/dashboard' },
+  { id: 'overview', icon: <LineChart size={18} />, label: 'Overview', path: '/overview' },
+  { id: 'activity', icon: <Bell size={18} />, label: 'Activity Feed', path: '/activity' },
 ];
 
 const navGroups = [
   {
     id: 'crm',
     label: 'CRM',
-    icon: '👥',
+    icon: <Users size={18} />,
     items: [
-      { id: 'leads', icon: '🎯', label: 'Leads', path: '/leads' },
-      { id: 'contacts', icon: '📇', label: 'Contacts', path: '/contacts' },
-      { id: 'pipeline', icon: '🛤️', label: 'Pipelines', path: '/pipeline' },
-      { id: 'deals', icon: '🤝', label: 'Deals', path: '/deals' },
-      { id: 'funnel', icon: '🔽', label: 'Funnel', path: '/funnel' },
+      { id: 'leads', icon: <Target size={16} />, label: 'Leads', path: '/leads' },
+      { id: 'contacts', icon: <Contact size={16} />, label: 'Contacts', path: '/contacts' },
+      { id: 'pipeline', icon: <GitBranch size={16} />, label: 'Pipelines', path: '/pipeline' },
+      { id: 'deals', icon: <Handshake size={16} />, label: 'Deals', path: '/deals' },
+      { id: 'funnel', icon: <Filter size={16} />, label: 'Funnel', path: '/funnel' },
     ],
   },
   {
     id: 'revenue',
     label: 'Revenue Hub',
-    icon: '💲',
+    icon: <CircleDollarSign size={18} />,
     items: [
-      { id: 'quotes', icon: '📄', label: 'Quotes', path: '/quotes' },
-      { id: 'invoices', icon: '🧾', label: 'Invoices', path: '/invoices' },
-      { id: 'contracts', icon: '✍️', label: 'Contracts', path: '/contracts' },
-      { id: 'payments', icon: '💳', label: 'Payments', path: '/payments' },
+      { id: 'quotes', icon: <FileText size={16} />, label: 'Quotes', path: '/quotes' },
+      { id: 'invoices', icon: <Receipt size={16} />, label: 'Invoices', path: '/invoices' },
+      { id: 'contracts', icon: <PenTool size={16} />, label: 'Contracts', path: '/contracts' },
+      { id: 'payments', icon: <CreditCard size={16} />, label: 'Payments', path: '/payments' },
     ],
   },
   {
     id: 'marketing',
     label: 'Marketing',
-    icon: '📢',
+    icon: <Megaphone size={18} />,
     items: [
-      { id: 'content', icon: '📝', label: 'Content Hub', path: '/content' },
-      { id: 'assets', icon: '🗂️', label: 'Assets', path: '/assets' },
-      { id: 'campaigns', icon: '🚀', label: 'Campaigns', path: '/campaigns' },
-      { id: 'calendar', icon: '📅', label: 'Scheduling Calendar', path: '/marketing-calendar' },
-      { id: 'social', icon: '📱', label: 'Social Media Manager', path: '/social' },
+      { id: 'content', icon: <Edit3 size={16} />, label: 'Content Hub', path: '/content' },
+      { id: 'assets', icon: <FolderOpen size={16} />, label: 'Assets', path: '/assets' },
+      { id: 'campaigns', icon: <Rocket size={16} />, label: 'Campaigns', path: '/campaigns' },
+      { id: 'calendar', icon: <CalendarDays size={16} />, label: 'Scheduling Calendar', path: '/marketing-calendar' },
+      { id: 'social', icon: <Smartphone size={16} />, label: 'Social Media Manager', path: '/social' },
     ],
   },
   {
     id: 'workspace',
     label: 'Workspace',
-    icon: '📚',
+    icon: <Briefcase size={18} />,
     items: [
-      { id: 'projects', icon: '🏗️', label: 'Projects', path: '/projects' },
-      { id: 'tasks', icon: '✅', label: 'Task Manager', path: '/tasks' },
-      { id: 'workspace-calendar', icon: '📆', label: 'Calendar', path: '/calendar' },
-      { id: 'team', icon: '👥', label: 'Team', path: '/team' },
+      { id: 'projects', icon: <Building size={16} />, label: 'Projects', path: '/projects' },
+      { id: 'tasks', icon: <CheckSquare size={16} />, label: 'Task Manager', path: '/tasks' },
+      { id: 'workspace-calendar', icon: <Calendar size={16} />, label: 'Calendar', path: '/calendar' },
+      { id: 'team', icon: <UsersRound size={16} />, label: 'Team', path: '/team' },
     ],
   },
   {
     id: 'analytics',
     label: 'Analytics',
-    icon: '📊',
+    icon: <BarChart2 size={18} />,
     items: [
-      { id: 'analytics-dash', icon: '📈', label: 'Analytics Dashboard', path: '/analytics' },
-      { id: 'reports', icon: '📋', label: 'Reports', path: '/reports' },
+      { id: 'analytics-dash', icon: <TrendingUp size={16} />, label: 'Analytics Dashboard', path: '/analytics' },
+      { id: 'reports', icon: <ClipboardList size={16} />, label: 'Reports', path: '/reports' },
     ],
   },
   {
     id: 'integration',
     label: 'Integration Hub',
-    icon: '⚙',
+    icon: <Settings size={18} />,
     items: [
-      { id: 'automation', icon: '🤖', label: 'Automation Engine', path: '/automation' },
-      { id: 'webhooks', icon: '🔗', label: 'Webhook Manager', path: '/webhooks' },
-      { id: 'api', icon: '🚪', label: 'API Gateway', path: '/api' },
-      { id: 'mcp', icon: '🖥️', label: 'MCP Server', path: '/mcp' },
+      { id: 'automation', icon: <Bot size={16} />, label: 'Automation Engine', path: '/automation' },
+      { id: 'webhooks', icon: <LinkIcon size={16} />, label: 'Webhook Manager', path: '/webhooks' },
+      { id: 'api', icon: <DoorOpen size={16} />, label: 'API Gateway', path: '/api' },
+      { id: 'mcp', icon: <Cpu size={16} />, label: 'MCP Server', path: '/mcp' },
     ],
   },
 ];
@@ -93,40 +101,52 @@ export default function Sidebar() {
     <aside
       className="sidebar"
       style={{
-        background: '#0078d4',
-        color: '#f8fafc',
+        background: '#6B00CC',
+        color: '#FFFFFF',
         '--sidebar-width': isCollapsed ? '72px' : '240px',
         transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        '--text-primary': '#f8fafc',
-        '--text-secondary': '#94a3b8',
-        '--text-muted': '#475569',
-        '--border': '#1e293b',
-        '--bg-card': '#0f172a',
-        '--bg-card-hover': '#1e293b',
-        '--blue-dim': '#2563eb',
-        '--blue-light': '#ffffff',
-        '--purple-dim': '#1e1b4b',
-        '--purple-light': '#a855f7',
+        '--text-primary': '#FFFFFF',
+        '--text-secondary': '#E0D0FF',
+        '--text-muted': 'rgba(224,208,255,0.5)',
+        '--border': 'rgba(155,48,255,0.2)',
+        '--bg-card': 'rgba(255,255,255,0.08)',
+        '--bg-card-hover': 'rgba(255,255,255,0.14)',
+        '--blue-dim': 'rgba(155,48,255,0.2)',
+        '--blue-light': '#FFFFFF',
+        '--purple-dim': 'rgba(123,47,255,0.22)',
+        '--purple-light': '#E0D0FF',
       } as React.CSSProperties}
     >
       <div className="sidebar-logo">
-        <div className="logo-mark" style={{ background: '#1d4ed8', color: '#ffffff', boxShadow: 'none' }}>T</div>
-        <div style={{
-          opacity: isCollapsed ? 0 : 1,
-          maxWidth: isCollapsed ? 0 : 200,
-          overflow: 'hidden',
-          whiteSpace: 'nowrap',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}>
-          <div className="logo-text">Tagverse</div>
-          <div className="logo-sub">CRM Platform</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img 
+            src="/logo.png" 
+            alt="Tagverse.io Logo" 
+            style={{ 
+              width: isCollapsed ? 32 : 40, 
+              height: isCollapsed ? 32 : 40, 
+              borderRadius: '50%',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              objectFit: 'contain',
+              background: '#ffffff'
+            }} 
+          />
+          <div style={{
+            opacity: isCollapsed ? 0 : 1,
+            maxWidth: isCollapsed ? 0 : 200,
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}>
+            <div className="logo-text">TAGVERSE.IO</div>
+          </div>
         </div>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           style={{
             marginLeft: isCollapsed ? 0 : 'auto',
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
+            background: 'rgba(0,0,0,0.25)',
+            border: '1px solid rgba(255,255,255,0.2)',
             color: '#ffffff',
             cursor: 'pointer',
             width: 24,
@@ -266,7 +286,7 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <Link href="/settings" className="sidebar-item" style={{ textDecoration: 'none', marginBottom: 12, justifyContent: isCollapsed ? 'center' : 'flex-start', color: '#ffffff' }} title={isCollapsed ? "Settings" : undefined}>
-          <span className="icon">⚙</span>
+          <span className="icon"><Settings size={18} /></span>
           <span style={{
             opacity: isCollapsed ? 0 : 1,
             maxWidth: isCollapsed ? 0 : 200,

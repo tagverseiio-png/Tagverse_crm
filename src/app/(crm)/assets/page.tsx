@@ -28,14 +28,14 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   return (
     <div style={{
       position: 'fixed', bottom: 32, right: 32, zIndex: 2000,
-      background: 'var(--emerald)', color: '#fff',
+      background: 'var(--emerald)', color: '#ffffff',
       padding: '14px 20px', borderRadius: 12, fontWeight: 600, fontSize: 14,
       boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
       display: 'flex', alignItems: 'center', gap: 10, animation: 'fadeIn 0.3s ease'
     }}>
       <i className="ti ti-check-circle" style={{ fontSize: 20 }}></i>
       {message}
-      <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 16, marginLeft: 8 }}>✕</button>
+      <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', fontSize: 16, marginLeft: 8 }}>✕</button>
     </div>
   );
 }

@@ -337,7 +337,7 @@ function RescheduleModal({
                     onChange={() => toggleAttendee(m.id)}
                     className={styles.attendeeCheck}
                   />
-                  <span className={styles.popupAvatar} style={{ background: '#7c5cbf22', color: '#7c5cbf', fontSize: 10 }}>{m.avatar}</span>
+                  <span className={styles.popupAvatar} style={{ background: 'var(--purple-dim)', color: 'var(--purple-light)', fontSize: 10 }}>{m.avatar}</span>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 13 }}>{m.name}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.role}</div>
@@ -472,7 +472,7 @@ export default function CalendarPage() {
     if (!newEventTitle.trim()) { alert('Event title is required!'); return; }
     if (newEventAttendees.length === 0) { alert('Select at least one attendee!'); return; }
     const proj = projects.find(p => p.id === newEventProject);
-    addEvent({ title: newEventTitle.trim(), date: newEventDate, time: newEventTime, attendees: newEventAttendees, linkedRecord: newEventProject ? { type: 'project', id: newEventProject } : null, color: proj?.color ?? '#7c5cbf' });
+    addEvent({ title: newEventTitle.trim(), date: newEventDate, time: newEventTime, attendees: newEventAttendees, linkedRecord: newEventProject ? { type: 'project', id: newEventProject } : null, color: proj?.color ?? 'var(--brand-primary)' });
     setNewEventTitle(''); setNewEventAttendees([]); setCreateOpen(false);
   };
 
@@ -557,7 +557,7 @@ export default function CalendarPage() {
           {viewMode === 'month' && (<>
             <div className={styles.gridHeader}>
               {WEEK_DAYS_SHORT.map((d, i) => (
-                <div key={d} className={styles.gridHeaderCell} style={i >= 5 ? { color: '#e05252' } : undefined}>{d}</div>
+                <div key={d} className={styles.gridHeaderCell} style={i >= 5 ? { color: 'var(--rose)' } : undefined}>{d}</div>
               ))}
             </div>
             <div className={styles.daysGrid}>
@@ -585,7 +585,7 @@ export default function CalendarPage() {
                       {isToday
                         ? <span className={styles.todayNum}>{dayNum}</span>
                         : <span className={isCurrentMonth ? styles.cellNum : styles.cellNumOutside}
-                            style={isWeekend && isCurrentMonth ? { color: '#e05252' } : undefined}>{dayNum}</span>
+                            style={isWeekend && isCurrentMonth ? { color: 'var(--rose)' } : undefined}>{dayNum}</span>
                       }
                     </div>
                     <div className={styles.indicatorList}>
@@ -603,7 +603,7 @@ export default function CalendarPage() {
                           </div>
                         ) : (
                           <div key={(data as Task).id} className={styles.taskPill} title={`Task: ${(data as Task).title}`}>
-                            <span className={styles.pillDot} style={{ backgroundColor: '#3b82f6' }} />
+                            <span className={styles.pillDot} style={{ backgroundColor: 'var(--blue)' }} />
                             <span className={styles.pillLabel}>{(data as Task).title}</span>
                           </div>
                         )
@@ -631,7 +631,7 @@ export default function CalendarPage() {
                     key={col.dateStr}
                     className={styles.timeColHeader}
                     onClick={() => setSelectedDate(col.dateStr)}
-                    style={col.isWeekend ? { color: '#e05252' } : undefined}
+                    style={col.isWeekend ? { color: 'var(--rose)' } : undefined}
                   >
                     <span className={styles.timeColDay}>{col.dayLabel}</span>
                     <span className={col.dateStr === TODAY ? styles.todayNumSm : styles.timeColNum}
@@ -649,7 +649,7 @@ export default function CalendarPage() {
                   <div key={col.dateStr} className={styles.timeAllDayCell}>
                     {allDayForDate(col.dateStr).map(t => (
                       <div key={t.id} className={styles.taskPill} style={{ marginBottom: 2 }}>
-                        <span className={styles.pillDot} style={{ backgroundColor: '#3b82f6' }} />
+                        <span className={styles.pillDot} style={{ backgroundColor: 'var(--blue)' }} />
                         <span className={styles.pillLabel}>{t.title}</span>
                       </div>
                     ))}
@@ -815,7 +815,7 @@ export default function CalendarPage() {
                   {members.map(m => (
                     <label key={m.id} className={styles.attendeeRow}>
                       <input type="checkbox" checked={newEventAttendees.includes(m.id)} onChange={() => setNewEventAttendees(p => p.includes(m.id) ? p.filter(x => x !== m.id) : [...p, m.id])} className={styles.attendeeCheck} />
-                      <span className={styles.popupAvatar} style={{ background: '#7c5cbf22', color: '#7c5cbf', fontSize: 10 }}>{m.avatar}</span>
+                      <span className={styles.popupAvatar} style={{ background: 'var(--purple-dim)', color: 'var(--purple-light)', fontSize: 10 }}>{m.avatar}</span>
                       <div><div style={{ fontWeight: 600, fontSize: 13 }}>{m.name}</div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.role}</div></div>
                     </label>
                   ))}
@@ -824,7 +824,7 @@ export default function CalendarPage() {
             </div>
             <div className={styles.editModalFooter}>
               <button className={styles.popupCancelBtn} onClick={() => setCreateOpen(false)}>Cancel</button>
-              <button className={styles.popupRescheduleBtn} style={{ background: '#7c5cbf' }} onClick={handleCreateEvent}>+ Schedule</button>
+              <button className={styles.popupRescheduleBtn} style={{ background: 'var(--brand-primary)' }} onClick={handleCreateEvent}>+ Schedule</button>
             </div>
           </div>
         </div>

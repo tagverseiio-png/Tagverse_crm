@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 const initialPipeline = [
   {
-    id: 'new', label: 'New Enquiry', color: 'new', headerColor: '#3b82f6',
+    id: 'new', label: 'New Enquiry', color: 'new', headerColor: 'var(--blue)',
     deals: [
       { id: 1, name: 'Riya Sharma', company: 'BloomAds', value: 45000, owner: 'JS', days: 0, source: 'Meta Ads' },
       { id: 2, name: 'Karthik R.', company: 'TechVibe', value: 80000, owner: 'AM', days: 1, source: 'Form' },
@@ -11,40 +11,40 @@ const initialPipeline = [
     ],
   },
   {
-    id: 'engaged', label: 'Engaged', color: 'engaged', headerColor: '#7c5cbf',
+    id: 'engaged', label: 'Engaged', color: 'engaged', headerColor: 'var(--purple)',
     deals: [
       { id: 4, name: 'Arjun Mehta', company: 'GrowthLab', value: 120000, owner: 'SA', days: 3, source: 'Form' },
       { id: 5, name: 'Priya K.', company: 'NexaDigital', value: 60000, owner: 'JS', days: 2, source: 'Referral' },
     ],
   },
   {
-    id: 'qualified', label: 'Qualified', color: 'qualified', headerColor: '#f59e0b',
+    id: 'qualified', label: 'Qualified', color: 'qualified', headerColor: 'var(--amber)',
     deals: [
       { id: 6, name: 'Sameer P.', company: 'MediaCo', value: 95000, owner: 'AM', days: 5, source: 'LinkedIn' },
       { id: 7, name: 'Divya T.', company: 'BrandNest', value: 210000, owner: 'SA', days: 4, source: 'Meta Ads' },
     ],
   },
   {
-    id: 'proposal', label: 'Proposal Sent', color: 'proposal', headerColor: '#6366f1',
+    id: 'proposal', label: 'Proposal Sent', color: 'proposal', headerColor: 'var(--purple)',
     deals: [
       { id: 8, name: 'Raj Verma', company: 'ScaleUp', value: 180000, owner: 'JS', days: 7, source: 'LinkedIn' },
     ],
   },
   {
-    id: 'negotiation', label: 'Negotiation', color: 'negotiation', headerColor: '#f97316',
+    id: 'negotiation', label: 'Negotiation', color: 'negotiation', headerColor: 'var(--amber)',
     deals: [
       { id: 9, name: 'Ananya S.', company: 'ClickFarm', value: 350000, owner: 'AM', days: 12, source: 'Cold Email' },
       { id: 10, name: 'Vikram L.', company: 'AdSphere', value: 280000, owner: 'JS', days: 10, source: 'Referral' },
     ],
   },
   {
-    id: 'won', label: 'Closed Win', color: 'won', headerColor: '#10b981',
+    id: 'won', label: 'Closed Win', color: 'won', headerColor: 'var(--emerald)',
     deals: [
       { id: 11, name: 'Nisha D.', company: 'BoldMark', value: 420000, owner: 'SA', days: 18, source: 'Meta Ads' },
     ],
   },
   {
-    id: 'lost', label: 'Closed Lose', color: 'lost', headerColor: '#f43f5e',
+    id: 'lost', label: 'Closed Lose', color: 'lost', headerColor: 'var(--rose)',
     deals: [
       { id: 12, name: 'Mohit B.', company: 'SprintCo', value: 70000, owner: 'AM', days: 21, source: 'Cold Email' },
     ],
@@ -171,7 +171,7 @@ export default function PipelinePage() {
                 {/* Column Header */}
                 <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderTop: `3px solid ${col.headerColor}`, borderRadius: '10px 10px 0 0', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{col.label}</span>
-                  <span className={`pipeline-col-count ${col.color}`} style={{ background: `${col.headerColor}22`, color: col.headerColor, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8 }}>{col.deals.length}</span>
+                  <span className={`pipeline-col-count ${col.color}`} style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8 }}>{col.deals.length}</span>
                 </div>
                 {/* Deals */}
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 120 }}>

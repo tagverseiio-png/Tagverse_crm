@@ -405,7 +405,7 @@ export default function MarketingCalendarPage() {
                 </td>
                 <td style={{ padding: '16px 24px', color: 'var(--text-secondary)', fontSize: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, var(--purple), var(--blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff' }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, var(--purple), var(--blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#ffffff' }}>
                       {s.author.split(' ')[0][0]}{s.author.split(' ')[1][0]}
                     </div>
                     <span style={{ fontWeight: 500 }}>{s.author}</span>

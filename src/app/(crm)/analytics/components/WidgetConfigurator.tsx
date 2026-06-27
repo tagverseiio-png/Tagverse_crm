@@ -3,7 +3,7 @@ import { useAnalyticsStore } from '../store';
 import { X } from 'lucide-react';
 
 export function WidgetConfigurator() {
-  const { isEditMode, widgets, selectedWidgetId, selectWidget, updateWidgetConfig, updateWidgetTitle } = useAnalyticsStore();
+  const { isEditMode, widgets, selectedWidgetId, selectWidget, updateWidgetConfig, updateWidgetTitle, updateWidgetType } = useAnalyticsStore();
 
   if (!isEditMode || !selectedWidgetId) return null;
 
@@ -31,6 +31,23 @@ export function WidgetConfigurator() {
             onChange={(e) => updateWidgetTitle(widget.id, e.target.value)}
             style={inputStyle}
           />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Widget Type</label>
+          <select 
+            value={widget.type}
+            onChange={(e) => updateWidgetType(widget.id, e.target.value as any)}
+            style={inputStyle}
+          >
+            <option value="kpi">KPI Card</option>
+            <option value="bar">Bar Chart</option>
+            <option value="line">Line Chart</option>
+            <option value="area">Area Chart</option>
+            <option value="pie">Pie Chart (Solid)</option>
+            <option value="donut">Donut Chart (Hollow)</option>
+            <option value="funnel">Funnel Chart</option>
+          </select>
         </div>
 
         <div>
