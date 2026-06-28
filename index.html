@@ -192,6 +192,1145 @@
     // 1. MOCK DATA
     // ============================================================================
 
+    // ============================================================================
+    // LENTONE CONSUMER PRODUCTS — MOCK DATA
+    // ============================================================================
+
+    const mockLentoneTeam = [
+      { empId: 'LNT-001', name: 'Rajesh Kumar', role: 'Super Admin', email: 'admin@lentone.in', password: 'Lentone@001', initial: 'RK', region: 'All', phone: '+91 98400 11111' },
+      { empId: 'LNT-002', name: 'Pradeep Sundar', role: 'Area Manager', email: 'pradeep@lentone.in', password: 'Lentone@002', initial: 'PS', region: 'South Chennai', phone: '+91 98400 22222' },
+      { empId: 'LNT-003', name: 'Jatin Sharma', role: 'Field Sales Executive', email: 'jatin@lentone.in', password: 'Lentone@003', initial: 'JS', region: 'South Chennai', phone: '+91 98400 33333' },
+      { empId: 'LNT-004', name: 'Thamizh T', role: 'Field Sales Executive', email: 'thamizh@lentone.in', password: 'Lentone@004', initial: 'TT', region: 'South Chennai', phone: '+91 98400 44444' },
+      { empId: 'LNT-005', name: 'Murugan V', role: 'Delivery Agent', email: 'murugan@lentone.in', password: 'Lentone@005', initial: 'MV', region: 'South Chennai', phone: '+91 98400 55555' },
+      { empId: 'LNT-006', name: 'Selvam K', role: 'Delivery Agent', email: 'selvam@lentone.in', password: 'Lentone@006', initial: 'SK', region: 'South Chennai', phone: '+91 98400 66666' },
+    ];
+
+    const mockLentoneClients = [
+      { id: 1, name: 'ILARA HOTEL & SPA', contact: 'Mr. Ravi', phone: '+91 98765 10001', type: 'Hotel', address: 'OMR Road, Chennai', products: ['Hand Wash 5L', 'Floor Cleaner 5L', 'Glass Cleaner 5L'], monthlyQty: 60, status: 'active', assignedTo: 'LNT-003', lastOrder: '2026-06-25' },
+      { id: 2, name: 'KHADER BHAI BIRIYANI', contact: 'Khader Bhai', phone: '+91 98765 10002', type: 'Restaurant', address: 'Adyar, Chennai', products: ['Dishwash 5L', 'Hand Wash 5L'], monthlyQty: 30, status: 'active', assignedTo: 'LNT-003', lastOrder: '2026-06-27' },
+      { id: 3, name: 'HOT DOSAI', contact: 'Senthil Kumar', phone: '+91 98765 10003', type: 'Restaurant', address: 'T Nagar, Chennai', products: ['Dishwash 5L', 'Toilet Cleaner 5L'], monthlyQty: 25, status: 'active', assignedTo: 'LNT-004', lastOrder: '2026-06-26' },
+      { id: 4, name: 'YALIS RESTAURANT', contact: 'Mr. Yali', phone: '+91 98765 10004', type: 'Restaurant', address: 'Nungambakkam, Chennai', products: ['Hand Wash 5L', 'Dishwash 5L', 'Floor Cleaner 5L'], monthlyQty: 45, status: 'active', assignedTo: 'LNT-004', lastOrder: '2026-06-24' },
+      { id: 5, name: 'SUNRISE INTERNATIONAL SCHOOL', contact: 'Ms. Kavitha', phone: '+91 98765 10005', type: 'Educational Institution', address: 'Velachery, Chennai', products: ['Hand Wash 5L', 'Toilet Cleaner 5L', 'Floor Cleaner 5L'], monthlyQty: 80, status: 'active', assignedTo: 'LNT-003', lastOrder: '2026-06-20' },
+      { id: 6, name: 'GRANDEUR MALL', contact: 'Ops Manager', phone: '+91 98765 10006', type: 'Mall', address: 'Anna Nagar, Chennai', products: ['Floor Cleaner 5L', 'Toilet Cleaner 5L', 'Glass Cleaner 5L'], monthlyQty: 120, status: 'active', assignedTo: 'LNT-003', lastOrder: '2026-06-22' },
+      { id: 7, name: 'GREEN LEAF CATERING', contact: 'Mr. Suresh', phone: '+91 98765 10007', type: 'Catering', address: 'Tambaram, Chennai', products: ['Dishwash 5L', 'Hand Wash 5L'], monthlyQty: 50, status: 'active', assignedTo: 'LNT-004', lastOrder: '2026-06-23' },
+      { id: 8, name: 'URBAN BAKEHOUSE', contact: 'Ms. Priya', phone: '+91 98765 10008', type: 'Bakery', address: 'Besant Nagar, Chennai', products: ['Hand Wash 5L', 'Dishwash 5L'], monthlyQty: 20, status: 'active', assignedTo: 'LNT-004', lastOrder: '2026-06-21' },
+      { id: 9, name: 'COMFORT STAY PG', contact: 'Mr. Balaji', phone: '+91 98765 10009', type: 'PG', address: 'Porur, Chennai', products: ['Hand Wash 5L', 'Toilet Cleaner 5L'], monthlyQty: 35, status: 'active', assignedTo: 'LNT-003', lastOrder: '2026-06-19' },
+      { id: 10, name: 'BLUE STAR OFFICE COMPLEX', contact: 'Admin Team', phone: '+91 98765 10010', type: 'Office', address: 'Guindy, Chennai', products: ['Hand Wash 5L', 'Floor Cleaner 5L', 'Toilet Cleaner 5L', 'Glass Cleaner 5L'], monthlyQty: 100, status: 'active', assignedTo: 'LNT-004', lastOrder: '2026-06-18' },
+      { id: 11, name: 'SPICE GARDEN HOTEL', contact: 'Mr. Arun', phone: '+91 98765 10011', type: 'Hotel', address: 'Egmore, Chennai', products: ['Hand Wash 5L', 'Dishwash 5L', 'Floor Cleaner 5L'], monthlyQty: 70, status: 'prospect', assignedTo: 'LNT-003', lastOrder: null },
+      { id: 12, name: 'MAHARAJA BIRIYANI', contact: 'Ali Bhai', phone: '+91 98765 10012', type: 'Restaurant', address: 'Royapettah, Chennai', products: ['Dishwash 5L'], monthlyQty: 15, status: 'prospect', assignedTo: 'LNT-004', lastOrder: null },
+    ];
+
+    const mockLentoneDeals = [
+      { id: 1, clientId: 1, title: 'ILARA HOTEL — Monthly Contract', stage: 'won', value: 12000, liters: 60, assignedTo: 'LNT-003', closedDate: '2026-06-25', notes: 'Recurring monthly supply agreed' },
+      { id: 2, clientId: 2, title: 'Khader Bhai — Dishwash Supply', stage: 'won', value: 6000, liters: 30, assignedTo: 'LNT-003', closedDate: '2026-06-27', notes: 'Closed after sample trial' },
+      { id: 3, clientId: 3, title: 'Hot Dosai — Kitchen Hygiene Pack', stage: 'won', value: 5000, liters: 25, assignedTo: 'LNT-004', closedDate: '2026-06-26', notes: 'Part of June 27 closure batch' },
+      { id: 4, clientId: 4, title: 'Yalis Restaurant — Full Pack', stage: 'won', value: 9000, liters: 45, assignedTo: 'LNT-004', closedDate: '2026-06-27', notes: 'Part of June 27 closure batch — 400L target' },
+      { id: 5, clientId: 5, title: 'Sunrise School — Quarterly Deal', stage: 'won', value: 16000, liters: 80, assignedTo: 'LNT-003', closedDate: '2026-06-20', notes: 'Quarterly contract signed' },
+      { id: 6, clientId: 6, title: 'Grandeur Mall — Cleaning Contract', stage: 'negotiation', value: 24000, liters: 120, assignedTo: 'LNT-003', notes: 'Awaiting procurement approval' },
+      { id: 7, clientId: 7, title: 'Green Leaf — Dishwash Supply', stage: 'follow_up', value: 10000, liters: 50, assignedTo: 'LNT-004', notes: 'Sample given, follow-up scheduled' },
+      { id: 8, clientId: 8, title: 'Urban Bakehouse — Hand Wash', stage: 'sample_given', value: 4000, liters: 20, assignedTo: 'LNT-004', notes: '2 sample cans given 2026-06-25' },
+      { id: 9, clientId: 9, title: 'Comfort Stay PG — Bundle', stage: 'sample_given', value: 7000, liters: 35, assignedTo: 'LNT-003', notes: 'Sample stickers applied, awaiting feedback' },
+      { id: 10, clientId: 10, title: 'Blue Star Office — Premium Pack', stage: 'follow_up', value: 20000, liters: 100, assignedTo: 'LNT-004', notes: 'Met admin, proposal sent via WhatsApp' },
+      { id: 11, clientId: 11, title: 'Spice Garden Hotel — Initial Pitch', stage: 'prospect', value: 14000, liters: 70, assignedTo: 'LNT-003', notes: 'First contact made via field visit' },
+      { id: 12, clientId: 12, title: 'Maharaja Biriyani — Dishwash Trial', stage: 'prospect', value: 3000, liters: 15, assignedTo: 'LNT-004', notes: 'Needs follow-up call' },
+    ];
+
+    const mockLentoneOrders = [
+      { id: 'ORD-001', clientId: 1, products: [{ name: 'Hand Wash 5L', qty: 4 }, { name: 'Floor Cleaner 5L', qty: 4 }, { name: 'Glass Cleaner 5L', qty: 4 }], totalLiters: 60, status: 'delivered', assignedTo: 'LNT-005', orderDate: '2026-06-25', deliveryDate: '2026-06-26' },
+      { id: 'ORD-002', clientId: 2, products: [{ name: 'Dishwash 5L', qty: 3 }, { name: 'Hand Wash 5L', qty: 3 }], totalLiters: 30, status: 'in_transit', assignedTo: 'LNT-005', orderDate: '2026-06-27', deliveryDate: null },
+      { id: 'ORD-003', clientId: 3, products: [{ name: 'Dishwash 5L', qty: 2 }, { name: 'Toilet Cleaner 5L', qty: 3 }], totalLiters: 25, status: 'picked_up', assignedTo: 'LNT-006', orderDate: '2026-06-27', deliveryDate: null },
+      { id: 'ORD-004', clientId: 4, products: [{ name: 'Hand Wash 5L', qty: 3 }, { name: 'Dishwash 5L', qty: 3 }, { name: 'Floor Cleaner 5L', qty: 3 }], totalLiters: 45, status: 'pending', assignedTo: 'LNT-005', orderDate: '2026-06-28', deliveryDate: null },
+      { id: 'ORD-005', clientId: 5, products: [{ name: 'Hand Wash 5L', qty: 6 }, { name: 'Toilet Cleaner 5L', qty: 4 }, { name: 'Floor Cleaner 5L', qty: 6 }], totalLiters: 80, status: 'delivered', assignedTo: 'LNT-006', orderDate: '2026-06-20', deliveryDate: '2026-06-21' },
+      { id: 'ORD-006', clientId: 6, products: [{ name: 'Floor Cleaner 5L', qty: 8 }, { name: 'Toilet Cleaner 5L', qty: 8 }, { name: 'Glass Cleaner 5L', qty: 8 }], totalLiters: 120, status: 'pending', assignedTo: 'LNT-006', orderDate: '2026-06-28', deliveryDate: null },
+      { id: 'ORD-007', clientId: 7, products: [{ name: 'Dishwash 5L', qty: 5 }, { name: 'Hand Wash 5L', qty: 5 }], totalLiters: 50, status: 'delivered', assignedTo: 'LNT-005', orderDate: '2026-06-23', deliveryDate: '2026-06-24' },
+    ];
+
+    const mockLentoneAttendance = [
+      { empId: 'LNT-003', checkIn: '2026-06-28T09:15:00', checkOut: null, location: 'Adyar Sector', status: 'checked_in' },
+      { empId: 'LNT-004', checkIn: '2026-06-28T09:45:00', checkOut: null, location: 'T Nagar Sector', status: 'checked_in' },
+      { empId: 'LNT-005', checkIn: '2026-06-28T08:30:00', checkOut: null, location: 'Warehouse — Delivery Route', status: 'checked_in' },
+      { empId: 'LNT-006', checkIn: null, checkOut: null, location: null, status: 'not_logged' },
+    ];
+
+    // ============================================================================
+    // LENTONE — COLOR TOKENS & HELPER COMPONENTS
+    // ============================================================================
+
+    const LT_GREEN = '#0F766E';
+    const LT_LIGHT = '#CCFBF1';
+    const LT_BG = '#F0FDFA';
+
+    const LCard = ({ children, className = '' }) => (
+      <div className={`bg-white rounded-xl border border-teal-100 shadow-sm ${className}`}>{children}</div>
+    );
+
+    const LBadge = ({ children, variant = 'default', className = '' }) => {
+      const variants = {
+        default: 'bg-slate-100 text-slate-700 border border-slate-200',
+        success: 'bg-teal-50 text-teal-700 border border-teal-200',
+        warning: 'bg-amber-50 text-amber-700 border border-amber-200',
+        danger: 'bg-red-50 text-red-700 border border-red-200',
+        info: 'bg-blue-50 text-blue-700 border border-blue-200',
+        lime: 'bg-lime-50 text-lime-700 border border-lime-200',
+      };
+      return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${variants[variant]} ${className}`}>{children}</span>;
+    };
+
+    const LBtn = ({ children, variant = 'primary', size = 'md', className = '', ...props }) => {
+      const base = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none disabled:opacity-50 select-none';
+      const variants = {
+        primary: 'bg-teal-700 text-white hover:bg-teal-800 active:scale-[0.98]',
+        secondary: 'bg-teal-50 text-teal-800 hover:bg-teal-100 active:scale-[0.98]',
+        outline: 'border border-teal-200 bg-transparent hover:bg-teal-50 text-teal-700 active:scale-[0.98]',
+        danger: 'bg-red-50 text-red-600 hover:bg-red-100 active:scale-[0.98]',
+        ghost: 'bg-transparent hover:bg-teal-50 text-teal-700',
+      };
+      const sizes = { sm: 'h-8 px-3 text-xs', md: 'h-10 px-4 py-2 text-sm', lg: 'h-12 px-6 text-base' };
+      return <button className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>{children}</button>;
+    };
+
+    const LDialog = ({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' }) => {
+      useEffect(() => {
+        if (!isOpen) return;
+        const h = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', h);
+        return () => window.removeEventListener('keydown', h);
+      }, [isOpen, onClose]);
+      if (!isOpen) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-teal-900/30 p-4 backdrop-blur-sm" onClick={onClose}>
+          <div className={`w-full bg-white rounded-2xl shadow-xl flex flex-col max-h-[90vh] ${maxWidth}`} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-teal-100 px-6 py-4">
+              <h2 className="text-lg font-semibold text-teal-900">{title}</h2>
+              <button onClick={onClose} className="rounded-full p-1.5 hover:bg-teal-50 text-teal-400 transition"><X size={18} /></button>
+            </div>
+            <div className="p-6 overflow-y-auto">{children}</div>
+          </div>
+        </div>
+      );
+    };
+
+    const LInput = ({ className = '', ...props }) => (
+      <input className={`flex h-10 w-full rounded-lg border border-teal-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent transition-all ${className}`} {...props} />
+    );
+
+    const LSelect = ({ className = '', children, ...props }) => (
+      <select className={`flex h-10 w-full rounded-md border border-teal-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-600 transition-all ${className}`} {...props}>{children}</select>
+    );
+
+    const LAvatar = ({ name, className = '' }) => (
+      <div className={`flex items-center justify-center rounded-full bg-teal-700 text-white font-semibold text-xs uppercase ${className}`}>{name.slice(0, 2)}</div>
+    );
+
+    const LMetricCard = ({ title, value, sub, icon: Icon, color = 'teal' }) => (
+      <LCard className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <p className="text-sm font-medium text-slate-500">{title}</p>
+          <div className="p-2 bg-teal-50 rounded-lg text-teal-600"><Icon size={18} /></div>
+        </div>
+        <p className="text-2xl font-bold text-teal-900">{value}</p>
+        {sub && <p className="text-xs text-slate-500 mt-1">{sub}</p>}
+      </LCard>
+    );
+
+    // ============================================================================
+    // LENTONE — DASHBOARD
+    // ============================================================================
+
+    function LentoneDashboard({ currentUser, orders, deals, clients, attendance, team }) {
+      const totalLitersDelivered = orders.filter(o => o.status === 'delivered').reduce((s, o) => s + o.totalLiters, 0);
+      const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'in_transit' || o.status === 'picked_up').length;
+      const closedDeals = deals.filter(d => d.stage === 'won').length;
+      const activeClients = clients.filter(c => c.status === 'active').length;
+      const checkedIn = attendance.filter(a => a.status === 'checked_in').length;
+
+      const stageColors = { prospect: 'bg-slate-400', sample_given: 'bg-blue-400', follow_up: 'bg-amber-400', negotiation: 'bg-orange-400', won: 'bg-teal-500', lost: 'bg-red-400' };
+      const stageLabels = { prospect: 'Prospect', sample_given: 'Sample Given', follow_up: 'Follow-up', negotiation: 'Negotiation', won: 'Closed Won', lost: 'Lost' };
+
+      const myDeals = currentUser.role === 'Field Sales Executive'
+        ? deals.filter(d => d.assignedTo === currentUser.empId)
+        : deals;
+
+      const recentOrders = [...orders].sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate)).slice(0, 5);
+
+      const getOrderStatusBadge = (s) => {
+        const map = { pending: 'warning', picked_up: 'info', in_transit: 'info', delivered: 'success' };
+        const labels = { pending: 'Pending', picked_up: 'Picked Up', in_transit: 'In Transit', delivered: 'Delivered' };
+        return <LBadge variant={map[s]}>{labels[s]}</LBadge>;
+      };
+
+      // Monthly liters data (mock)
+      const monthlyData = [
+        { month: 'Jan', liters: 320 }, { month: 'Feb', liters: 480 }, { month: 'Mar', liters: 410 },
+        { month: 'Apr', liters: 590 }, { month: 'May', liters: 720 }, { month: 'Jun', liters: 1050 },
+      ];
+      const maxLiters = Math.max(...monthlyData.map(d => d.liters));
+
+      return (
+        <div className="space-y-6">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <LMetricCard title="Liters Delivered" value={`${totalLitersDelivered}L`} sub="This month" icon={TrendingUp} />
+            <LMetricCard title="Active Clients" value={activeClients} sub={`${clients.filter(c=>c.status==='prospect').length} prospects`} icon={Users} />
+            <LMetricCard title="Deals Closed" value={closedDeals} sub={`${deals.filter(d=>d.stage==='negotiation').length} in negotiation`} icon={CheckCircle2} />
+            <LMetricCard title="Field Workers In" value={`${checkedIn}/${attendance.length}`} sub="Checked in today" icon={Clock} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Monthly Volume Chart */}
+            <LCard className="lg:col-span-2 p-6">
+              <h3 className="font-semibold text-teal-900 mb-6">Monthly Volume (Liters)</h3>
+              <div className="flex items-end gap-3 h-40">
+                {monthlyData.map(d => (
+                  <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-xs font-medium text-teal-800">{d.liters}</span>
+                    <div className="w-full rounded-t-md transition-all duration-700" style={{ height: `${(d.liters / maxLiters) * 130}px`, backgroundColor: d.month === 'Jun' ? '#0F766E' : '#99F6E4' }}></div>
+                    <span className="text-xs text-slate-500">{d.month}</span>
+                  </div>
+                ))}
+              </div>
+            </LCard>
+
+            {/* Deal Pipeline Snapshot */}
+            <LCard className="p-6">
+              <h3 className="font-semibold text-teal-900 mb-4">Deal Pipeline</h3>
+              <div className="space-y-3">
+                {['prospect', 'sample_given', 'follow_up', 'negotiation', 'won'].map(stage => {
+                  const count = myDeals.filter(d => d.stage === stage).length;
+                  const pct = Math.round((count / Math.max(myDeals.length, 1)) * 100);
+                  return (
+                    <div key={stage} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-600">{stageLabels[stage]}</span>
+                        <span className="font-semibold text-teal-900">{count}</span>
+                      </div>
+                      <div className="h-1.5 bg-teal-50 rounded-full">
+                        <div className={`h-full rounded-full ${stageColors[stage]}`} style={{ width: `${pct}%` }}></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </LCard>
+          </div>
+
+          {/* Recent Orders */}
+          <LCard className="overflow-hidden">
+            <div className="p-5 border-b border-teal-50">
+              <h3 className="font-semibold text-teal-900">Recent Delivery Orders</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-teal-50/50 text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3 font-medium">Order ID</th>
+                    <th className="px-5 py-3 font-medium">Client</th>
+                    <th className="px-5 py-3 font-medium">Liters</th>
+                    <th className="px-5 py-3 font-medium">Status</th>
+                    <th className="px-5 py-3 font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-teal-50">
+                  {recentOrders.map(o => {
+                    const client = clients.find(c => c.id === o.clientId);
+                    return (
+                      <tr key={o.id} className="hover:bg-teal-50/30 transition-colors">
+                        <td className="px-5 py-3 font-semibold text-teal-800">{o.id}</td>
+                        <td className="px-5 py-3 text-slate-700">{client?.name || 'Unknown'}</td>
+                        <td className="px-5 py-3 font-medium">{o.totalLiters}L</td>
+                        <td className="px-5 py-3">{getOrderStatusBadge(o.status)}</td>
+                        <td className="px-5 py-3 text-slate-500">{o.orderDate}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </LCard>
+
+          {/* Pending Orders alert */}
+          {pendingOrders > 0 && (
+            <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <AlertCircle className="text-amber-600 shrink-0" size={20} />
+              <p className="text-sm text-amber-800 font-medium">{pendingOrders} order(s) pending delivery. Assign agents to move them forward.</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // LENTONE — FIELD WORKERS (Attendance Board)
+    // ============================================================================
+
+    function LentoneFieldWorkers({ team, attendance, setAttendance, currentUser }) {
+      const now = new Date().toISOString();
+
+      const handleCheckIn = (empId) => {
+        setAttendance(prev => prev.map(a =>
+          a.empId === empId ? { ...a, checkIn: now, status: 'checked_in', location: 'Field' } : a
+        ));
+      };
+
+      const handleCheckOut = (empId) => {
+        setAttendance(prev => prev.map(a =>
+          a.empId === empId ? { ...a, checkOut: now, status: 'checked_out' } : a
+        ));
+      };
+
+      const formatTime = (isoStr) => {
+        if (!isoStr) return '—';
+        return new Date(isoStr).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      };
+
+      const fieldWorkers = currentUser.role === 'Field Sales Executive' || currentUser.role === 'Delivery Agent'
+        ? team.filter(t => t.empId === currentUser.empId)
+        : team.filter(t => t.role !== 'Super Admin' && t.role !== 'Area Manager');
+
+      const getStatusBadge = (status) => {
+        const map = { checked_in: 'success', checked_out: 'default', not_logged: 'danger' };
+        const labels = { checked_in: '🟢 Checked In', checked_out: '⚪ Checked Out', not_logged: '🔴 Not Logged' };
+        return <LBadge variant={map[status]}>{labels[status]}</LBadge>;
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-lg font-bold text-teal-900">Field Worker Attendance</h2>
+              <p className="text-sm text-slate-500 mt-0.5">Today: {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            </div>
+          </div>
+
+          {/* Summary cards */}
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { label: 'Checked In', count: attendance.filter(a => a.status === 'checked_in').length, color: 'bg-teal-50 text-teal-700' },
+              { label: 'Checked Out', count: attendance.filter(a => a.status === 'checked_out').length, color: 'bg-slate-100 text-slate-700' },
+              { label: 'Not Logged', count: attendance.filter(a => a.status === 'not_logged').length, color: 'bg-red-50 text-red-700' },
+            ].map(s => (
+              <LCard key={s.label} className={`p-4 text-center ${s.color}`}>
+                <p className="text-2xl font-bold">{s.count}</p>
+                <p className="text-xs font-medium mt-1">{s.label}</p>
+              </LCard>
+            ))}
+          </div>
+
+          <LCard className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-teal-50/60 text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3 font-medium">Employee</th>
+                    <th className="px-5 py-3 font-medium">Role</th>
+                    <th className="px-5 py-3 font-medium">Status</th>
+                    <th className="px-5 py-3 font-medium">Check-In</th>
+                    <th className="px-5 py-3 font-medium">Check-Out</th>
+                    <th className="px-5 py-3 font-medium">Location</th>
+                    <th className="px-5 py-3 font-medium text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-teal-50">
+                  {fieldWorkers.map(emp => {
+                    const rec = attendance.find(a => a.empId === emp.empId);
+                    const canControl = currentUser.role === 'Super Admin' || currentUser.role === 'Area Manager' || currentUser.empId === emp.empId;
+                    return (
+                      <tr key={emp.empId} className="hover:bg-teal-50/30 transition-colors">
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-3">
+                            <LAvatar name={emp.initial} className="w-8 h-8 text-[10px]" />
+                            <div>
+                              <div className="font-semibold text-slate-900">{emp.name}</div>
+                              <div className="text-xs text-slate-400">{emp.empId}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 text-slate-600">{emp.role}</td>
+                        <td className="px-5 py-3">{getStatusBadge(rec?.status || 'not_logged')}</td>
+                        <td className="px-5 py-3 font-medium text-teal-800">{formatTime(rec?.checkIn)}</td>
+                        <td className="px-5 py-3 text-slate-500">{formatTime(rec?.checkOut)}</td>
+                        <td className="px-5 py-3 text-slate-500 text-xs">{rec?.location || '—'}</td>
+                        <td className="px-5 py-3 text-right">
+                          {canControl && (
+                            <div className="flex justify-end gap-2">
+                              {rec?.status !== 'checked_in' && (
+                                <LBtn size="sm" variant="secondary" onClick={() => handleCheckIn(emp.empId)}>Check In</LBtn>
+                              )}
+                              {rec?.status === 'checked_in' && (
+                                <LBtn size="sm" variant="outline" onClick={() => handleCheckOut(emp.empId)}>Check Out</LBtn>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </LCard>
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // LENTONE — B2B CLIENTS
+    // ============================================================================
+
+    function LentoneClients({ clients, setClients, currentUser }) {
+      const [search, setSearch] = useState('');
+      const [filterType, setFilterType] = useState('all');
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [form, setForm] = useState({ name: '', contact: '', phone: '', type: 'Hotel', address: '', products: [], monthlyQty: 0, status: 'prospect' });
+
+      const clientTypes = ['Hotel', 'Restaurant', 'Mall', 'Educational Institution', 'Office', 'PG', 'Catering', 'Bakery'];
+      const productOptions = ['Hand Wash 5L', 'Dishwash 5L', 'Floor Cleaner 5L', 'Toilet Cleaner 5L', 'Glass Cleaner 5L'];
+
+      const visibleClients = currentUser.role === 'Field Sales Executive'
+        ? clients.filter(c => c.assignedTo === currentUser.empId)
+        : clients;
+
+      const filtered = visibleClients.filter(c => {
+        const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.contact.toLowerCase().includes(search.toLowerCase());
+        const matchType = filterType === 'all' || c.type === filterType;
+        return matchSearch && matchType;
+      });
+
+      const typeColors = {
+        Hotel: 'info', Restaurant: 'warning', Mall: 'lime', 'Educational Institution': 'success',
+        Office: 'default', PG: 'default', Catering: 'warning', Bakery: 'lime',
+      };
+
+      const handleAdd = (e) => {
+        e.preventDefault();
+        setClients([...clients, { ...form, id: Date.now(), assignedTo: currentUser.empId, lastOrder: null }]);
+        setIsModalOpen(false);
+        setForm({ name: '', contact: '', phone: '', type: 'Hotel', address: '', products: [], monthlyQty: 0, status: 'prospect' });
+      };
+
+      const toggleProduct = (p) => {
+        setForm(prev => ({
+          ...prev,
+          products: prev.products.includes(p) ? prev.products.filter(x => x !== p) : [...prev.products, p],
+        }));
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <div className="flex gap-3 flex-1">
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-2.5 top-2.5 text-slate-400" size={15} />
+                <LInput placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8" />
+              </div>
+              <LSelect value={filterType} onChange={e => setFilterType(e.target.value)} className="w-44">
+                <option value="all">All Types</option>
+                {clientTypes.map(t => <option key={t} value={t}>{t}</option>)}
+              </LSelect>
+            </div>
+            <LBtn onClick={() => setIsModalOpen(true)}><Plus size={16} className="mr-2" />Add Client</LBtn>
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: 'Total B2B', val: visibleClients.length },
+              { label: 'Active', val: visibleClients.filter(c => c.status === 'active').length },
+              { label: 'Prospects', val: visibleClients.filter(c => c.status === 'prospect').length },
+              { label: 'Monthly Vol.', val: `${visibleClients.filter(c=>c.status==='active').reduce((s,c)=>s+c.monthlyQty,0)}L` },
+            ].map(s => (
+              <LCard key={s.label} className="p-4 text-center">
+                <p className="text-xl font-bold text-teal-800">{s.val}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+              </LCard>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filtered.map(c => (
+              <LCard key={c.id} className="p-5 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h4 className="font-bold text-teal-900 text-sm leading-tight">{c.name}</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">{c.address}</p>
+                  </div>
+                  <LBadge variant={typeColors[c.type] || 'default'}>{c.type}</LBadge>
+                </div>
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {c.products.map(p => (
+                    <span key={p} className="text-[10px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full border border-teal-100">{p}</span>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-500 border-t border-teal-50 pt-3 mt-3">
+                  <span className="flex items-center gap-1"><MessageCircle size={12} />{c.phone}</span>
+                  <span className="font-semibold text-teal-700">{c.monthlyQty}L/mo</span>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <LBadge variant={c.status === 'active' ? 'success' : 'warning'} className="capitalize">{c.status}</LBadge>
+                  <a href={`https://wa.me/${c.phone.replace(/[^\d]/g, '')}?text=Hi ${c.contact}, following up on Lentone products!`} target="_blank" rel="noreferrer">
+                    <LBtn size="sm" variant="ghost" className="text-xs">
+                      <MessageCircle size={12} className="mr-1" />WhatsApp
+                    </LBtn>
+                  </a>
+                </div>
+              </LCard>
+            ))}
+            {filtered.length === 0 && (
+              <div className="col-span-3 text-center py-12 text-slate-400">
+                <Users size={40} className="mx-auto mb-3 opacity-30" />
+                <p>No clients found.</p>
+              </div>
+            )}
+          </div>
+
+          <LDialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add B2B Client">
+            <form onSubmit={handleAdd} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Business Name</label>
+                <LInput required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. SUNRISE HOTEL" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Contact Person</label>
+                  <LInput required value={form.contact} onChange={e => setForm({...form, contact: e.target.value})} placeholder="e.g. Mr. Ravi" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+                  <LInput required value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="+91 98765 XXXXX" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Client Type</label>
+                  <LSelect value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
+                    {clientTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </LSelect>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Monthly Qty (Liters)</label>
+                  <LInput type="number" min="0" value={form.monthlyQty} onChange={e => setForm({...form, monthlyQty: parseInt(e.target.value)||0})} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+                <LInput value={form.address} onChange={e => setForm({...form, address: e.target.value})} placeholder="Area, Chennai" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Products Needed</label>
+                <div className="flex flex-wrap gap-2">
+                  {productOptions.map(p => (
+                    <button type="button" key={p} onClick={() => toggleProduct(p)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${form.products.includes(p) ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-600 border-slate-300 hover:border-teal-300'}`}>
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="pt-3 flex justify-end gap-3">
+                <LBtn type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</LBtn>
+                <LBtn type="submit">Add Client</LBtn>
+              </div>
+            </form>
+          </LDialog>
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // LENTONE — ORDERS & DELIVERIES (Kanban)
+    // ============================================================================
+
+    function LentoneOrders({ orders, setOrders, clients, team, currentUser }) {
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [form, setForm] = useState({ clientId: '', assignedTo: '', items: [{ name: 'Hand Wash 5L', qty: 1 }] });
+
+      const columns = [
+        { id: 'pending', label: 'Pending', color: 'border-amber-400', badge: 'warning' },
+        { id: 'picked_up', label: 'Picked Up', color: 'border-blue-400', badge: 'info' },
+        { id: 'in_transit', label: 'In Transit', color: 'border-purple-400', badge: 'info' },
+        { id: 'delivered', label: 'Delivered', color: 'border-teal-500', badge: 'success' },
+      ];
+
+      const statusFlow = { pending: 'picked_up', picked_up: 'in_transit', in_transit: 'delivered', delivered: 'delivered' };
+      const nextLabel = { pending: 'Mark Picked Up', picked_up: 'Mark In Transit', in_transit: 'Mark Delivered', delivered: '✓ Done' };
+
+      const visibleOrders = currentUser.role === 'Delivery Agent'
+        ? orders.filter(o => o.assignedTo === currentUser.empId)
+        : orders;
+
+      const advance = (id) => {
+        setOrders(prev => prev.map(o => o.id === id ? { ...o, status: statusFlow[o.status], deliveryDate: statusFlow[o.status] === 'delivered' ? new Date().toISOString().split('T')[0] : o.deliveryDate } : o));
+      };
+
+      const productOptions = ['Hand Wash 5L', 'Dishwash 5L', 'Floor Cleaner 5L', 'Toilet Cleaner 5L', 'Glass Cleaner 5L'];
+      const deliveryAgents = team.filter(t => t.role === 'Delivery Agent');
+
+      const updateItem = (idx, field, val) => {
+        const items = form.items.map((it, i) => i === idx ? { ...it, [field]: field === 'qty' ? parseInt(val)||1 : val } : it);
+        setForm({...form, items});
+      };
+
+      const handleAdd = (e) => {
+        e.preventDefault();
+        const totalLiters = form.items.reduce((s, it) => s + (it.qty * 5), 0);
+        setOrders([...orders, {
+          id: `ORD-${String(orders.length + 1).padStart(3, '0')}`,
+          clientId: parseInt(form.clientId),
+          products: form.items.map(it => ({ name: it.name, qty: it.qty })),
+          totalLiters,
+          status: 'pending',
+          assignedTo: form.assignedTo,
+          orderDate: new Date().toISOString().split('T')[0],
+          deliveryDate: null,
+        }]);
+        setIsModalOpen(false);
+        setForm({ clientId: '', assignedTo: '', items: [{ name: 'Hand Wash 5L', qty: 1 }] });
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-slate-500">Drag or click to advance order status through the delivery pipeline.</p>
+            {(currentUser.role === 'Super Admin' || currentUser.role === 'Area Manager') && (
+              <LBtn onClick={() => setIsModalOpen(true)}><Plus size={16} className="mr-2" />New Order</LBtn>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {columns.map(col => {
+              const colOrders = visibleOrders.filter(o => o.status === col.id);
+              return (
+                <div key={col.id} className="bg-slate-50 rounded-xl p-3">
+                  <div className="flex justify-between items-center mb-3 px-1">
+                    <h3 className="font-semibold text-sm text-slate-700">{col.label}</h3>
+                    <LBadge variant={col.badge} className="text-[10px]">{colOrders.length}</LBadge>
+                  </div>
+                  <div className="space-y-3 min-h-[100px]">
+                    {colOrders.map(o => {
+                      const client = clients.find(c => c.id === o.clientId);
+                      const agent = team.find(t => t.empId === o.assignedTo);
+                      return (
+                        <div key={o.id} className={`bg-white rounded-lg p-3 border-l-4 ${col.color} shadow-sm`}>
+                          <div className="font-semibold text-xs text-teal-900 mb-1">{o.id}</div>
+                          <div className="text-sm font-medium text-slate-800 mb-1">{client?.name || 'Unknown'}</div>
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {o.products.map((p, i) => (
+                              <span key={i} className="text-[9px] bg-teal-50 text-teal-600 px-1.5 py-0.5 rounded-full">{p.qty}× {p.name}</span>
+                            ))}
+                          </div>
+                          <div className="flex justify-between items-center text-xs text-slate-500 mb-2">
+                            <span className="font-semibold text-teal-700">{o.totalLiters}L</span>
+                            <span>{agent?.name || '—'}</span>
+                          </div>
+                          {col.id !== 'delivered' && (
+                            <LBtn size="sm" variant="secondary" onClick={() => advance(o.id)} className="w-full text-[10px] h-7">
+                              {nextLabel[col.id]}
+                            </LBtn>
+                          )}
+                          {col.id === 'delivered' && (
+                            <div className="text-[10px] text-teal-600 font-medium text-center">✓ Delivered {o.deliveryDate}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {colOrders.length === 0 && (
+                      <div className="text-center py-6 text-xs text-slate-400 italic">No orders</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <LDialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Order" maxWidth="max-w-xl">
+            <form onSubmit={handleAdd} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Client</label>
+                  <LSelect required value={form.clientId} onChange={e => setForm({...form, clientId: e.target.value})}>
+                    <option value="">-- Select Client --</option>
+                    {clients.filter(c => c.status === 'active').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </LSelect>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Delivery Agent</label>
+                  <LSelect required value={form.assignedTo} onChange={e => setForm({...form, assignedTo: e.target.value})}>
+                    <option value="">-- Assign Agent --</option>
+                    {deliveryAgents.map(a => <option key={a.empId} value={a.empId}>{a.name}</option>)}
+                  </LSelect>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Products</label>
+                {form.items.map((it, idx) => (
+                  <div key={idx} className="flex gap-2 mb-2 items-center">
+                    <LSelect value={it.name} onChange={e => updateItem(idx, 'name', e.target.value)} className="flex-1">
+                      {productOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                    </LSelect>
+                    <LInput type="number" min="1" value={it.qty} onChange={e => updateItem(idx, 'qty', e.target.value)} className="w-16 text-center" />
+                    <span className="text-xs text-slate-500 w-12">{it.qty * 5}L</span>
+                    <button type="button" onClick={() => setForm({...form, items: form.items.filter((_,i)=>i!==idx)})} disabled={form.items.length===1} className="text-slate-300 hover:text-red-500 disabled:opacity-30"><Trash2 size={14}/></button>
+                  </div>
+                ))}
+                <LBtn type="button" variant="ghost" size="sm" onClick={() => setForm({...form, items: [...form.items, {name:'Hand Wash 5L', qty:1}]})}>
+                  <Plus size={13} className="mr-1" />Add Product
+                </LBtn>
+              </div>
+              <div className="pt-3 flex justify-end gap-3">
+                <LBtn type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</LBtn>
+                <LBtn type="submit">Create Order</LBtn>
+              </div>
+            </form>
+          </LDialog>
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // LENTONE — DEALS PIPELINE
+    // ============================================================================
+
+    function LentoneDeals({ deals, setDeals, clients, currentUser }) {
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [form, setForm] = useState({ clientId: '', title: '', liters: 0, value: 0, notes: '' });
+
+      const stages = [
+        { id: 'prospect', label: 'Prospect', color: 'border-slate-400', bg: 'bg-slate-50' },
+        { id: 'sample_given', label: 'Sample Given', color: 'border-blue-400', bg: 'bg-blue-50' },
+        { id: 'follow_up', label: 'Follow-up', color: 'border-amber-400', bg: 'bg-amber-50' },
+        { id: 'negotiation', label: 'Negotiation', color: 'border-orange-500', bg: 'bg-orange-50' },
+        { id: 'won', label: '✅ Closed Won', color: 'border-teal-500', bg: 'bg-teal-50' },
+        { id: 'lost', label: '❌ Lost', color: 'border-red-400', bg: 'bg-red-50' },
+      ];
+
+      const stageFlow = { prospect: 'sample_given', sample_given: 'follow_up', follow_up: 'negotiation', negotiation: 'won' };
+      const nextLabel = { prospect: 'Give Sample', sample_given: 'Mark Follow-up', follow_up: 'Negotiate', negotiation: 'Close Won!' };
+
+      const visibleDeals = currentUser.role === 'Field Sales Executive'
+        ? deals.filter(d => d.assignedTo === currentUser.empId)
+        : deals;
+
+      const handleDragStart = (e, id) => e.dataTransfer.setData('dealId', id);
+      const handleDrop = (e, stageId) => {
+        e.preventDefault();
+        const id = parseInt(e.dataTransfer.getData('dealId'));
+        setDeals(prev => prev.map(d => d.id === id ? { ...d, stage: stageId } : d));
+      };
+
+      const advance = (id) => {
+        setDeals(prev => prev.map(d => {
+          if (d.id !== id) return d;
+          const next = stageFlow[d.stage];
+          return next ? { ...d, stage: next, closedDate: next === 'won' ? new Date().toISOString().split('T')[0] : d.closedDate } : d;
+        }));
+      };
+
+      const markLost = (id) => {
+        if (confirm('Mark this deal as lost?')) setDeals(prev => prev.map(d => d.id === id ? {...d, stage:'lost'} : d));
+      };
+
+      const handleAdd = (e) => {
+        e.preventDefault();
+        setDeals([...deals, {
+          id: Date.now(),
+          clientId: parseInt(form.clientId),
+          title: form.title,
+          stage: 'prospect',
+          liters: parseInt(form.liters)||0,
+          value: parseInt(form.value)||0,
+          assignedTo: currentUser.empId,
+          notes: form.notes,
+        }]);
+        setIsModalOpen(false);
+        setForm({ clientId: '', title: '', liters: 0, value: 0, notes: '' });
+      };
+
+      const totalWonLiters = visibleDeals.filter(d => d.stage === 'won').reduce((s,d) => s+d.liters, 0);
+      const totalWonValue = visibleDeals.filter(d => d.stage === 'won').reduce((s,d) => s+d.value, 0);
+
+      return (
+        <div className="space-y-5">
+          <div className="flex justify-between items-center">
+            <div className="flex gap-4 text-sm">
+              <span className="font-semibold text-teal-800">Won: {totalWonLiters}L</span>
+              <span className="text-slate-500">|</span>
+              <span className="font-semibold text-teal-800">{formatINR(totalWonValue)}</span>
+            </div>
+            <LBtn onClick={() => setIsModalOpen(true)}><Plus size={16} className="mr-2" />Add Deal</LBtn>
+          </div>
+
+          <div className="flex gap-3 overflow-x-auto pb-3 custom-scrollbar">
+            {stages.map(stage => {
+              const stageDeals = visibleDeals.filter(d => d.stage === stage.id);
+              return (
+                <div key={stage.id} className="flex-shrink-0 w-60 rounded-xl bg-slate-100/70 p-3"
+                  onDragOver={e => e.preventDefault()} onDrop={e => handleDrop(e, stage.id)}>
+                  <div className="flex justify-between items-center mb-3 px-1">
+                    <h3 className="font-semibold text-xs text-slate-700">{stage.label}</h3>
+                    <span className="bg-white text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-semibold border border-slate-200">{stageDeals.length}</span>
+                  </div>
+                  <div className="space-y-2 min-h-[80px]">
+                    {stageDeals.map(deal => {
+                      const client = clients.find(c => c.id === deal.clientId);
+                      return (
+                        <div key={deal.id} className={`bg-white rounded-lg p-3 border-l-4 ${stage.color} shadow-sm cursor-grab active:cursor-grabbing`}
+                          draggable onDragStart={e => handleDragStart(e, deal.id)}>
+                          <div className="text-sm font-bold text-slate-900 mb-1 leading-tight">{client?.name || 'Unknown'}</div>
+                          <div className="text-xs text-slate-500 mb-2 line-clamp-2">{deal.title}</div>
+                          <div className="flex justify-between text-xs mb-2">
+                            <span className="font-semibold text-teal-700">{deal.liters}L</span>
+                            <span className="font-semibold text-slate-700">{formatINR(deal.value)}</span>
+                          </div>
+                          {deal.notes && <div className="text-[10px] text-slate-400 italic mb-2 line-clamp-1">{deal.notes}</div>}
+                          {stage.id === 'won' ? (
+                            <div className="text-[10px] text-teal-600 font-semibold text-center">🎉 Closed {deal.closedDate}</div>
+                          ) : stage.id === 'lost' ? (
+                            <div className="text-[10px] text-red-500 font-semibold text-center">Deal Lost</div>
+                          ) : (
+                            <div className="flex gap-1 mt-1">
+                              {stageFlow[stage.id] && (
+                                <LBtn size="sm" variant="secondary" onClick={() => advance(deal.id)} className="flex-1 text-[10px] h-6 px-1">{nextLabel[stage.id]}</LBtn>
+                              )}
+                              <LBtn size="sm" variant="danger" onClick={() => markLost(deal.id)} className="h-6 px-2 text-[10px]">✕</LBtn>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {stageDeals.length === 0 && <div className="text-center py-4 text-xs text-slate-400 italic">Empty</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <LDialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add New Deal">
+            <form onSubmit={handleAdd} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Client</label>
+                <LSelect required value={form.clientId} onChange={e => setForm({...form, clientId: e.target.value})}>
+                  <option value="">-- Select Client --</option>
+                  {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </LSelect>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Deal Title</label>
+                <LInput required value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="e.g. Monthly Dishwash Supply" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Expected Liters/mo</label>
+                  <LInput type="number" min="0" value={form.liters} onChange={e => setForm({...form, liters: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Deal Value (₹)</label>
+                  <LInput type="number" min="0" value={form.value} onChange={e => setForm({...form, value: e.target.value})} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                <LInput value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="e.g. Sample given, awaiting feedback..." />
+              </div>
+              <div className="pt-3 flex justify-end gap-3">
+                <LBtn type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</LBtn>
+                <LBtn type="submit">Create Deal</LBtn>
+              </div>
+            </form>
+          </LDialog>
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // LENTONE — REPORTS (Admin / Area Manager only)
+    // ============================================================================
+
+    function LentoneReports({ deals, orders, clients, team }) {
+      const closedDeals = deals.filter(d => d.stage === 'won');
+      const totalLitersWon = closedDeals.reduce((s,d) => s+d.liters, 0);
+      const totalRevWon = closedDeals.reduce((s,d) => s+d.value, 0);
+      const deliveredOrders = orders.filter(o => o.status === 'delivered');
+      const deliveryRate = orders.length > 0 ? Math.round((deliveredOrders.length / orders.length) * 100) : 0;
+
+      // Performance by executive
+      const executives = team.filter(t => t.role === 'Field Sales Executive');
+      const perfData = executives.map(ex => {
+        const myDeals = closedDeals.filter(d => d.assignedTo === ex.empId);
+        const myLiters = myDeals.reduce((s,d) => s+d.liters, 0);
+        return { name: ex.name, deals: myDeals.length, liters: myLiters, value: myDeals.reduce((s,d)=>s+d.value,0) };
+      }).sort((a,b) => b.liters - a.liters);
+
+      const maxLiters = Math.max(...perfData.map(p => p.liters), 1);
+
+      // Client type breakdown
+      const typeGroups = {};
+      clients.filter(c=>c.status==='active').forEach(c => {
+        typeGroups[c.type] = (typeGroups[c.type] || 0) + 1;
+      });
+
+      // Product popularity
+      const productCount = {};
+      clients.filter(c=>c.status==='active').forEach(c => {
+        c.products.forEach(p => { productCount[p] = (productCount[p]||0) + 1; });
+      });
+
+      return (
+        <div className="space-y-6">
+          {/* Top KPIs */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <LCard className="p-5 bg-gradient-to-br from-teal-600 to-teal-800 text-white border-teal-700">
+              <p className="text-teal-200 text-xs font-medium mb-1">Total Liters Won</p>
+              <p className="text-3xl font-bold">{totalLitersWon}L</p>
+            </LCard>
+            <LCard className="p-5 bg-gradient-to-br from-lime-600 to-lime-700 text-white border-lime-700">
+              <p className="text-lime-200 text-xs font-medium mb-1">Total Revenue</p>
+              <p className="text-2xl font-bold">{formatINR(totalRevWon)}</p>
+            </LCard>
+            <LCard className="p-5">
+              <p className="text-slate-500 text-xs font-medium mb-1">Deals Closed</p>
+              <p className="text-3xl font-bold text-teal-900">{closedDeals.length}</p>
+            </LCard>
+            <LCard className="p-5">
+              <p className="text-slate-500 text-xs font-medium mb-1">Delivery Success Rate</p>
+              <p className="text-3xl font-bold text-teal-900">{deliveryRate}%</p>
+            </LCard>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Executive Performance */}
+            <LCard className="p-6">
+              <h3 className="font-bold text-teal-900 mb-5">Field Executive Performance</h3>
+              <div className="space-y-4">
+                {perfData.map((p, i) => (
+                  <div key={p.name}>
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ${i===0?'bg-teal-600 text-white':'bg-slate-100 text-slate-600'}`}>{i+1}</span>
+                        <span className="text-sm font-semibold text-slate-800">{p.name}</span>
+                      </div>
+                      <div className="text-right text-xs">
+                        <span className="font-bold text-teal-700">{p.liters}L</span>
+                        <span className="text-slate-400 ml-2">{p.deals} deals</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-teal-50 rounded-full">
+                      <div className="h-full bg-teal-500 rounded-full transition-all duration-700" style={{width:`${(p.liters/maxLiters)*100}%`}}></div>
+                    </div>
+                  </div>
+                ))}
+                {perfData.length === 0 && <p className="text-sm text-slate-400 italic">No data.</p>}
+              </div>
+            </LCard>
+
+            {/* Client Type Mix */}
+            <LCard className="p-6">
+              <h3 className="font-bold text-teal-900 mb-5">Client Type Mix</h3>
+              <div className="space-y-3">
+                {Object.entries(typeGroups).sort((a,b)=>b[1]-a[1]).map(([type, count]) => {
+                  const total = Object.values(typeGroups).reduce((s,v)=>s+v,0);
+                  const pct = Math.round((count/total)*100);
+                  return (
+                    <div key={type}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-slate-700">{type}</span>
+                        <span className="font-semibold text-teal-800">{count} ({pct}%)</span>
+                      </div>
+                      <div className="h-1.5 bg-teal-50 rounded-full">
+                        <div className="h-full bg-gradient-to-r from-teal-400 to-lime-400 rounded-full" style={{width:`${pct}%`}}></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </LCard>
+          </div>
+
+          {/* Product Popularity */}
+          <LCard className="p-6">
+            <h3 className="font-bold text-teal-900 mb-5">Product Popularity (Active Clients Using)</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {Object.entries(productCount).sort((a,b)=>b[1]-a[1]).map(([prod, cnt]) => (
+                <div key={prod} className="bg-teal-50 rounded-xl p-4 text-center border border-teal-100">
+                  <p className="text-2xl font-bold text-teal-700">{cnt}</p>
+                  <p className="text-xs text-slate-600 mt-1 leading-tight">{prod}</p>
+                </div>
+              ))}
+            </div>
+          </LCard>
+
+          {/* Deals table */}
+          <LCard className="overflow-hidden">
+            <div className="p-5 border-b border-teal-50">
+              <h3 className="font-bold text-teal-900">Closed Deals Log</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-teal-50/50 text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3 font-medium">Client</th>
+                    <th className="px-5 py-3 font-medium">Deal</th>
+                    <th className="px-5 py-3 font-medium">Liters</th>
+                    <th className="px-5 py-3 font-medium">Value</th>
+                    <th className="px-5 py-3 font-medium">Closed By</th>
+                    <th className="px-5 py-3 font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-teal-50">
+                  {closedDeals.map(d => {
+                    const client = clients.find(c => c.id === d.clientId);
+                    const exec = team.find(t => t.empId === d.assignedTo);
+                    return (
+                      <tr key={d.id} className="hover:bg-teal-50/20 transition-colors">
+                        <td className="px-5 py-3 font-semibold text-teal-900">{client?.name}</td>
+                        <td className="px-5 py-3 text-slate-600">{d.title}</td>
+                        <td className="px-5 py-3 font-semibold">{d.liters}L</td>
+                        <td className="px-5 py-3 font-semibold">{formatINR(d.value)}</td>
+                        <td className="px-5 py-3 text-slate-600">{exec?.name}</td>
+                        <td className="px-5 py-3 text-slate-500">{d.closedDate || '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </LCard>
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // LENTONE — MAIN APP SHELL
+    // ============================================================================
+
+    function LentoneApp({ user, onLogout }) {
+      const [route, setRoute] = useState('dashboard');
+      const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+      // Shared state
+      const [lClients, setLClients] = useState(mockLentoneClients);
+      const [lDeals, setLDeals] = useState(mockLentoneDeals);
+      const [lOrders, setLOrders] = useState(mockLentoneOrders);
+      const [lAttendance, setLAttendance] = useState(mockLentoneAttendance);
+
+      const isAdmin = user.role === 'Super Admin' || user.role === 'Area Manager';
+      const isExec = user.role === 'Field Sales Executive';
+      const isAgent = user.role === 'Delivery Agent';
+
+      // Navigation config per role
+      const navItems = isAdmin ? [
+        { id: 'dashboard', label: 'Dashboard', icon: Home },
+        { id: 'field_workers', label: 'Field Workers', icon: Users },
+        { id: 'clients', label: 'B2B Clients', icon: Briefcase },
+        { id: 'orders', label: 'Orders & Delivery', icon: CheckSquare },
+        { id: 'deals', label: 'Deals Pipeline', icon: Target },
+        { id: 'reports', label: 'Reports', icon: BarChart3 },
+      ] : isExec ? [
+        { id: 'dashboard', label: 'My Dashboard', icon: Home },
+        { id: 'field_workers', label: 'My Check-In', icon: Clock },
+        { id: 'clients', label: 'My Clients', icon: Briefcase },
+        { id: 'deals', label: 'My Deals', icon: Target },
+      ] : [
+        { id: 'dashboard', label: 'My Dashboard', icon: Home },
+        { id: 'field_workers', label: 'My Check-In', icon: Clock },
+        { id: 'orders', label: 'My Deliveries', icon: CheckSquare },
+      ];
+
+      const renderView = () => {
+        switch (route) {
+          case 'dashboard': return <LentoneDashboard currentUser={user} orders={lOrders} deals={lDeals} clients={lClients} attendance={lAttendance} team={mockLentoneTeam} />;
+          case 'field_workers': return <LentoneFieldWorkers team={mockLentoneTeam} attendance={lAttendance} setAttendance={setLAttendance} currentUser={user} />;
+          case 'clients': return <LentoneClients clients={lClients} setClients={setLClients} currentUser={user} />;
+          case 'orders': return <LentoneOrders orders={lOrders} setOrders={setLOrders} clients={lClients} team={mockLentoneTeam} currentUser={user} />;
+          case 'deals': return <LentoneDeals deals={lDeals} setDeals={setLDeals} clients={lClients} currentUser={user} />;
+          case 'reports': return <LentoneReports deals={lDeals} orders={lOrders} clients={lClients} team={mockLentoneTeam} />;
+          default: return <LentoneDashboard currentUser={user} orders={lOrders} deals={lDeals} clients={lClients} attendance={lAttendance} team={mockLentoneTeam} />;
+        }
+      };
+
+      const routeTitles = { dashboard: 'Dashboard', field_workers: isAdmin ? 'Field Workers' : 'My Check-In', clients: isAdmin ? 'B2B Clients' : 'My Clients', orders: isAdmin ? 'Orders & Delivery' : 'My Deliveries', deals: isAdmin ? 'Deals Pipeline' : 'My Deals', reports: 'Reports' };
+
+      const roleBadgeColor = { 'Super Admin': 'bg-teal-800', 'Area Manager': 'bg-teal-600', 'Field Sales Executive': 'bg-lime-600', 'Delivery Agent': 'bg-blue-600' };
+
+      const SidebarContent = () => (
+        <>
+          <div className="p-4 flex-1 overflow-y-auto space-y-0.5 custom-scrollbar">
+            {navItems.map(item => (
+              <button key={item.id} onClick={() => { setRoute(item.id); setIsMobileOpen(false); }}
+                className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${route === item.id ? 'bg-teal-700 text-white' : 'text-teal-100 hover:bg-teal-800/60'}`}>
+                <item.icon className="mr-3" size={17} />
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <div className="p-4 border-t border-teal-800">
+            <div className="flex items-center gap-3 mb-3">
+              <LAvatar name={user.initial} className="w-9 h-9 text-xs" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-white truncate">{user.name}</div>
+                <div className={`text-[10px] px-2 py-0.5 rounded-full text-white font-bold inline-block mt-0.5 ${roleBadgeColor[user.role]}`}>{user.role}</div>
+              </div>
+            </div>
+            <button onClick={onLogout} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-teal-200 hover:text-white hover:bg-teal-800/60 rounded-lg transition-colors">
+              <LogOut size={15} />Logout
+            </button>
+          </div>
+        </>
+      );
+
+      return (
+        <div className="flex h-screen overflow-hidden font-sans" style={{ background: LT_BG }}>
+          {/* Desktop Sidebar */}
+          <aside className="hidden md:flex w-60 flex-col z-20" style={{ background: '#0D4A44' }}>
+            <div className="h-16 flex items-center px-5 border-b border-teal-800 shrink-0">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center mr-3 shrink-0" style={{ background: '#14B8A6' }}>
+                <span className="text-white font-black text-sm">L</span>
+              </div>
+              <div>
+                <div className="text-white font-bold text-sm leading-tight">LENTONE</div>
+                <div className="text-teal-400 text-[10px] font-medium tracking-wide">Consumer Products</div>
+              </div>
+            </div>
+            <SidebarContent />
+          </aside>
+
+          {/* Mobile drawer backdrop */}
+          {isMobileOpen && <div className="md:hidden fixed inset-0 z-40 bg-teal-900/50" onClick={() => setIsMobileOpen(false)} />}
+          <aside className={`md:hidden fixed inset-y-0 left-0 z-50 w-60 flex flex-col transform transition-transform duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`} style={{ background: '#0D4A44' }}>
+            <div className="h-16 flex items-center justify-between px-5 border-b border-teal-800">
+              <div className="text-white font-bold">LENTONE CRM</div>
+              <button onClick={() => setIsMobileOpen(false)} className="text-teal-300"><X size={20} /></button>
+            </div>
+            <SidebarContent />
+          </aside>
+
+          {/* Main content */}
+          <main className="flex-1 flex flex-col h-screen overflow-hidden">
+            <header className="h-16 bg-white border-b border-teal-100 flex items-center justify-between px-4 md:px-7 shrink-0 shadow-sm">
+              <div className="flex items-center gap-3">
+                <button className="md:hidden text-teal-600" onClick={() => setIsMobileOpen(true)}><Menu size={22} /></button>
+                <h1 className="text-lg font-bold text-teal-900">{routeTitles[route]}</h1>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`hidden sm:inline text-[11px] font-bold px-3 py-1 rounded-full text-white ${roleBadgeColor[user.role]}`}>{user.role}</span>
+                <LAvatar name={user.initial} className="w-8 h-8 text-[10px] md:hidden" />
+                <button onClick={onLogout} className="md:hidden text-teal-500 hover:text-red-500"><LogOut size={18} /></button>
+              </div>
+            </header>
+
+            <div className="flex-1 overflow-y-auto p-4 md:p-7 custom-scrollbar">
+              <div className="max-w-6xl mx-auto pb-10">
+                {renderView()}
+              </div>
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // END LENTONE MODULE
+    // ============================================================================
+
     const mockTeam = [
       { empId: 'TGV-001', name: 'Vikram Sharma', role: 'Super Admin', email: 'vikram@tagverse.ai', password: 'Tagverse@001', initial: 'VS' },
       { empId: 'TGV-002', name: 'Aisha Kapoor', role: 'Sales Head', email: 'aisha@tagverse.ai', password: 'Tagverse@002', initial: 'AK' },
@@ -570,7 +1709,9 @@
     // ============================================================================
 
     export default function App() {
-      const [currentUser, setCurrentUser] = useState(mockTeam[0]);
+      const [currentUser, setCurrentUser] = useState(null);
+      const [portal, setPortal] = useState('tagverse'); // 'tagverse' | 'lentone'
+      const [activePortalTab, setActivePortalTab] = useState('tagverse'); // for login screen tabs
       const [currentRoute, setCurrentRoute] = useState('dashboard');
       const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
       const [selectedQuoteId, setSelectedQuoteId] = useState(null);
@@ -617,74 +1758,169 @@
           setLoginError('Please fill in all fields.');
           return;
         }
-        const matchedUser = mockTeam.find(u => 
-          u.email.toLowerCase() === email.trim().toLowerCase() && 
-          u.password === password
-        );
-        if (matchedUser) {
-          setCurrentUser(matchedUser);
+        if (activePortalTab === 'lentone') {
+          const matchedUser = mockLentoneTeam.find(u =>
+            u.email.toLowerCase() === email.trim().toLowerCase() &&
+            u.password === password
+          );
+          if (matchedUser) {
+            setCurrentUser(matchedUser);
+            setPortal('lentone');
+          } else {
+            setLoginError('Invalid Lentone credentials.');
+          }
         } else {
-          setLoginError('Invalid email or password');
+          const matchedUser = mockTeam.find(u =>
+            u.email.toLowerCase() === email.trim().toLowerCase() &&
+            u.password === password
+          );
+          if (matchedUser) {
+            setCurrentUser(matchedUser);
+            setPortal('tagverse');
+          } else {
+            setLoginError('Invalid email or password');
+          }
         }
       };
 
       const handleLogout = () => {
         setCurrentUser(null);
+        setPortal('tagverse');
         setEmail('');
         setPassword('');
         setLoginError('');
+        setCurrentRoute('dashboard');
       };
 
+      // Route to Lentone portal if Lentone user logged in
+      if (currentUser && portal === 'lentone') {
+        return <LentoneApp user={currentUser} onLogout={handleLogout} />;
+      }
+
       if (!currentUser) {
+        // Credential hints for demo
+        const tvHints = [
+          { label: 'Super Admin', email: 'vikram@tagverse.ai', pass: 'Tagverse@001' },
+          { label: 'Sales Head', email: 'aisha@tagverse.ai', pass: 'Tagverse@002' },
+        ];
+        const lnHints = [
+          { label: 'Super Admin', email: 'admin@lentone.in', pass: 'Lentone@001' },
+          { label: 'Field Sales Exec', email: 'jatin@lentone.in', pass: 'Lentone@003' },
+          { label: 'Delivery Agent', email: 'murugan@lentone.in', pass: 'Lentone@005' },
+        ];
+        const hints = activePortalTab === 'lentone' ? lnHints : tvHints;
+
         return (
-          <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-            <Card className="max-w-md w-full p-8 shadow-xl border-slate-200/60">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <span className="text-white font-bold text-3xl tracking-tighter">T</span>
-                </div>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">TAGVERSE CRM</h1>
-                <p className="text-slate-500 mt-2 text-sm">Sign in to your account</p>
+          <div className="min-h-screen flex items-center justify-center p-4" style={{ background: activePortalTab === 'lentone' ? 'linear-gradient(135deg, #0D4A44 0%, #0F766E 50%, #134e4a 100%)' : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)' }}>
+            <div className="w-full max-w-md">
+              {/* Portal Tabs */}
+              <div className="flex mb-6 bg-white/10 rounded-2xl p-1.5 gap-1.5 backdrop-blur-sm">
+                <button
+                  onClick={() => { setActivePortalTab('tagverse'); setLoginError(''); setEmail(''); setPassword(''); }}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                    activePortalTab === 'tagverse'
+                      ? 'bg-white text-slate-900 shadow-lg'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded flex items-center justify-center text-xs font-black ${activePortalTab === 'tagverse' ? 'bg-slate-900 text-white' : 'bg-white/20 text-white'}`}>T</div>
+                  TagVerse Agency
+                </button>
+                <button
+                  onClick={() => { setActivePortalTab('lentone'); setLoginError(''); setEmail(''); setPassword(''); }}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                    activePortalTab === 'lentone'
+                      ? 'bg-white text-teal-900 shadow-lg'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded flex items-center justify-center text-xs font-black ${activePortalTab === 'lentone' ? 'bg-teal-700 text-white' : 'bg-white/20 text-white'}`}>L</div>
+                  Lentone Products
+                </button>
               </div>
-              <form onSubmit={handleLoginSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
-                  <Input 
-                    type="email" 
-                    required 
-                    placeholder="you@tagverse.ai" 
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                  />
+
+              {/* Login Card */}
+              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                {/* Card Header */}
+                <div className={`px-8 pt-8 pb-6 ${activePortalTab === 'lentone' ? 'bg-gradient-to-br from-teal-700 to-teal-900' : 'bg-gradient-to-br from-slate-800 to-slate-900'}`}>
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-lg ${activePortalTab === 'lentone' ? 'bg-teal-500' : 'bg-white/10'}`}>
+                    <span className="text-white font-black text-2xl">{activePortalTab === 'lentone' ? 'L' : 'T'}</span>
+                  </div>
+                  <h1 className="text-2xl font-bold text-white tracking-tight">
+                    {activePortalTab === 'lentone' ? 'Lentone CRM' : 'TagVerse CRM'}
+                  </h1>
+                  <p className="text-white/60 text-sm mt-1">
+                    {activePortalTab === 'lentone' ? 'FMCG Field Force Portal' : 'AI Agency Management Portal'}
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                  <div className="relative">
-                    <Input 
-                      type={showPassword ? "text" : "password"} 
-                      required 
-                      placeholder="••••••••" 
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      className="pr-10"
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 transition-colors pointer-events-auto"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+
+                {/* Form */}
+                <div className="px-8 py-6">
+                  <form onSubmit={handleLoginSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                      <Input
+                        type="email"
+                        required
+                        placeholder={activePortalTab === 'lentone' ? 'you@lentone.in' : 'you@tagverse.ai'}
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          required
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={e => setPassword(e.target.value)}
+                          className="pr-10"
+                        />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 transition-colors">
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {loginError && (
+                      <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
+                        <AlertCircle size={15} className="text-red-500 shrink-0" />
+                        <p className="text-sm text-red-600 font-medium">{loginError}</p>
+                      </div>
+                    )}
+
+                    <button type="submit"
+                      className={`w-full py-3 rounded-xl font-semibold text-white text-sm transition-all active:scale-[0.98] shadow-lg ${
+                        activePortalTab === 'lentone'
+                          ? 'bg-teal-700 hover:bg-teal-800'
+                          : 'bg-slate-900 hover:bg-slate-800'
+                      }`}>
+                      Sign In →
                     </button>
+                  </form>
+
+                  {/* Demo credential hints */}
+                  <div className="mt-5 pt-4 border-t border-slate-100">
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Demo Credentials</p>
+                    <div className="space-y-1.5">
+                      {hints.map((h, i) => (
+                        <button key={i} type="button"
+                          onClick={() => { setEmail(h.email); setPassword(h.pass); setLoginError(''); }}
+                          className="w-full text-left flex items-center justify-between px-3 py-2 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors group">
+                          <span className="text-xs font-semibold text-slate-600">{h.label}</span>
+                          <span className="text-[10px] text-slate-400 group-hover:text-slate-600 font-mono">{h.email}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                
-                {loginError && (
-                  <p className="text-sm text-red-600 font-medium">{loginError}</p>
-                )}
+              </div>
 
-                <Button type="submit" className="w-full mt-2">Sign In</Button>
-              </form>
-            </Card>
+              <p className="text-center text-white/30 text-xs mt-5">TagVerse CRM — Dual Portal System</p>
+            </div>
           </div>
         );
       }
