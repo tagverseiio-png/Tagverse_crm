@@ -8,7 +8,7 @@ import {
   CircleDollarSign, FileText, Receipt, PenTool, CreditCard, Megaphone, Edit3,
   FolderOpen, Rocket, CalendarDays, Smartphone, Briefcase, Building, CheckSquare,
   Calendar, UsersRound, BarChart2, TrendingUp, ClipboardList, Settings, Bot,
-  Link as LinkIcon, DoorOpen, Cpu
+  Link as LinkIcon, DoorOpen, Cpu, MapPin, Truck
 } from 'lucide-react';
 
 const topNavItems = [
@@ -28,6 +28,7 @@ const navGroups = [
       { id: 'pipeline', icon: <GitBranch size={16} />, label: 'Pipelines', path: '/pipeline' },
       { id: 'deals', icon: <Handshake size={16} />, label: 'Deals', path: '/deals' },
       { id: 'funnel', icon: <Filter size={16} />, label: 'Funnel', path: '/funnel' },
+      { id: 'field-monitoring', icon: <MapPin size={16} />, label: 'Field Tracking', path: '/field-monitoring' },
     ],
   },
   {
@@ -62,6 +63,7 @@ const navGroups = [
       { id: 'tasks', icon: <CheckSquare size={16} />, label: 'Task Manager', path: '/tasks' },
       { id: 'workspace-calendar', icon: <Calendar size={16} />, label: 'Calendar', path: '/calendar' },
       { id: 'team', icon: <UsersRound size={16} />, label: 'Team', path: '/team' },
+      { id: 'deliveries', icon: <Truck size={16} />, label: 'Deliveries', path: '/deliveries' },
     ],
   },
   {

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { MessageSquare, CheckCircle, Package, AlertTriangle, Send } from 'lucide-react';
 
 const initialPipeline = [
   {
@@ -7,48 +8,41 @@ const initialPipeline = [
     deals: [
       { id: 1, name: 'Riya Sharma', company: 'BloomAds', value: 45000, owner: 'JS', days: 0, source: 'Meta Ads' },
       { id: 2, name: 'Karthik R.', company: 'TechVibe', value: 80000, owner: 'AM', days: 1, source: 'Form' },
-      { id: 3, name: 'Meera N.', company: 'FreshBrand', value: 30000, owner: 'JS', days: 0, source: 'Referral' },
     ],
   },
   {
-    id: 'engaged', label: 'Engaged', color: 'engaged', headerColor: 'var(--purple)',
+    id: 'sample', label: 'Sample Delivered', color: 'engaged', headerColor: 'var(--purple)',
     deals: [
-      { id: 4, name: 'Arjun Mehta', company: 'GrowthLab', value: 120000, owner: 'SA', days: 3, source: 'Form' },
-      { id: 5, name: 'Priya K.', company: 'NexaDigital', value: 60000, owner: 'JS', days: 2, source: 'Referral' },
+      { id: 4, name: 'Hotel Manager', company: 'Ilara Hotel & Spa', value: 120000, owner: 'SA', days: 3, source: 'WhatsApp' },
+      { id: 5, name: 'Purchase Head', company: 'Yalis Restaurant', value: 60000, owner: 'JS', days: 2, source: 'WhatsApp' },
     ],
   },
   {
-    id: 'qualified', label: 'Qualified', color: 'qualified', headerColor: 'var(--amber)',
+    id: 'quote', label: 'Quote Sent', color: 'qualified', headerColor: 'var(--amber)',
     deals: [
-      { id: 6, name: 'Sameer P.', company: 'MediaCo', value: 95000, owner: 'AM', days: 5, source: 'LinkedIn' },
+      { id: 6, name: 'Procurement', company: 'Educational Inst.', value: 95000, owner: 'AM', days: 5, source: 'WhatsApp' },
       { id: 7, name: 'Divya T.', company: 'BrandNest', value: 210000, owner: 'SA', days: 4, source: 'Meta Ads' },
-    ],
-  },
-  {
-    id: 'proposal', label: 'Proposal Sent', color: 'proposal', headerColor: 'var(--purple)',
-    deals: [
-      { id: 8, name: 'Raj Verma', company: 'ScaleUp', value: 180000, owner: 'JS', days: 7, source: 'LinkedIn' },
     ],
   },
   {
     id: 'negotiation', label: 'Negotiation', color: 'negotiation', headerColor: 'var(--amber)',
     deals: [
-      { id: 9, name: 'Ananya S.', company: 'ClickFarm', value: 350000, owner: 'AM', days: 12, source: 'Cold Email' },
-      { id: 10, name: 'Vikram L.', company: 'AdSphere', value: 280000, owner: 'JS', days: 10, source: 'Referral' },
+      { id: 9, name: 'Owner', company: 'Hot Dosai', value: 350000, owner: 'AM', days: 12, source: 'Cold Email' },
     ],
   },
   {
-    id: 'won', label: 'Closed Win', color: 'won', headerColor: 'var(--emerald)',
+    id: 'confirmed', label: 'Order Confirmed', color: 'won', headerColor: 'var(--emerald)',
     deals: [
-      { id: 11, name: 'Nisha D.', company: 'BoldMark', value: 420000, owner: 'SA', days: 18, source: 'Meta Ads' },
+      { id: 11, name: 'Khader Bhai', company: 'Khader Bhai Biriyani', value: 420000, owner: 'SA', days: 18, source: 'WhatsApp' },
     ],
   },
-  {
-    id: 'lost', label: 'Closed Lose', color: 'lost', headerColor: 'var(--rose)',
-    deals: [
-      { id: 12, name: 'Mohit B.', company: 'SprintCo', value: 70000, owner: 'AM', days: 21, source: 'Cold Email' },
-    ],
-  },
+];
+
+const mockWhatsAppActivity = [
+  { id: 1, sender: 'Client', text: 'Hi, we need some samples for our hotel. Can you deliver 5L hand wash and floor cleaner?', time: '10:30 AM', date: '27/06/2026' },
+  { id: 2, sender: 'Agent (Thamizh T.)', text: 'Priority - samples needed for Ilara Hotel & Spa. Added to queue.', time: '10:45 AM', date: '27/06/2026', internal: true },
+  { id: 3, sender: 'Agent (Thamizh T.)', text: 'Sample Delivered at Ilara Hotel. Awaiting feedback.', time: '02:15 PM', date: '28/06/2026', internal: true },
+  { id: 4, sender: 'Client', text: 'Thanks. The samples look good. Can you send a quote for 1000+ cans?', time: '11:00 AM', date: 'Today' },
 ];
 
 function fmtVal(v: number) {
@@ -129,7 +123,7 @@ export default function PipelinePage() {
   };
 
   const totalValue = pipelineState.flatMap(s => s.deals).reduce((a, d) => a + d.value, 0);
-  const wonValue = (pipelineState.find(s => s.id === 'won')?.deals || []).reduce((a, d) => a + d.value, 0);
+  const wonValue = (pipelineState.find(s => s.id === 'confirmed')?.deals || []).reduce((a, d) => a + d.value, 0);
   const totalDeals = pipelineState.flatMap(s => s.deals).length;
 
   return (
@@ -139,9 +133,9 @@ export default function PipelinePage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
         {[
           { label: 'Total Pipeline Value', value: fmtVal(totalValue), color: 'purple' },
-          { label: 'Closed Won (Month)', value: fmtVal(wonValue), color: 'emerald' },
-          { label: 'Active Deals', value: String(totalDeals - 2), color: 'blue' },
-          { label: 'Avg. Deal Size', value: fmtVal(Math.round(totalValue / totalDeals)), color: 'amber' },
+          { label: 'Confirmed Orders', value: fmtVal(wonValue), color: 'emerald' },
+          { label: 'Active Deals', value: String(totalDeals), color: 'blue' },
+          { label: 'Avg. Deal Size', value: fmtVal(Math.round(totalValue / totalDeals || 0)), color: 'amber' },
         ].map(k => (
           <div key={k.label} className={`kpi-card ${k.color}`}>
             <div className="kpi-label" style={{ marginBottom: 8 }}>{k.label}</div>
@@ -246,47 +240,105 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* New Deal Modal */}
+      {/* New/Edit Deal Modal with WhatsApp Integration */}
       {isModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="card" style={{ width: 420, padding: 24, display: 'flex', flexDirection: 'column', gap: 16, background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>{editingDealId ? 'Edit Deal' : 'Create New Deal'}</h3>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div className="card" style={{ width: '100%', maxWidth: 850, padding: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)', height: '80vh', overflow: 'hidden' }}>
+            
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>{editingDealId ? `Deal: ${newDealCompany}` : 'Create New Deal'}</h3>
+                {editingDealId && <span style={{ fontSize: 11, background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', padding: '2px 8px', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 4 }}><MessageSquare size={12}/> WhatsApp Linked</span>}
+              </div>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 16 }}>✕</button>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>Deal Name</label>
-                <input type="text" value={newDealName} onChange={e => setNewDealName(e.target.value)} placeholder="e.g. Website Redesign" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>Company / Client</label>
-                <input type="text" value={newDealCompany} onChange={e => setNewDealCompany(e.target.value)} placeholder="Search companies..." style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }} />
-              </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>Value (₹)</label>
-                  <input type="number" value={newDealValue} onChange={e => setNewDealValue(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }} />
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              {/* Left Side: Deal Details */}
+              <div style={{ flex: 1, padding: 24, overflowY: 'auto', borderRight: '1px solid var(--border)' }}>
+                <h4 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>Deal Information</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Deal Name</label>
+                    <input type="text" value={newDealName} onChange={e => setNewDealName(e.target.value)} placeholder="e.g. 10x 5L Floor Cleaner" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Company / Client</label>
+                    <input type="text" value={newDealCompany} onChange={e => setNewDealCompany(e.target.value)} placeholder="Search companies..." style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Value (₹)</label>
+                      <input type="number" value={newDealValue} onChange={e => setNewDealValue(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Pipeline Stage</label>
+                      <select value={newDealStage} onChange={e => setNewDealStage(e.target.value)} style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}>
+                        <option value="new">New Enquiry</option>
+                        <option value="sample">Sample Delivered</option>
+                        <option value="quote">Quote Sent</option>
+                        <option value="negotiation">Negotiation</option>
+                        <option value="confirmed">Order Confirmed</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>Pipeline Stage</label>
-                  <select value={newDealStage} onChange={e => setNewDealStage(e.target.value)} style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}>
-                    <option value="new">New Enquiry</option>
-                    <option value="engaged">Engaged</option>
-                    <option value="qualified">Qualified</option>
-                    <option value="proposal">Proposal Sent</option>
-                    <option value="negotiation">Negotiation</option>
-                    <option value="won">Closed Win</option>
-                    <option value="lost">Closed Lose</option>
-                  </select>
-                </div>
-              </div>
-            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
-              <button className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSaveDeal}>{editingDealId ? 'Update Deal' : 'Create Deal'}</button>
+                <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 10, marginTop: 24 }}>
+                  <button className="btn btn-primary" onClick={handleSaveDeal}>{editingDealId ? 'Update Deal' : 'Create Deal'}</button>
+                  <button className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                </div>
+              </div>
+
+              {/* Right Side: WhatsApp Activity Feed (Only show when editing) */}
+              {editingDealId ? (
+                <div style={{ width: 350, display: 'flex', flexDirection: 'column', background: 'var(--bg-card)' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.02)' }}>
+                    <h4 style={{ fontSize: 13, fontWeight: 600, margin: 0, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <MessageSquare size={14} /> WhatsApp Activity Feed
+                    </h4>
+                  </div>
+                  
+                  {/* Messages Feed */}
+                  <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {mockWhatsAppActivity.map(msg => (
+                      <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.internal ? 'flex-end' : 'flex-start' }}>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>{msg.sender} • {msg.date} {msg.time}</span>
+                        <div style={{ 
+                          background: msg.internal ? 'var(--blue-dim)' : 'var(--bg-secondary)', 
+                          color: msg.internal ? 'var(--blue-light)' : 'var(--text-primary)',
+                          padding: '8px 12px', 
+                          borderRadius: '8px', 
+                          borderBottomLeftRadius: msg.internal ? '8px' : '0px',
+                          borderBottomRightRadius: msg.internal ? '0px' : '8px',
+                          fontSize: 13,
+                          maxWidth: '85%',
+                          border: msg.internal ? 'none' : '1px solid var(--border)'
+                        }}>
+                          {msg.text}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Message Input Simulator */}
+                  <div style={{ padding: 16, borderTop: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input type="text" placeholder="Reply via WhatsApp..." style={{ flex: 1, padding: '8px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
+                      <button className="btn btn-primary" style={{ padding: '8px', borderRadius: '50%' }}>
+                        <Send size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ width: 350, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', background: 'var(--bg-card)', padding: 24, textAlign: 'center', borderLeft: '1px solid var(--border)' }}>
+                  <MessageSquare size={32} color="var(--text-muted)" style={{ marginBottom: 16 }} />
+                  <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 8 }}>WhatsApp Integration</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Save this deal to start tracking WhatsApp conversations with the client automatically.</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
