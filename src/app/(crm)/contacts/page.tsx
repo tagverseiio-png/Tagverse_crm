@@ -332,7 +332,7 @@ export default function ContactsPage() {
                   <td>
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                       {c.tags.map(tag => (
-                         <span key={tag} style={{ fontSize: 10, color: 'var(--purple-light)', background: 'var(--purple-dim)', padding: '2px 6px', borderRadius: 4 }}>
+                         <span key={tag} style={{ fontSize: 10, color: '#000', background: 'var(--purple-dim)', padding: '2px 6px', borderRadius: 4 }}>
                            {tag}
                          </span>
                       ))}
@@ -343,7 +343,7 @@ export default function ContactsPage() {
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
                       <button onClick={() => setViewContact(c)} className="btn btn-ghost" title="View details" style={{ padding: '4px 10px', fontSize: 11 }}>View</button>
-                      <button onClick={() => openEdit(c)} title="Edit contact" style={{ padding: '4px 10px', fontSize: 11, background: 'var(--blue-dim)', color: 'var(--blue-light)', border: '1px solid var(--blue-light)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>✏️ Edit</button>
+                      <button onClick={() => openEdit(c)} title="Edit contact" style={{ padding: '4px 10px', fontSize: 11, background: 'var(--blue-dim)', color: '#000', border: '1px solid var(--blue-light)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>✏️ Edit</button>
                       <button onClick={() => setDeleteContact(c)} title="Delete contact" style={{ padding: '4px 10px', fontSize: 11, background: 'rgba(239,68,68,0.1)', color: 'var(--rose-light)', border: '1px solid var(--rose)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>🗑️ Delete</button>
                     </div>
                   </td>
