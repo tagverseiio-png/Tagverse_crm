@@ -106,7 +106,7 @@ export default function PipelinePage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
           {(['kanban', 'list'] as const).map(v => (
-            <button key={v} onClick={() => setView(v)} style={{ padding: '7px 16px', fontSize: 12, fontWeight: 600, background: view === v ? 'var(--purple-dim)' : 'transparent', color: view === v ? 'var(--purple-light)' : 'var(--text-muted)', border: 'none', cursor: 'pointer', borderRight: '1px solid var(--border)', fontFamily: 'Inter, sans-serif', textTransform: 'capitalize' }}>
+            <button key={v} onClick={() => setView(v)} style={{ padding: '7px 16px', fontSize: 12, fontWeight: 600, background: view === v ? 'var(--purple-dim)' : 'transparent', color: view === v ? 'var(--brand-accent)' : 'var(--text-muted)', border: 'none', cursor: 'pointer', borderRight: '1px solid var(--border)', fontFamily: 'Inter, sans-serif', textTransform: 'capitalize' }}>
               {v === 'kanban' ? '⬡ Kanban' : '≡ List'}
             </button>
           ))}
@@ -126,15 +126,15 @@ export default function PipelinePage() {
                   <span className={`pipeline-col-count ${col.color}`} style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8 }}>{col.deals.length}</span>
                 </div>
                 {/* Deals */}
-                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 120 }}>
+                <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 120 }}>
                   {col.deals.map(deal => (
                     <div key={deal.id} className="deal-card" style={{ position: 'relative', padding: '14px' }} onClick={() => openModalForEdit(col.id, deal)}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>{deal.name}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>{deal.company}</div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--emerald-light)' }}>{fmtVal(deal.value)}</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--emerald)' }}>{fmtVal(deal.value)}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontSize: 11, color: deal.days > 10 ? 'var(--rose-light)' : 'var(--text-muted)' }}>{deal.days}d</span>
+                          <span style={{ fontSize: 11, color: deal.days > 10 ? 'var(--rose)' : 'var(--text-muted)' }}>{deal.days}d</span>
                           <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, var(--purple), var(--blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'white' }}>{deal.owner}</div>
                         </div>
                       </div>
@@ -147,7 +147,7 @@ export default function PipelinePage() {
                           right: 4,
                           background: 'transparent',
                           border: 'none',
-                          color: 'var(--rose-light)',
+                          color: 'var(--rose)',
                           cursor: 'pointer',
                           fontSize: 12,
                         }}
@@ -183,10 +183,10 @@ export default function PipelinePage() {
                 <tr key={deal.id} style={{ cursor: 'pointer', position: 'relative' }} onClick={() => openModalForEdit(col.id, deal)}>
                   <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{deal.name}</td>
                   <td>{deal.company}</td>
-                  <td style={{ fontWeight: 700, color: 'var(--emerald-light)' }}>{fmtVal(deal.value)}</td>
+                  <td style={{ fontWeight: 700, color: 'var(--emerald)' }}>{fmtVal(deal.value)}</td>
                   <td><span className={`badge ${col.color}`}>{col.label}</span></td>
                   <td style={{ fontSize: 11, color: 'var(--text-muted)' }}>{deal.source}</td>
-                  <td style={{ color: deal.days > 10 ? 'var(--rose-light)' : 'var(--text-muted)', fontSize: 12 }}>{deal.days}d</td>
+                  <td style={{ color: deal.days > 10 ? 'var(--rose)' : 'var(--text-muted)', fontSize: 12 }}>{deal.days}d</td>
                   <td><div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg, var(--purple), var(--blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'white' }}>{deal.owner}</div></td>
                   <td>
                     <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 11 }} onClick={e => { e.stopPropagation(); handleDeleteDeal(col.id, deal.id); }}>Delete</button>
@@ -252,7 +252,7 @@ export default function PipelinePage() {
               {/* Right Side: WhatsApp Activity Feed (Only show when editing) */}
               {editingDealId ? (
                 <div style={{ width: 350, display: 'flex', flexDirection: 'column', background: 'var(--bg-card)' }}>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-glass)' }}>
                     <h4 style={{ fontSize: 13, fontWeight: 600, margin: 0, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
                       <MessageSquare size={14} /> WhatsApp Activity Feed
                     </h4>
@@ -265,7 +265,7 @@ export default function PipelinePage() {
                         <span style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>{msg.sender} • {msg.date} {msg.time}</span>
                         <div style={{ 
                           background: msg.internal ? 'var(--blue-dim)' : 'var(--bg-secondary)', 
-                          color: msg.internal ? 'var(--blue-light)' : 'var(--text-primary)',
+                          color: msg.internal ? 'var(--brand-accent)' : 'var(--text-primary)',
                           padding: '8px 12px', 
                           borderRadius: '8px', 
                           borderBottomLeftRadius: msg.internal ? '8px' : '0px',

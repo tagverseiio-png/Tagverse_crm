@@ -93,7 +93,7 @@ function LeadModal({
             <label style={labelStyle}>Full Name *</label>
             <input style={inputStyle('name')} value={form.name} placeholder="e.g. Riya Sharma"
               onChange={e => onChange('name', e.target.value)} />
-            {errors.name && <span style={{ fontSize: 11, color: 'var(--rose-light)' }}>{errors.name}</span>}
+            {errors.name && <span style={{ fontSize: 11, color: 'var(--rose)' }}>{errors.name}</span>}
           </div>
 
           {/* Company */}
@@ -108,7 +108,7 @@ function LeadModal({
             <label style={labelStyle}>Phone *</label>
             <input style={inputStyle('phone')} value={form.phone} placeholder="+91 98765 43210"
               onChange={e => onChange('phone', e.target.value)} />
-            {errors.phone && <span style={{ fontSize: 11, color: 'var(--rose-light)' }}>{errors.phone}</span>}
+            {errors.phone && <span style={{ fontSize: 11, color: 'var(--rose)' }}>{errors.phone}</span>}
           </div>
 
           {/* Email */}
@@ -116,7 +116,7 @@ function LeadModal({
             <label style={labelStyle}>Email *</label>
             <input style={inputStyle('email')} value={form.email} type="email" placeholder="name@company.com"
               onChange={e => onChange('email', e.target.value)} />
-            {errors.email && <span style={{ fontSize: 11, color: 'var(--rose-light)' }}>{errors.email}</span>}
+            {errors.email && <span style={{ fontSize: 11, color: 'var(--rose)' }}>{errors.email}</span>}
           </div>
 
           {/* Source */}
@@ -381,15 +381,15 @@ export default function LeadsPage() {
                   <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{l.company}</td>
                   <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{l.email}</td>
                   <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{l.phone}</td>
-                  <td><span style={{ fontSize: 11, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 6 }}>{l.source}</span></td>
+                  <td><span style={{ fontSize: 11, color: 'var(--text-muted)', background: 'var(--border)', padding: '2px 8px', borderRadius: 6 }}>{l.source}</span></td>
                   <td style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{l.intent}</td>
                   <td><span className={`badge ${l.stage}`}>{l.stage === 'won' ? '✓ Won' : l.stage === 'lost' ? '✗ Lost' : l.stage}</span></td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{ width: 36, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
                         <div style={{ width: `${l.score}%`, height: '100%', background: l.score >= 80 ? 'var(--emerald)' : l.score >= 60 ? 'var(--amber)' : 'var(--rose)', borderRadius: 2 }} />
                       </div>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: l.score >= 80 ? 'var(--emerald-light)' : l.score >= 60 ? 'var(--amber-light)' : 'var(--rose-light)' }}>{l.score}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: l.score >= 80 ? 'var(--emerald)' : l.score >= 60 ? 'var(--amber)' : 'var(--rose)' }}>{l.score}</span>
                     </div>
                   </td>
                   <td style={{ fontSize: 16 }}>{l.whatsapp ? '🟢' : '⚫'}</td>
@@ -408,13 +408,13 @@ export default function LeadsPage() {
                       <button
                         onClick={() => openEdit(l)}
                         title="Edit lead"
-                        style={{ padding: '4px 10px', fontSize: 11, background: 'var(--blue-dim)', color: 'var(--blue-light)', border: '1px solid var(--blue-light)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}
+                        style={{ padding: '4px 10px', fontSize: 11, background: 'var(--blue-dim)', color: 'var(--brand-accent)', border: '1px solid var(--brand-accent)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}
                       >✏️ Edit</button>
                       {/* Delete */}
                       <button
                         onClick={() => setDeleteLead(l)}
                         title="Delete lead"
-                        style={{ padding: '4px 10px', fontSize: 11, background: 'rgba(239,68,68,0.1)', color: 'var(--rose-light)', border: '1px solid var(--rose)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}
+                        style={{ padding: '4px 10px', fontSize: 11, background: 'var(--rose-dim)', color: 'var(--rose)', border: '1px solid var(--rose)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}
                       >🗑️ Delete</button>
                     </div>
                   </td>

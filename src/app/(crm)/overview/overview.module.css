@@ -55,22 +55,22 @@
 
 .cardIconPurple {
   background: var(--purple-dim);
-  color: var(--purple-light);
+  color: var(--brand-accent);
 }
 
 .cardIconEmerald {
   background: var(--emerald-dim);
-  color: var(--emerald-light);
+  color: var(--emerald);
 }
 
 .cardIconAmber {
   background: var(--amber-dim);
-  color: var(--amber-light);
+  color: var(--amber);
 }
 
 .cardIconRose {
   background: var(--rose-dim);
-  color: var(--rose-light);
+  color: var(--rose);
 }
 
 .cardTitle {
@@ -98,11 +98,11 @@
 }
 
 .changePositive {
-  color: var(--emerald-light);
+  color: var(--emerald);
 }
 
 .changeNegative {
-  color: var(--rose-light);
+  color: var(--rose);
 }
 
 .sectionTitle {
@@ -188,8 +188,8 @@
 }
 
 .stageLead { background: var(--bg-glass); color: var(--text-secondary); }
-.stageActive { background: var(--blue-dim); color: var(--blue-light); }
-.stageWon { background: var(--emerald-dim); color: var(--emerald-light); }
+.stageActive { background: var(--blue-dim); color: var(--brand-accent); }
+.stageWon { background: var(--emerald-dim); color: var(--emerald); }
 
 .companyMetrics {
   display: flex;
@@ -223,7 +223,7 @@
 
 .healthFill {
   height: 100%;
-  background: var(--emerald-light);
+  background: var(--emerald);
   border-radius: 9999px;
 }
 
@@ -311,7 +311,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem;
-  background: rgba(0,0,0,0.15);
+  background: var(--bg-glass);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   transition: var(--transition);
@@ -358,11 +358,11 @@
 .listRightValue {
   font-size: 0.875rem;
   font-weight: 700;
-  color: var(--emerald-light);
+  color: var(--emerald);
 }
 
 .link {
-  color: var(--blue-light);
+  color: var(--brand-accent);
   font-size: 0.75rem;
   cursor: pointer;
 }

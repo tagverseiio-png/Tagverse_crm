@@ -238,7 +238,7 @@ export default function ActivityPage() {
           
           <div className={styles.upcomingCard}>
             <div className={styles.upcomingHeader}>
-              <Calendar size={16} color="var(--blue-light)" />
+              <Calendar size={16} color="var(--brand-accent)" />
               <h3 className={styles.upcomingTitle}>Coming Up</h3>
             </div>
 

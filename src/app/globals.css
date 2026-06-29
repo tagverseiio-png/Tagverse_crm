@@ -651,11 +651,11 @@ h6 {
 }
 
 .kpi-delta.up {
-  color: var(--emerald-light);
+  color: var(--emerald);
 }
 
 .kpi-delta.down {
-  color: var(--rose-light);
+  color: var(--rose);
 }
 
 /* ===== SECTION TITLE ===== */
@@ -731,37 +731,37 @@ h6 {
 
 .pipeline-col.new .pipeline-col-count {
   background: var(--blue-dim);
-  color: var(--blue-light);
+  color: var(--brand-accent);
 }
 
 .pipeline-col.engaged .pipeline-col-count {
   background: var(--purple-dim);
-  color: var(--purple-light);
+  color: var(--brand-accent);
 }
 
 .pipeline-col.qualified .pipeline-col-count {
   background: var(--amber-dim);
-  color: var(--amber-light);
+  color: var(--amber);
 }
 
 .pipeline-col.proposal .pipeline-col-count {
   background: rgba(99, 102, 241, 0.15);
-  color: #a5b4fc;
+  color: #6366f1;
 }
 
 .pipeline-col.negotiation .pipeline-col-count {
   background: rgba(249, 115, 22, 0.15);
-  color: #fdba74;
+  color: #f97316;
 }
 
 .pipeline-col.won .pipeline-col-count {
   background: var(--emerald-dim);
-  color: var(--emerald-light);
+  color: var(--emerald);
 }
 
 .pipeline-col.lost .pipeline-col-count {
   background: var(--rose-dim);
-  color: var(--rose-light);
+  color: var(--rose);
 }
 
 .pipeline-cards {
@@ -769,7 +769,7 @@ h6 {
   flex-direction: column;
   gap: 8px;
   padding: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-glass);
   border: 1px solid var(--border);
   border-top: none;
   border-radius: 0 0 14px 14px;
@@ -814,7 +814,7 @@ h6 {
 .deal-card-value {
   font-size: 11px;
   font-weight: 700;
-  color: var(--emerald-light);
+  color: var(--emerald);
 }
 
 .deal-card-avatar {
@@ -903,7 +903,7 @@ h6 {
 
 .funnel-track {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--border);
   border-radius: 4px;
   height: 8px;
   overflow: hidden;
@@ -949,7 +949,7 @@ tbody td {
   padding: 10px 12px;
   font-size: 12px;
   color: var(--text-secondary);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border);
 }
 
 tbody tr:hover td {
@@ -972,63 +972,63 @@ tbody tr:hover td {
 
 .badge.new {
   background: var(--blue-dim);
-  color: var(--blue-light);
+  color: var(--brand-accent);
 }
 
 .badge.engaged {
   background: var(--purple-dim);
-  color: var(--purple-light);
+  color: var(--brand-accent);
 }
 
 .badge.qualified {
   background: var(--amber-dim);
-  color: var(--amber-light);
+  color: var(--amber);
 }
 
 .badge.proposal {
   background: rgba(99, 102, 241, 0.15);
-  color: #a5b4fc;
+  color: #6366f1;
 }
 
 .badge.negotiation {
   background: rgba(249, 115, 22, 0.15);
-  color: #fdba74;
+  color: #f97316;
 }
 
 .badge.won {
   background: var(--emerald-dim);
-  color: var(--emerald-light);
+  color: var(--emerald);
 }
 
 .badge.lost {
   background: var(--rose-dim);
-  color: var(--rose-light);
+  color: var(--rose);
 }
 
 /* Generic color badges */
 .badge.purple {
   background: var(--purple-dim);
-  color: var(--purple-light);
+  color: var(--brand-accent);
 }
 
 .badge.blue {
   background: var(--blue-dim);
-  color: var(--blue-light);
+  color: var(--brand-accent);
 }
 
 .badge.emerald {
   background: var(--emerald-dim);
-  color: var(--emerald-light);
+  color: var(--emerald);
 }
 
 .badge.amber {
   background: var(--amber-dim);
-  color: var(--amber-light);
+  color: var(--amber);
 }
 
 .badge.rose {
   background: var(--rose-dim);
-  color: var(--rose-light);
+  color: var(--rose);
 }
 
 /* ===== SCROLLBAR ===== */

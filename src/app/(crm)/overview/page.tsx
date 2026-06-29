@@ -87,7 +87,7 @@ export default function OverviewPage() {
         <div className={styles.card}>
           <div>
             <div className={styles.cardTitle}>Open Tasks Today</div>
-            <div className={styles.cardValue} style={{ color: 'var(--amber-light)' }}>{openTasksCount}</div>
+            <div className={styles.cardValue} style={{ color: 'var(--amber)' }}>{openTasksCount}</div>
             <div className={`${styles.cardChange} ${styles.changeNegative}`}>
               <TrendingDown size={14} />
               <span>Remaining work</span>
@@ -101,7 +101,7 @@ export default function OverviewPage() {
         <div className={styles.card}>
           <div>
             <div className={styles.cardTitle}>Overdue Items</div>
-            <div className={styles.cardValue} style={{ color: 'var(--rose-light)' }}>{overdueItemsCount}</div>
+            <div className={styles.cardValue} style={{ color: 'var(--rose)' }}>{overdueItemsCount}</div>
             <div className={`${styles.cardChange} ${styles.changeNegative}`}>
               <TrendingDown size={14} />
               <span>Requires attention</span>
@@ -151,7 +151,7 @@ export default function OverviewPage() {
                     <div className={styles.healthBar}>
                       <div className={styles.healthFill} style={{ width: `${company.health}%` }}></div>
                     </div>
-                    <span className={styles.metricValue} style={{ color: 'var(--emerald-light)' }}>{company.health}%</span>
+                    <span className={styles.metricValue} style={{ color: 'var(--emerald)' }}>{company.health}%</span>
                   </div>
                 </div>
               </div>
@@ -171,10 +171,10 @@ export default function OverviewPage() {
           {funnelData.map((stage, idx) => {
             const colors = [
               { color: 'var(--text-secondary)' },
-              { color: 'var(--blue-light)', bg: 'var(--blue-dim)' },
-              { color: 'var(--amber-light)', bg: 'var(--amber-dim)' },
-              { color: 'var(--purple-light)', bg: 'var(--purple-dim)' },
-              { color: 'var(--emerald-light)', bg: 'var(--emerald-dim)' }
+              { color: 'var(--brand-accent)', bg: 'var(--blue-dim)' },
+              { color: 'var(--amber)', bg: 'var(--amber-dim)' },
+              { color: 'var(--brand-primary)', bg: 'var(--purple-dim)' },
+              { color: 'var(--emerald)', bg: 'var(--emerald-dim)' }
             ][idx];
 
             return (
@@ -242,7 +242,7 @@ export default function OverviewPage() {
               return (
                 <div key={deal.id} className={styles.listItem}>
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                    <div className={styles.avatar} style={{ background: 'var(--blue-dim)', color: 'var(--blue-light)' }}>
+                    <div className={styles.avatar} style={{ background: 'var(--blue-dim)', color: 'var(--brand-accent)' }}>
                       #{index + 1}
                     </div>
                     <div>
