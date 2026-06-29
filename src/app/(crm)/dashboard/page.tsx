@@ -1,7 +1,6 @@
 'use client';
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
-
 const kpis = [
   { label: 'Total Leads', value: '1,284', delta: '+18% this week', trend: 'up', color: 'purple', icon: '👤' },
   { label: 'Active Deals', value: '47', delta: '+5 new today', trend: 'up', color: 'blue', icon: '🤝' },

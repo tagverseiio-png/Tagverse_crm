@@ -46,6 +46,8 @@ export default function ActivityPage() {
   const [filter, setFilter] = useState('all');
   const [completedExpanded, setCompletedExpanded] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
+  const [isRescheduling, setIsRescheduling] = useState(false);
 
   const meetingsCount = store.activities.filter(a => a.type === 'meeting' && a.status !== 'done').length;
   const tasksCount = store.activities.filter(a => a.type === 'task' && a.status !== 'done').length;
@@ -187,7 +189,7 @@ export default function ActivityPage() {
                                 </div>
                               )}
                             </div>
-                            <button className={styles.viewBtn}>
+                            <button className={styles.viewBtn} onClick={() => setSelectedActivity(activity)}>
                               View
                             </button>
                           </div>
@@ -322,6 +324,56 @@ export default function ActivityPage() {
               <button style={{ padding: '10px 16px', borderRadius: 10, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600, color: 'var(--text-muted)', fontSize: 13 }} onClick={() => setShowAddModal(false)}>Cancel</button>
               <button style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--text-primary)', color: 'var(--bg-card)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13 }} onClick={() => setShowAddModal(false)}>Schedule Activity</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Activity Modal */}
+      {selectedActivity && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => { setSelectedActivity(null); setIsRescheduling(false); }}>
+          <div style={{ background: 'var(--bg-card, #fff)', border: '1px solid var(--border, #eaeaea)', borderRadius: 20, padding: 32, width: '100%', maxWidth: 520, boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>Activity Details</h2>
+              <button onClick={() => { setSelectedActivity(null); setIsRescheduling(false); }} style={{ background: 'var(--bg-secondary)', width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            </div>
+            
+            <div style={{ fontSize: '15px', color: 'var(--text-primary)', marginBottom: '8px', fontWeight: 600 }}>
+              {selectedActivity.title}
+            </div>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+              Time: {selectedActivity.time}
+            </div>
+            {selectedActivity.note && (
+              <div style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.5' }}>
+                {selectedActivity.note}
+              </div>
+            )}
+            
+            {isRescheduling ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Select New Time</label>
+                  <input type="datetime-local" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }} />
+                </div>
+                <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                  <button className="btn" style={{ flex: 1, padding: '12px', borderRadius: 10, background: 'var(--brand-accent)', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer' }} onClick={() => { alert('Rescheduled'); setSelectedActivity(null); setIsRescheduling(false); }}>
+                    Confirm Reschedule
+                  </button>
+                  <button className="btn btn-ghost" style={{ flex: 1, padding: '12px', borderRadius: 10, background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: 'none', fontWeight: 600, cursor: 'pointer' }} onClick={() => setIsRescheduling(false)}>
+                    Back
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 12, marginTop: 32, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+                <button className="btn" style={{ flex: 1, padding: '12px', borderRadius: 10, background: 'var(--emerald, #10b981)', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer' }} onClick={() => { alert('Marked as completed'); setSelectedActivity(null); }}>
+                  Mark as Completed
+                </button>
+                <button className="btn" style={{ flex: 1, padding: '12px', borderRadius: 10, background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', fontWeight: 600, cursor: 'pointer' }} onClick={() => setIsRescheduling(true)}>
+                  Reschedule
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
