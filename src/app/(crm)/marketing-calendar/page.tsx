@@ -72,7 +72,12 @@ export default function MarketingCalendarPage() {
   const [toastColor, setToastColor] = useState('var(--emerald)');
   const [detailsEvent, setDetailsEvent] = useState<ScheduledEvent | null>(null);
 
+<<<<<<< HEAD
   const blankForm = { title: '', channel: 'LinkedIn', date: `2026-06-${String(selectedDate).padStart(2, '0')}`, time: '09:00', author: 'Priya S.', type: 'Social', company: '', client: '' };
+=======
+  const POST_COLORS = ['#6366f1','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#06b6d4','#84cc16','#f97316'];
+  const blankForm = { title: '', channel: 'LinkedIn', date: selectedDate, time: '09:00', author: 'Priya S.', company: '', client: '', color: '#6366f1' };
+>>>>>>> aae4086dc3e44ed1d474e7bbec8a9bff8bc27b6b
   const [form, setForm] = useState(blankForm);
 
   const showToast = (msg: string, color = 'var(--emerald)') => {
@@ -108,12 +113,17 @@ export default function MarketingCalendarPage() {
   const handleSchedule = () => {
     if (!form.title.trim()) return;
     const newEvt: ScheduledEvent = {
+<<<<<<< HEAD
       id: Date.now(), date: form.date, title: form.title,
       channel: form.channel, time: to12h(form.time), type: form.type,
+=======
+      id: Date.now(), date: Number(form.date), title: form.title,
+      channel: form.channel, time: to12h(form.time), type: form.channel,
+>>>>>>> aae4086dc3e44ed1d474e7bbec8a9bff8bc27b6b
       author: form.author, company: form.company, client: form.client,
       badgeChannel: CHANNEL_BADGE[form.channel] || 'blue',
       badgeStatus: 'amber', status: 'Scheduled',
-      color: CHANNEL_COLOR[form.channel] || 'var(--blue)',
+      color: form.color,
     };
     setEvents(prev => [...prev, newEvt]);
     setSelectedDate(typeof form.date === 'string' && form.date.startsWith('2026-06-') ? Number(form.date.split('-')[2]) : selectedDate);
@@ -131,18 +141,27 @@ export default function MarketingCalendarPage() {
       const h24 = ampm === 'PM' ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h);
       return `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
     };
+<<<<<<< HEAD
     setForm({ title: evt.title, channel: evt.channel, date: typeof evt.date === 'number' ? `2026-06-${String(evt.date).padStart(2, '0')}` : String(evt.date), time: to24h(evt.time), author: evt.author, type: evt.type, company: evt.company || '', client: evt.client || '' });
+=======
+    setForm({ title: evt.title, channel: evt.channel, date: evt.date, time: to24h(evt.time), author: evt.author, company: evt.company || '', client: evt.client || '', color: evt.color || '#6366f1' });
+>>>>>>> aae4086dc3e44ed1d474e7bbec8a9bff8bc27b6b
     setShowEditModal(true);
   };
 
   const handleSaveEdit = () => {
     if (!editingEvent || !form.title.trim()) return;
     setEvents(prev => prev.map(e => e.id === editingEvent.id ? {
+<<<<<<< HEAD
       ...e, title: form.title, channel: form.channel, date: form.date,
       time: to12h(form.time), type: form.type, author: form.author,
+=======
+      ...e, title: form.title, channel: form.channel, date: Number(form.date),
+      time: to12h(form.time), type: form.channel, author: form.author,
+>>>>>>> aae4086dc3e44ed1d474e7bbec8a9bff8bc27b6b
       company: form.company, client: form.client,
       badgeChannel: CHANNEL_BADGE[form.channel] || 'blue',
-      color: CHANNEL_COLOR[form.channel] || 'var(--blue)',
+      color: form.color,
     } : e));
     setShowEditModal(false);
     showToast('Post updated!');
@@ -169,18 +188,32 @@ export default function MarketingCalendarPage() {
           <input style={inputStyle} placeholder="e.g. Jane Doe" value={form.client} onChange={e => setForm(f => ({ ...f, client: e.target.value }))} />
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <div>
-          <label style={labelStyle}>Channel</label>
-          <select style={inputStyle} value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value }))}>
-            {['LinkedIn', 'Twitter', 'Instagram', 'Email', 'Blog', 'YouTube'].map(c => <option key={c}>{c}</option>)}
-          </select>
-        </div>
-        <div>
-          <label style={labelStyle}>Type</label>
-          <select style={inputStyle} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
-            {['Social', 'Email', 'Content', 'Video'].map(t => <option key={t}>{t}</option>)}
-          </select>
+      <div>
+        <label style={labelStyle}>Channel</label>
+        <select style={inputStyle} value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value }))}>
+          {['LinkedIn', 'Twitter', 'Instagram', 'Email', 'Blog', 'YouTube'].map(c => <option key={c}>{c}</option>)}
+        </select>
+      </div>
+      <div>
+        <label style={labelStyle}>Colour</label>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 4 }}>
+          {POST_COLORS.map(c => (
+            <button
+              key={c}
+              type="button"
+              title={c}
+              onClick={() => setForm(f => ({ ...f, color: c }))}
+              style={{
+                width: 30, height: 30, borderRadius: '50%', background: c,
+                border: form.color === c ? '3px solid var(--text-primary)' : '3px solid transparent',
+                outline: form.color === c ? `2px solid ${c}` : 'none',
+                outlineOffset: 2,
+                cursor: 'pointer', padding: 0, flexShrink: 0,
+                boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                transition: 'transform 0.15s',
+              }}
+            />
+          ))}
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: forDate ? '1fr 1fr' : '1fr 1fr', gap: 12 }}>
