@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
 import { chatHistoryInitial } from '@/lib/mockData';
 
@@ -55,6 +55,8 @@ export default function Topbar({ activePage }: Props) {
   const [editingHistoryId, setEditingHistoryId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [chatKey, setChatKey] = useState(0);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLoadChat = (newMessages: any[]) => {
     setMessages(newMessages);
@@ -62,10 +64,12 @@ export default function Topbar({ activePage }: Props) {
   };
 
   const handleSendMessage = () => {
-    if (!chatMessage.trim()) return;
+    if (!chatMessage.trim() && !uploadedFile) return;
 
-    setMessages(prev => [...prev, { role: 'user', text: chatMessage }]);
+    const attachmentText = uploadedFile ? `\n[Attached: ${uploadedFile.name}]` : '';
+    setMessages(prev => [...prev, { role: 'user', text: chatMessage + attachmentText }]);
     setChatMessage('');
+    setUploadedFile(null);
 
     // Simulate API delay
     setTimeout(() => {
@@ -544,6 +548,15 @@ export default function Topbar({ activePage }: Props) {
                     : '0 8px 30px rgba(123, 47, 255, 0.04)',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}>
+                  {uploadedFile && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'var(--bg-main)', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 12, width: 'fit-content' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{uploadedFile.name}</span>
+                      <button onClick={() => setUploadedFile(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 2, display: 'flex' }} className="hover-opacity">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      </button>
+                    </div>
+                  )}
                   <textarea
                     placeholder="Message Rio for key data insights."
                     value={chatMessage}
@@ -571,6 +584,24 @@ export default function Topbar({ activePage }: Props) {
                     }}
                   />
                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12, marginTop: 12 }}>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      style={{ display: 'none' }} 
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setUploadedFile(e.target.files[0]);
+                        }
+                      }}
+                    />
+                    <button onClick={() => fileInputRef.current?.click()} style={{
+                      background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 6, borderRadius: '50%'
+                    }} className="hover-bg" title="Attach File">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                      </svg>
+                    </button>
                     <button style={{
                       background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 6, borderRadius: '50%'
