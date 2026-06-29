@@ -938,3 +938,38 @@ export const socialPendingPosts = [
   { platform: 'LinkedIn',  colorText: 'var(--blue-light)', text: 'Excited to share our latest case study on how Arka Systems improved retention by 42% using our platform...' },
   { platform: 'Instagram', colorText: 'var(--rose-light)', text: "🚀 Big things are coming this July. Stay tuned for our Q3 product launch — you won't want to miss it." },
 ];
+
+export const chatHistoryInitial = [
+  {
+    id: 'chat-1',
+    title: 'Summarize Q3 revenue pipeline',
+    messages: [
+      { role: 'user', text: 'Summarize Q3 revenue pipeline' },
+      { role: 'agent', text: 'Sure! Your Q3 revenue pipeline has 18 active deals worth $420,500 in total. The largest deal is Acme Corp at $85,000 in the Negotiation stage.' }
+    ]
+  },
+  {
+    id: 'chat-2',
+    title: 'Draft a follow-up email to Acme Corp',
+    messages: [
+      { role: 'user', text: 'Draft a follow-up email to Acme Corp' },
+      { role: 'agent', text: 'Here is a draft:\n\n"Hi Rajan,\n\nJust checking in on the proposal we discussed last week..."' }
+    ]
+  },
+  {
+    id: 'chat-3',
+    title: 'Show me my closing rate this month',
+    messages: [
+      { role: 'user', text: 'Show me my closing rate this month' },
+      { role: 'agent', text: 'Your closing rate for this month is currently 18.2%, which is up 2.4% from last month. You have closed 19 deals so far.' }
+    ]
+  },
+  {
+    id: 'chat-4',
+    title: 'List all high-priority tasks',
+    messages: [
+      { role: 'user', text: 'List all high-priority tasks' },
+      { role: 'agent', text: 'You have 2 high-priority tasks due today:\n1. Follow up — NexaDigital proposal (Today 4pm)\n2. Book discovery call — GrowthLab (Today 6pm)' }
+    ]
+  }
+];

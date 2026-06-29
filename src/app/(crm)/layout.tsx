@@ -13,7 +13,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     <WorkspaceProvider>
       <div className="crm-layout">
         <Sidebar />
-        <div className="main-content">
+        <div className="main-content" style={{ position: 'relative' }}>
           <Topbar activePage={activePage} />
           <div className="page-content animate-fade" key={pathname}>
             {children}
