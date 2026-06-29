@@ -56,6 +56,7 @@ export default function Topbar({ activePage }: Props) {
   const [editTitle, setEditTitle] = useState('');
   const [chatKey, setChatKey] = useState(0);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLoadChat = (newMessages: any[]) => {
@@ -531,13 +532,23 @@ export default function Topbar({ activePage }: Props) {
 
               {/* Input Area */}
               <div style={{ padding: '24px', display: 'flex', justifyContent: 'center' }}>
-                <div style={{
-                  width: '100%',
-                  maxWidth: 700,
-                  position: 'relative',
-                  background: 'var(--bg-card)',
-                  borderRadius: 16,
-                  border: isInputFocused ? '1px solid rgba(123, 47, 255, 0.25)' : '1px solid rgba(123, 47, 255, 0.08)',
+                <div 
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      setUploadedFile(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    maxWidth: 700,
+                    position: 'relative',
+                    background: isDragging ? 'rgba(123, 47, 255, 0.05)' : 'var(--bg-card)',
+                    borderRadius: 16,
+                    border: isDragging ? '2px dashed var(--purple)' : (isInputFocused ? '1px solid rgba(123, 47, 255, 0.25)' : '1px solid rgba(123, 47, 255, 0.08)'),
                   padding: '16px 20px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -563,6 +574,12 @@ export default function Topbar({ activePage }: Props) {
                     onChange={(e) => setChatMessage(e.target.value)}
                     onFocus={() => setIsInputFocused(true)}
                     onBlur={() => setIsInputFocused(false)}
+                    onPaste={(e) => {
+                      if (e.clipboardData.files && e.clipboardData.files.length > 0) {
+                        e.preventDefault();
+                        setUploadedFile(e.clipboardData.files[0]);
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
