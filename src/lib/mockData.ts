@@ -883,20 +883,20 @@ export const workspaceInitialMembers = [
 ];
 
 export const workspaceInitialProjects = [
-  { id: 'p1', name: 'Brand Identity Redesign', status: 'Active', members: ['m3', 'm4'], linkedDeal: 'deal-102', progress: 0, budget: { est: 25000, actual: 18500 }, color: '#6366f1' },
-  { id: 'p2', name: 'API Integration Sprint', status: 'Active', members: ['m2'], linkedDeal: 'deal-105', progress: 0, budget: { est: 45000, actual: 32000 }, color: '#3b82f6' },
-  { id: 'p3', name: 'SaaS Beta Launch Prep', status: 'Planning', members: ['m1', 'm2', 'm3'], linkedDeal: 'deal-109', progress: 0, budget: { est: 80000, actual: 5000 }, color: '#10b981' }
+  { id: 'p1', name: 'Brand Identity Redesign', emoji: '🎨', status: 'Planning', members: ['m3', 'm4'], linkedDeal: 'deal-102', progress: 0, budget: { est: 25000, actual: 18500 }, color: '#6366f1', startDate: '2026-06-01', endDate: '2026-07-15' },
+  { id: 'p2', name: 'API Integration Sprint', emoji: '🔌', status: 'Implementation', members: ['m2'], linkedDeal: 'deal-105', progress: 0, budget: { est: 45000, actual: 32000 }, color: '#3b82f6', startDate: '2026-06-15', endDate: '2026-08-01' },
+  { id: 'p3', name: 'SaaS Beta Launch Prep', emoji: '🚀', status: 'Kick-off', members: ['m1', 'm2', 'm3'], linkedDeal: 'deal-109', progress: 0, budget: { est: 80000, actual: 5000 }, color: '#10b981', startDate: '2026-07-01', endDate: '2026-09-30' }
 ];
 
 export const workspaceInitialTasks = [
-  { id: 't1', title: 'Complete high-fidelity dashboard wireframes', projectId: 'p1', owner: 'm3', status: 'In Progress', priority: 'High', due: '2026-06-28', parentType: 'project', tags: ['design', 'ui'] },
-  { id: 't2', title: 'Refactor Auth middleware for token expiration', projectId: 'p2', owner: 'm2', status: 'To Do', priority: 'High', due: '2026-06-26', parentType: 'project', tags: ['backend', 'security'] },
-  { id: 't3', title: 'Draft email onboarding sequence copy', projectId: 'p3', owner: 'm4', status: 'To Do', priority: 'Normal', due: '2026-06-30', parentType: 'project', tags: ['copywriting', 'marketing'] },
-  { id: 't4', title: 'Conduct user research database schema validation', projectId: 'p2', owner: 'm2', status: 'Done', priority: 'Low', due: '2026-06-22', parentType: 'project', tags: ['database'] },
-  { id: 't5', title: 'Write unit tests for Stripe payment webhooks', projectId: 'p2', owner: 'm2', status: 'In Progress', priority: 'Urgent', due: '2026-06-25', parentType: 'project', tags: ['stripe', 'testing'] },
-  { id: 't6', title: 'Finalize brand color palette system styles', projectId: 'p1', owner: 'm3', status: 'Done', priority: 'Normal', due: '2026-06-20', parentType: 'project', tags: ['design', 'branding'] },
-  { id: 't7', title: 'Define SLA protocols and response times documentation', projectId: null, owner: 'm1', status: 'To Do', priority: 'Normal', due: '2026-07-02', parentType: null, tags: ['docs'] },
-  { id: 't8', title: 'Set up Google Analytics marketing dashboard pixels', projectId: 'p3', owner: 'm4', status: 'To Do', priority: 'Low', due: '2026-06-27', parentType: 'project', tags: ['analytics'] }
+  { id: 't1', title: 'Complete high-fidelity dashboard wireframes', projectId: 'p1', owner: 'm3', status: 'In Progress', priority: 'High', due: '2026-06-28', parentType: 'project', tags: ['design', 'ui'], phase: 'Planning' },
+  { id: 't2', title: 'Refactor Auth middleware for token expiration', projectId: 'p2', owner: 'm2', status: 'To Do', priority: 'High', due: '2026-06-26', parentType: 'project', tags: ['backend', 'security'], phase: 'Implementation' },
+  { id: 't3', title: 'Draft email onboarding sequence copy', projectId: 'p3', owner: 'm4', status: 'To Do', priority: 'Normal', due: '2026-06-30', parentType: 'project', tags: ['copywriting', 'marketing'], phase: 'Kick-off' },
+  { id: 't4', title: 'Conduct user research database schema validation', projectId: 'p2', owner: 'm2', status: 'Done', priority: 'Low', due: '2026-06-22', parentType: 'project', tags: ['database'], phase: 'Implementation' },
+  { id: 't5', title: 'Write unit tests for Stripe payment webhooks', projectId: 'p2', owner: 'm2', status: 'In Progress', priority: 'Urgent', due: '2026-06-25', parentType: 'project', tags: ['stripe', 'testing'], phase: 'Implementation' },
+  { id: 't6', title: 'Finalize brand color palette system styles', projectId: 'p1', owner: 'm3', status: 'Done', priority: 'Normal', due: '2026-06-20', parentType: 'project', tags: ['design', 'branding'], phase: 'Planning' },
+  { id: 't7', title: 'Define SLA protocols and response times documentation', projectId: null, owner: 'm1', status: 'To Do', priority: 'Normal', due: '2026-07-02', parentType: null, tags: ['docs'], phase: 'Planning' },
+  { id: 't8', title: 'Set up Google Analytics marketing dashboard pixels', projectId: 'p3', owner: 'm4', status: 'To Do', priority: 'Low', due: '2026-06-27', parentType: 'project', tags: ['analytics'], phase: 'Kick-off' }
 ];
 
 export const workspaceInitialEvents = [

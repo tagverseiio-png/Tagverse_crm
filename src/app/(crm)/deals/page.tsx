@@ -1123,7 +1123,7 @@ export default function DealsPage() {
               <button key={v} onClick={() => setView(v)} style={{
                 padding: '7px 16px', fontSize: 12, fontWeight: 600,
                 background: view === v ? 'var(--purple-dim)' : 'transparent',
-                color: view === v ? 'var(--purple-light)' : 'var(--text-muted)',
+                color: view === v ? '#000' : 'var(--text-muted)',
                 border: 'none', cursor: 'pointer',
                 borderRight: '1px solid var(--border)',
                 fontFamily: 'Inter, sans-serif', textTransform: 'capitalize',
@@ -1139,7 +1139,7 @@ export default function DealsPage() {
               <button key={f} onClick={() => setStageFilter(f)} style={{
                 padding: '7px 10px', fontSize: 11, fontWeight: 600,
                 background: stageFilter === f ? 'var(--purple-dim)' : 'transparent',
-                color: stageFilter === f ? 'var(--purple-light)' : 'var(--text-muted)',
+                color: stageFilter === f ? '#000' : 'var(--text-muted)',
                 border: 'none', cursor: 'pointer', textTransform: 'capitalize',
                 borderRight: '1px solid var(--border)',
                 fontFamily: 'Inter, sans-serif',

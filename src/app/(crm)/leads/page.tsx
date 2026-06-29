@@ -343,7 +343,7 @@ export default function LeadsPage() {
         </div>
         <div style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', flex: 1 }}>
           {stageFilters.map(f => (
-            <button key={f} onClick={() => setFilter(f)} style={{ padding: '7px 12px', fontSize: 11, fontWeight: 600, background: filter === f ? 'var(--purple-dim)' : 'transparent', color: filter === f ? 'var(--purple-light)' : 'var(--text-muted)', border: 'none', cursor: 'pointer', textTransform: 'capitalize', borderRight: '1px solid var(--border)', fontFamily: 'Inter, sans-serif', flex: 1 }}>
+            <button key={f} onClick={() => setFilter(f)} style={{ padding: '7px 12px', fontSize: 11, fontWeight: 600, background: filter === f ? 'var(--purple-dim)' : 'transparent', color: filter === f ? '#000' : 'var(--text-muted)', border: 'none', cursor: 'pointer', textTransform: 'capitalize', borderRight: '1px solid var(--border)', fontFamily: 'Inter, sans-serif', flex: 1 }}>
               {f === 'all' ? 'All' : f}
             </button>
           ))}

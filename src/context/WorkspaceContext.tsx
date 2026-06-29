@@ -14,7 +14,10 @@ export interface Member {
 export interface Project {
   id: string;
   name: string;
-  status: 'Active' | 'Planning' | 'Archived';
+  emoji?: string;
+  startDate?: string;
+  endDate?: string;
+  status: 'Kick-off' | 'Planning' | 'Implementation' | 'Review' | 'Closing' | 'Active' | 'Archived';
   members: string[]; // Member IDs
   linkedDeal: string | null;
   progress: number;
@@ -35,6 +38,7 @@ export interface Task {
   due: string; // YYYY-MM-DD
   parentType: 'project' | 'deal' | 'contact' | null;
   tags: string[];
+  phase?: string; // e.g., 'Kick-off', 'Planning'
 }
 
 export interface CalendarEvent {
@@ -57,6 +61,7 @@ interface WorkspaceContextType {
   deleteTask: (id: string) => void;
   toggleTaskDone: (id: string) => void;
   addProject: (project: Omit<Project, 'id' | 'progress'>) => void;
+  updateProject: (project: Project) => void;
   addEvent: (event: Omit<CalendarEvent, 'id'>) => void;
   updateEvent: (event: CalendarEvent) => void;
   deleteEvent: (id: string) => void;
@@ -148,6 +153,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     setProjects(prev => [...prev, newProject]);
   };
 
+  const updateProject = (project: Project) => {
+    setProjects(prev => prev.map(p => p.id === project.id ? project : p));
+  };
+
   const addEvent = (event: Omit<CalendarEvent, 'id'>) => {
     const newEvent: CalendarEvent = {
       ...event,
@@ -176,6 +185,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         deleteTask,
         toggleTaskDone,
         addProject,
+        updateProject,
         addEvent,
         updateEvent,
         deleteEvent,
