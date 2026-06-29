@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAnalyticsStore, WidgetType } from '../store';
-import { X, LayoutGrid, BarChart2, PieChart, LineChart, Filter, Activity, Plus } from 'lucide-react';
+import { X, LayoutGrid, BarChart2, PieChart, LineChart, Filter, Activity } from 'lucide-react';
+import { analyticsWidgetTypes } from '@/lib/mockData';
 
 interface AddWidgetModalProps {
   onClose: () => void;
@@ -20,15 +21,18 @@ export function AddWidgetModal({ onClose }: AddWidgetModalProps) {
     cursor: 'pointer', width: '100%', textAlign: 'left' as const, transition: 'all 0.2s ease',
   };
 
-  const widgets: { type: WidgetType; label: string; desc: string; icon: React.ReactNode; color: string }[] = [
-    { type: 'kpi', label: 'KPI Card', desc: 'Single metric summary with sparkline', icon: <LayoutGrid size={18} />, color: 'blue' },
-    { type: 'bar', label: 'Bar Chart', desc: 'Compare categories across a dimension', icon: <BarChart2 size={18} />, color: 'purple' },
-    { type: 'line', label: 'Line Chart', desc: 'View trends over time', icon: <LineChart size={18} />, color: 'emerald' },
-    { type: 'pie', label: 'Pie Chart', desc: 'Part-to-whole ratio (solid)', icon: <PieChart size={18} />, color: 'amber' },
-    { type: 'donut', label: 'Donut Chart', desc: 'Part-to-whole ratio (hollow)', icon: <PieChart size={18} />, color: 'rose' },
-    { type: 'funnel', label: 'Funnel Chart', desc: 'Conversion rates across stages', icon: <Filter size={18} />, color: 'blue' },
-    { type: 'area', label: 'Area Chart', desc: 'Volume trends over time', icon: <Activity size={18} />, color: 'purple' },
-  ];
+  // Icons are JSX so they stay in the component; everything else comes from mockData
+  const iconMap: Record<string, React.ReactNode> = {
+    kpi:    <LayoutGrid size={18} />,
+    bar:    <BarChart2  size={18} />,
+    line:   <LineChart  size={18} />,
+    pie:    <PieChart   size={18} />,
+    donut:  <PieChart   size={18} />,
+    funnel: <Filter     size={18} />,
+    area:   <Activity   size={18} />,
+  };
+
+  const widgets = analyticsWidgetTypes.map(w => ({ ...w, icon: iconMap[w.type] }));
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>

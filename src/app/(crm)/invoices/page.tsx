@@ -1,18 +1,14 @@
 'use client';
 import { useState, useMemo } from 'react';
-
-type Invoice = {
-  id: string; client: string; amount: number; issued: string;
-  due: string; status: 'Draft' | 'Sent' | 'Paid' | 'Overdue';
-};
+import QuoteBuilderModal, { Quote as Invoice } from '../quotes/QuoteBuilderModal';
 
 const INITIAL_INVOICES: Invoice[] = [
-  { id: '#INV-2091', client: 'Nexus Retail', amount: 85000, issued: 'Jun 12', due: 'Jun 26', status: 'Sent' },
-  { id: '#INV-2090', client: 'BlueStar Media', amount: 45500, issued: 'Jun 8', due: 'Jun 22', status: 'Overdue' },
-  { id: '#INV-2089', client: 'Arka Systems', amount: 120000, issued: 'Jun 1', due: 'Jun 15', status: 'Paid' },
-  { id: '#INV-2088', client: 'Vega Partners', amount: 60000, issued: 'May 25', due: 'Jun 8', status: 'Overdue' },
-  { id: '#INV-2087', client: 'Indra Logistics', amount: 240000, issued: 'May 18', due: 'Jun 1', status: 'Paid' },
-  { id: '#INV-2086', client: 'GrowthLab Inc.', amount: 35000, issued: 'May 10', due: 'May 24', status: 'Draft' },
+  { id: '#INV-2091', client: 'Nexus Retail', amount: 85000, sentOn: 'Jun 12', expires: 'Jun 26', status: 'Sent' },
+  { id: '#INV-2090', client: 'BlueStar Media', amount: 45500, sentOn: 'Jun 8', expires: 'Jun 22', status: 'Overdue' },
+  { id: '#INV-2089', client: 'Arka Systems', amount: 120000, sentOn: 'Jun 1', expires: 'Jun 15', status: 'Paid' },
+  { id: '#INV-2088', client: 'Vega Partners', amount: 60000, sentOn: 'May 25', expires: 'Jun 8', status: 'Overdue' },
+  { id: '#INV-2087', client: 'Indra Logistics', amount: 240000, sentOn: 'May 18', expires: 'Jun 1', status: 'Paid' },
+  { id: '#INV-2086', client: 'GrowthLab Inc.', amount: 35000, sentOn: 'May 10', expires: 'May 24', status: 'Draft' },
 ];
 
 function fmt(v: number) {
@@ -31,12 +27,9 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>(INITIAL_INVOICES);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [mClient, setMClient] = useState('');
-  const [mAmount, setMAmount] = useState('');
-  const [mStatus, setMStatus] = useState<Invoice['status']>('Draft');
-  const [mDue, setMDue] = useState('');
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
 
   const filtered = useMemo(() => invoices.filter(inv => {
     const ms = inv.client.toLowerCase().includes(search.toLowerCase()) || inv.id.toLowerCase().includes(search.toLowerCase());
@@ -48,22 +41,35 @@ export default function InvoicesPage() {
   const paidThisMonth = invoices.filter(i => i.status === 'Paid').reduce((a, i) => a + i.amount, 0);
   const overdueCount = invoices.filter(i => i.status === 'Overdue').length;
 
-  const openNew = () => { setMClient(''); setMAmount(''); setMStatus('Draft'); setMDue(''); setEditingId(null); setIsModalOpen(true); };
-  const openEdit = (inv: Invoice) => { setMClient(inv.client); setMAmount(String(inv.amount)); setMStatus(inv.status); setMDue(inv.due); setEditingId(inv.id); setIsModalOpen(true); };
-  const handleSave = () => {
-    if (!mClient.trim()) return;
-    if (editingId) {
-      setInvoices(p => p.map(i => i.id === editingId ? { ...i, client: mClient, amount: Number(mAmount), status: mStatus, due: mDue } : i));
-    } else {
-      setInvoices(p => [{
-        id: `#INV-${Math.floor(2000 + Math.random() * 999)}`, client: mClient,
-        amount: Number(mAmount) || 0,
-        issued: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
-        due: mDue, status: mStatus
-      }, ...p]);
-    }
+  const openNew = () => { 
+    setEditingInvoice({
+      id: `#INV-${Math.floor(2000 + Math.random() * 999)}`,
+      client: '',
+      amount: 0,
+      sentOn: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
+      expires: '',
+      status: 'Draft'
+    });
+    setIsModalOpen(true); 
+  };
+  
+  const openEdit = (inv: Invoice) => { 
+    setEditingInvoice(inv); 
+    setIsModalOpen(true); 
+  };
+  
+  const handleSaveInvoice = (savedInvoice: Invoice) => {
+    setInvoices(p => {
+      const exists = p.some(i => i.id === savedInvoice.id);
+      if (exists) {
+        return p.map(i => i.id === savedInvoice.id ? savedInvoice : i);
+      } else {
+        return [savedInvoice, ...p];
+      }
+    });
     setIsModalOpen(false);
   };
+  
   const handleDelete = (id: string) => { setInvoices(p => p.filter(i => i.id !== id)); setIsModalOpen(false); };
 
   return (
@@ -126,9 +132,9 @@ export default function InvoicesPage() {
               <tr key={inv.id} style={{ cursor: 'pointer' }} onClick={() => openEdit(inv)}>
                 <td><span style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace' }}>{inv.id}</span></td>
                 <td style={{ fontWeight: 500 }}>{inv.client}</td>
-                <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontVariantNumeric: 'tabular-nums' }}>{fmt(inv.amount)}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{inv.issued}</td>
-                <td style={{ color: inv.status === 'Overdue' ? 'var(--rose-light)' : 'var(--text-secondary)', fontWeight: inv.status === 'Overdue' ? 600 : 400 }}>{inv.due}</td>
+                <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontVariantNumeric: 'tabular-nums' }}>{inv.currency || '₹'}{inv.amount.toLocaleString('en-IN')}</td>
+                <td style={{ color: 'var(--text-secondary)' }}>{inv.sentOn}</td>
+                <td style={{ color: inv.status === 'Overdue' ? 'var(--rose-light)' : 'var(--text-secondary)', fontWeight: inv.status === 'Overdue' ? 600 : 400 }}>{inv.expires}</td>
                 <td><span className={STATUS_BADGE[inv.status]}>{inv.status}</span></td>
                 <td>
                   <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
@@ -156,49 +162,15 @@ export default function InvoicesPage() {
         </table>
       </div>
 
-      {/* Modal */}
+      {/* Advanced Invoice Builder Modal */}
       {isModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="card" style={{ width: 460, padding: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>{editingId ? 'Edit Invoice' : 'Create Invoice'}</h3>
-              <button onClick={() => setIsModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18 }}>✕</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Client</label>
-                <input type="text" value={mClient} onChange={e => setMClient(e.target.value)} placeholder="e.g. Nexus Retail"
-                  style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-              </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Amount (₹)</label>
-                  <input type="number" value={mAmount} onChange={e => setMAmount(e.target.value)} placeholder="0"
-                    style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Due Date</label>
-                  <input type="text" value={mDue} onChange={e => setMDue(e.target.value)} placeholder="e.g. Jun 30"
-                    style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Status</label>
-                <select value={mStatus} onChange={e => setMStatus(e.target.value as Invoice['status'])}
-                  style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }}>
-                  {['Draft', 'Sent', 'Paid', 'Overdue'].map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-              {editingId ? <button className="btn btn-ghost" style={{ color: 'var(--rose)' }} onClick={() => handleDelete(editingId)}>Delete</button> : <div />}
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSave}>{editingId ? 'Save Changes' : 'Create Invoice'}</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <QuoteBuilderModal 
+          initialQuote={editingInvoice} 
+          onClose={() => setIsModalOpen(false)} 
+          onSave={handleSaveInvoice}
+          docType="Invoice"
+          actionLabel="Save Invoice"
+        />
       )}
     </div>
   );

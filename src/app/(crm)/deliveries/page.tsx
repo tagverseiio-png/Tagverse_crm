@@ -1,58 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Truck, MapPin, Package, CheckCircle, Image as ImageIcon, Search, Plus, Filter, MoreHorizontal, User, AlertCircle } from 'lucide-react';
-
-const columns = [
-  { id: 'pending', title: 'Pending / Scheduled', color: 'blue' },
-  { id: 'out', title: 'Out for Delivery', color: 'emerald' },
-  { id: 'delivered', title: 'Delivered', color: 'purple' },
-  { id: 'issues', title: 'Issues / Returns', color: 'rose' }
-];
-
-const mockDeliveries = [
-  {
-    id: 'DEL-1042',
-    client: 'Ilara Hotel & Spa',
-    address: 'OMR Road, Chennai',
-    items: ['10x 5L Hand Wash', '5x 5L Floor Cleaner'],
-    status: 'pending',
-    agent: null,
-    date: '2026-06-29',
-    priority: 'High'
-  },
-  {
-    id: 'DEL-1043',
-    client: 'Khader Bhai Biriyani',
-    address: 'Anna Nagar, Chennai',
-    items: ['20x 5L Dishwash', '2x 5L Glass Cleaner'],
-    status: 'out',
-    agent: 'Thamizh T.',
-    date: '2026-06-29',
-    priority: 'Medium'
-  },
-  {
-    id: 'DEL-1044',
-    client: 'Hot Dosai',
-    address: 'T-Nagar, Chennai',
-    items: ['15x 5L Toilet Cleaner'],
-    status: 'delivered',
-    agent: 'Jatin M.',
-    date: '2026-06-29',
-    podImage: 'https://images.unsplash.com/photo-1620916297397-a4a5402a3c6c?w=150&h=150&fit=crop',
-    priority: 'Low'
-  },
-  {
-    id: 'DEL-1045',
-    client: 'Yalis Restaurant',
-    address: 'Velachery, Chennai',
-    items: ['5x 5L Hand Wash'],
-    status: 'issues',
-    agent: 'Manoj K.',
-    date: '2026-06-29',
-    issueNote: 'Client requested reschedule (Shop closed)',
-    priority: 'Medium'
-  }
-];
+import { deliveriesColumns as columns, deliveriesData as mockDeliveries } from '@/lib/mockData';
 
 export default function DeliveriesPage() {
   const [deliveries, setDeliveries] = useState(mockDeliveries);

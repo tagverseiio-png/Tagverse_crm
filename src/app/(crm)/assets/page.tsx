@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
+import { store } from '@/lib/mockData';
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
@@ -53,33 +54,11 @@ const labelStyle = {
 
 type Asset = { name: string; type: string; size: string; folder: string; badge: string; icon: string };
 
+const { assetsKpis: kpis, assetsFolders: folders } = store;
+
 export default function AssetsPage() {
-  const kpis = [
-    { label: 'Total files', value: '612', delta: 'Across all folders', color: 'purple' },
-    { label: 'Storage used', value: '4.8 GB', delta: 'of 10 GB', color: 'blue' },
-    { label: 'Images', value: '440', delta: '72% of total', color: 'emerald' },
-    { label: 'Videos', value: '38', delta: '6% of total', color: 'amber' },
-  ];
-
-  const folders = [
-    { name: 'Brand guidelines', count: 24, icon: '📁', color: 'var(--rose-light)' },
-    { name: 'Campaign creatives', count: 118, icon: '📁', color: 'var(--purple-light)' },
-    { name: 'Product screenshots', count: 76, icon: '📁', color: 'var(--blue-light)' },
-    { name: 'Social media templates', count: 92, icon: '📁', color: 'var(--amber-light)' },
-    { name: 'Videos & reels', count: 38, icon: '📁', color: 'var(--emerald-light)' },
-  ];
-
-  const [assets, setAssets] = useState<Asset[]>([
-    { name: 'hero-banner-v3.png', type: 'Image', size: '1.2 MB', folder: 'Campaign creatives', badge: 'rose', icon: '🖼️' },
-    { name: 'brand-kit-2025.pdf', type: 'PDF', size: '4.4 MB', folder: 'Brand guidelines', badge: 'purple', icon: '📄' },
-    { name: 'product-demo-final.mp4', type: 'Video', size: '84 MB', folder: 'Videos & reels', badge: 'emerald', icon: '🎥' },
-  ]);
-
-  const [recentUploads, setRecentUploads] = useState([
-    { name: 'hero-banner-v3.png', size: '1.2 MB', date: 'Jun 23', icon: '🖼️', bg: 'var(--rose-dim)', color: 'var(--rose-light)' },
-    { name: 'brand-kit-2025.pdf', size: '4.4 MB', date: 'Jun 21', icon: '📄', bg: 'var(--blue-dim)', color: 'var(--blue-light)' },
-    { name: 'product-demo-final.mp4', size: '84 MB', date: 'Jun 19', icon: '🎥', bg: 'var(--emerald-dim)', color: 'var(--emerald-light)' },
-  ]);
+  const [assets, setAssets] = useState<Asset[]>(store.assets);
+  const [recentUploads, setRecentUploads] = useState(store.recentUploads);
 
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);

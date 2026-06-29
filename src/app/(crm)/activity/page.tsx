@@ -35,6 +35,8 @@ const ChevronDown = ({ size = 16 }: { size?: number }) => (
 import { store, getCompanyById, getMemberById } from '@/lib/mockData';
 import styles from './activity.module.css';
 
+const { upcomingEvents, productivityTracker } = store;
+
 export default function ActivityPage() {
   const [filter, setFilter] = useState('all');
   const [completedExpanded, setCompletedExpanded] = useState(false);
@@ -240,46 +242,23 @@ export default function ActivityPage() {
               <h3 className={styles.upcomingTitle}>Coming Up</h3>
             </div>
 
-            <div className={styles.upcomingGroup}>
-              <p className={styles.upcomingGroupTitle}>Tomorrow</p>
-              
-              <div className={styles.upcomingEvent}>
-                <div className={styles.eventDot} style={{ background: 'var(--blue-light)' }}></div>
-                <div>
-                  <p className={styles.eventTitle}>Onboarding Call — BrightWave Team</p>
-                  <div className={styles.eventMeta}>
-                    <span className={styles.eventTime}>09:30 AM</span>
-                    <span>Owner: Priya N.</span>
+            {upcomingEvents.map((group) => (
+              <div key={group.group} className={styles.upcomingGroup}>
+                <p className={styles.upcomingGroupTitle}>{group.group}</p>
+                {group.events.map((ev) => (
+                  <div key={ev.title} className={styles.upcomingEvent}>
+                    <div className={styles.eventDot} style={{ background: ev.color }}></div>
+                    <div>
+                      <p className={styles.eventTitle}>{ev.title}</p>
+                      <div className={styles.eventMeta}>
+                        <span className={styles.eventTime}>{ev.time}</span>
+                        <span>Owner: {ev.owner}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-
-              <div className={styles.upcomingEvent}>
-                <div className={styles.eventDot} style={{ background: 'var(--rose-light)' }}></div>
-                <div>
-                  <p className={styles.eventTitle}>Quarterly Review Deadline</p>
-                  <div className={styles.eventMeta}>
-                    <span className={styles.eventTime}>16:00 PM</span>
-                    <span>Owner: Arjun S.</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.upcomingGroup}>
-              <p className={styles.upcomingGroupTitle}>Day After Tomorrow</p>
-              
-              <div className={styles.upcomingEvent}>
-                <div className={styles.eventDot} style={{ background: 'var(--amber-light)' }}></div>
-                <div>
-                  <p className={styles.eventTitle}>Strategic alignment with Acme CMO</p>
-                  <div className={styles.eventMeta}>
-                    <span className={styles.eventTime}>11:00 AM</span>
-                    <span>Owner: Arjun S.</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
           <div className={styles.insightsCard}>
@@ -287,11 +266,11 @@ export default function ActivityPage() {
             <p className={styles.insightsText}>You completed {completedActivities.length} crucial pipeline workflows today. Keep up the high momentum with the team!</p>
             <div>
               <div className={styles.progressLabel}>
-                <span>Daily Goal Target</span>
-                <span>75% Achieved</span>
+                <span>{productivityTracker.label}</span>
+                <span>{productivityTracker.dailyGoalPct}% Achieved</span>
               </div>
               <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ width: '75%' }}></div>
+                <div className={styles.progressFill} style={{ width: `${productivityTracker.dailyGoalPct}%` }}></div>
               </div>
             </div>
           </div>

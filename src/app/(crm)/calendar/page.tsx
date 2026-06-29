@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useWorkspace, CalendarEvent, Task } from '@/context/WorkspaceContext';
 import styles from './calendar.module.css';
+import { calendarPresetColors } from '@/lib/mockData';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const MAX_VISIBLE_PILLS = 3;
@@ -250,7 +251,7 @@ function RescheduleModal({
     });
   };
 
-  const PRESET_COLORS = ['#7c5cbf', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#ec4899'];
+  const PRESET_COLORS = calendarPresetColors;
 
   return (
     <div className={styles.popupBackdrop} onClick={onCancel}>

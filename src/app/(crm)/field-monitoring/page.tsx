@@ -1,29 +1,32 @@
 'use client';
 import { useState } from 'react';
 import { MapPin, Navigation, Package, UserCheck, Activity, BatteryMedium, MessageSquare, CheckCircle, AlertTriangle } from 'lucide-react';
+import { fieldMonitoringKpis, fieldMonitoringAgents as agents, fieldMonitoringFeed } from '@/lib/mockData';
 
-const kpis = [
-  { label: 'Total Agents', value: '12', delta: 'All assigned', color: 'blue', icon: <UserCheck size={20} /> },
-  { label: 'Active in Field', value: '8', delta: '+2 from morning', color: 'emerald', icon: <Navigation size={20} /> },
-  { label: 'Deliveries Today', value: '45/60', delta: '75% completion', color: 'purple', icon: <Package size={20} /> },
-  { label: 'Idle / Alerts', value: '2', delta: 'Requires attention', color: 'rose', icon: <AlertTriangle size={20} /> },
-];
+const kpiIcons: Record<string, React.ReactNode> = {
+  blue: <UserCheck size={20} />,
+  emerald: <Navigation size={20} />,
+  purple: <Package size={20} />,
+  rose: <AlertTriangle size={20} />
+};
 
-const agents = [
-  { id: 1, name: 'Jatin M.', status: 'Active', location: 'Opal Hotel Area', battery: '85%', tasksCompleted: 8, lastUpdate: '2 mins ago', phone: '+91 9876543210' },
-  { id: 2, name: 'Thamizh T.', status: 'On Delivery', location: 'Khader Bhai Biriyani', battery: '62%', tasksCompleted: 12, lastUpdate: 'Just now', phone: '+91 9876543211' },
-  { id: 3, name: 'Rahul S.', status: 'Offline', location: 'Depot (Chennai)', battery: '---', tasksCompleted: 0, lastUpdate: 'Last seen 12h ago', phone: '+91 9876543212' },
-  { id: 4, name: 'Manoj K.', status: 'Idle', location: 'Yalis Restaurant (Nearby)', battery: '40%', tasksCompleted: 5, lastUpdate: '15 mins ago', phone: '+91 9876543213' },
-  { id: 5, name: 'Surya V.', status: 'Active', location: 'Hot Dosai Zone', battery: '91%', tasksCompleted: 4, lastUpdate: '5 mins ago', phone: '+91 9876543214' },
-];
+const feedIcons: Record<string, React.ReactNode> = {
+  check: <CheckCircle size={14} color="#10b981" />,
+  mapPin: <MapPin size={14} color="#6B00CC" />,
+  alert: <AlertTriangle size={14} color="#f43f5e" />,
+  package: <Package size={14} color="#8b5cf6" />,
+  activity: <Activity size={14} color="#10b981" />
+};
 
-const activityFeed = [
-  { id: 101, agent: 'Thamizh T.', action: 'Delivered', target: 'Khader Bhai Biriyani (4x 5L Cans)', time: 'Just now', icon: <CheckCircle size={14} color="#10b981" /> },
-  { id: 102, agent: 'Jatin M.', action: 'Checked In', target: 'Opal Hotel', time: '2 mins ago', icon: <MapPin size={14} color="#6B00CC" /> },
-  { id: 103, agent: 'Manoj K.', action: 'Alert', target: 'Idle for >15 mins', time: '5 mins ago', icon: <AlertTriangle size={14} color="#f43f5e" /> },
-  { id: 104, agent: 'Surya V.', action: 'Order Picked', target: 'Depot', time: '45 mins ago', icon: <Package size={14} color="#8b5cf6" /> },
-  { id: 105, agent: 'Jatin M.', action: 'Closed Deal', target: 'Hot Dosai (New Client)', time: '1 hr ago', icon: <Activity size={14} color="#10b981" /> },
-];
+const kpis = fieldMonitoringKpis.map(kpi => ({
+  ...kpi,
+  icon: kpiIcons[kpi.color]
+}));
+
+const activityFeed = fieldMonitoringFeed.map(feed => ({
+  ...feed,
+  icon: feedIcons[feed.iconType]
+}));
 
 export default function FieldMonitoringPage() {
   const [filter, setFilter] = useState('All');

@@ -1,34 +1,6 @@
 'use client';
 import { useState } from 'react';
-
-const kpis = [
-  { label: 'Conversion Rate', value: '18.2%', delta: '+2.4%', isUp: true, icon: '📈', color: 'blue' },
-  { label: 'Avg. Time to Close', value: '42 Days', delta: '-5 Days', isUp: true, icon: '⏱', color: 'emerald' },
-  { label: 'Revenue Velocity', value: '$12.4K / Day', delta: '+12%', isUp: true, icon: '📊', color: 'purple' },
-  { label: 'Leakage Amount', value: '$420.5K', delta: '+4.2%', isUp: false, icon: '📉', color: 'rose' },
-];
-
-const funnelData = [
-  { stage: 'LEADS', value: 840, conversion: '72%', totalPct: '100%', color: 'var(--blue)' },
-  { stage: 'QUALIFIED', value: 605, conversion: '62%', totalPct: '72%', color: 'var(--purple)' },
-  { stage: 'PROPOSAL', value: 375, conversion: '63%', totalPct: '45%', color: 'var(--amber)' },
-  { stage: 'NEGOTIATION', value: 236, conversion: '64%', totalPct: '28%', color: 'var(--rose)' },
-  { stage: 'CLOSING', value: 151, conversion: '-', totalPct: '18%', color: 'var(--emerald)' },
-];
-
-const performanceMetrics = [
-  { name: 'Lead Entry', volume: '840 deals', value: '$2.1M', time: '4 days', dropoff: '28%', dropColor: 'var(--text-secondary)' },
-  { name: 'Qualification', volume: '605 deals', value: '$1.8M', time: '12 days', dropoff: '38%', dropColor: 'var(--rose)' },
-  { name: 'Demo/Proposal', volume: '375 deals', value: '$1.2M', time: '18 days', dropoff: '37%', dropColor: 'var(--text-secondary)' },
-  { name: 'Negotiation', volume: '236 deals', value: '$840K', time: '22 days', dropoff: '36%', dropColor: 'var(--text-secondary)' },
-  { name: 'Closing', volume: '151 deals', value: '$560K', time: '7 days', dropoff: '12%', dropColor: 'var(--text-secondary)' },
-];
-
-const aiInsights = [
-  { title: 'Leakage in Qualification', text: '38% drop-off at Qualification is higher than your team average (24%). Verify if BANT criteria is too strict.', type: 'warning' },
-  { title: 'Bottleneck at Demo Stage', text: 'Average time in Proposal/Demo stage has increased to 18 days. Consider automated follow-up sequences.', type: 'warning' },
-  { title: 'Closing High Velocity', text: 'Win rate at negotiation is up 5% this month. Great performance on discount management!', type: 'success' },
-];
+import { funnelKpis as kpis, funnelData, funnelPerformanceMetrics as performanceMetrics, funnelAiInsights as aiInsights } from '@/lib/mockData';
 
 export default function FunnelPage() {
   const [hoveredStage, setHoveredStage] = useState<string | null>(null);

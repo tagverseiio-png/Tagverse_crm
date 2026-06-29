@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAnalyticsStore } from '../store';
 import { X } from 'lucide-react';
+import { analyticsWidgetTypeOptions, analyticsModules, analyticsMetrics, analyticsColorThemes } from '@/lib/mockData';
 
 export function WidgetConfigurator() {
   const { isEditMode, widgets, selectedWidgetId, selectWidget, updateWidgetConfig, updateWidgetTitle, updateWidgetType } = useAnalyticsStore();
@@ -35,52 +36,47 @@ export function WidgetConfigurator() {
 
         <div>
           <label style={labelStyle}>Widget Type</label>
-          <select 
+          <select
             value={widget.type}
             onChange={(e) => updateWidgetType(widget.id, e.target.value as any)}
             style={inputStyle}
           >
-            <option value="kpi">KPI Card</option>
-            <option value="bar">Bar Chart</option>
-            <option value="line">Line Chart</option>
-            <option value="area">Area Chart</option>
-            <option value="pie">Pie Chart (Solid)</option>
-            <option value="donut">Donut Chart (Hollow)</option>
-            <option value="funnel">Funnel Chart</option>
+            {analyticsWidgetTypeOptions.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
           </select>
         </div>
 
         <div>
           <label style={labelStyle}>Data Module</label>
-          <select 
+          <select
             value={widget.config.module}
             onChange={(e) => updateWidgetConfig(widget.id, { module: e.target.value })}
             style={inputStyle}
           >
-            <option value="Deals">Deals</option>
-            <option value="Leads">Leads</option>
-            <option value="Accounts">Accounts</option>
-            <option value="Campaigns">Campaigns</option>
+            {analyticsModules.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
           </select>
         </div>
 
         <div>
           <label style={labelStyle}>Metric Aggregation</label>
-          <select 
+          <select
             value={widget.config.metric}
             onChange={(e) => updateWidgetConfig(widget.id, { metric: e.target.value })}
             style={inputStyle}
           >
-            <option value="count">Count (Record Count)</option>
-            <option value="sum">Sum (Total Value)</option>
-            <option value="avg">Average</option>
+            {analyticsMetrics.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
           </select>
         </div>
 
         <div>
           <label style={labelStyle}>Color Theme</label>
           <div style={{ display: 'flex', gap: 8 }}>
-            {['blue', 'purple', 'emerald', 'rose'].map(color => (
+            {analyticsColorThemes.map(color => (
               <button
                 key={color}
                 onClick={() => updateWidgetConfig(widget.id, { colorTheme: color })}

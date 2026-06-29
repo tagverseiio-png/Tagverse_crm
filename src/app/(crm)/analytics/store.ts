@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { analyticsInitialLayout, analyticsInitialWidgets } from '@/lib/mockData';
 
 export type WidgetType = 'kpi' | 'bar' | 'donut' | 'line' | 'pie' | 'funnel' | 'area';
 
@@ -57,31 +58,9 @@ interface AnalyticsState {
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-const initialLayout: LayoutItem[] = [
-  { i: 'w1', x: 0, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
-  { i: 'w2', x: 3, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
-  { i: 'w3', x: 6, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
-  { i: 'w4', x: 9, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
-  { i: 'w5', x: 0, y: 4, w: 8, h: 10, minW: 4, minH: 8 },
-  { i: 'w6', x: 8, y: 4, w: 4, h: 10, minW: 3, minH: 8 },
-  { i: 'w7', x: 0, y: 14, w: 4, h: 10, minW: 3, minH: 8 },
-  { i: 'w8', x: 4, y: 14, w: 4, h: 10, minW: 3, minH: 8 },
-  { i: 'w9', x: 8, y: 14, w: 4, h: 10, minW: 3, minH: 8 },
-];
+const initialLayout = analyticsInitialLayout;
 
-const initialWidgets: Widget[] = [
-  { id: 'w1', type: 'kpi', title: 'Monthly Revenue', config: { module: 'Deals', metric: 'sum', colorTheme: 'blue' } },
-  { id: 'w2', type: 'kpi', title: 'Active Clients', config: { module: 'Accounts', metric: 'count', colorTheme: 'purple' } },
-  { id: 'w3', type: 'kpi', title: 'Avg ROI', config: { module: 'Campaigns', metric: 'avg', colorTheme: 'emerald' } },
-  { id: 'w4', type: 'kpi', title: 'Churn Rate', config: { module: 'Accounts', metric: 'avg', colorTheme: 'rose' } },
-
-  { id: 'w5', type: 'area', title: 'Revenue Trend (YoY)', config: { module: 'Deals', metric: 'sum', colorTheme: 'blue' } },
-  { id: 'w6', type: 'donut', title: 'Leads by Source', config: { module: 'Leads', metric: 'count', colorTheme: 'purple' } },
-
-  { id: 'w7', type: 'funnel', title: 'Sales Pipeline Conversion', config: { module: 'Deals', metric: 'count', colorTheme: 'emerald' } },
-  { id: 'w8', type: 'bar', title: 'Platform ROI Analysis', config: { module: 'Campaigns', metric: 'sum', colorTheme: 'rose' } },
-  { id: 'w9', type: 'pie', title: 'Account Distribution', config: { module: 'Accounts', metric: 'count', colorTheme: 'amber' } },
-];
+const initialWidgets = analyticsInitialWidgets as Widget[];
 
 export const useAnalyticsStore = create<AnalyticsState>()(
   persist(

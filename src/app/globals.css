@@ -638,7 +638,7 @@ h6 {
 }
 
 .kpi-value {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Outfit', sans-serif;
   font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);

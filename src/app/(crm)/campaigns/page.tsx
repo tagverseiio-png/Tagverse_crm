@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { campaignsKpis, campaignsInitial, campaignStats, campaignChannelBadge, campaignStatusBadge } from '@/lib/mockData';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Campaign = {
@@ -61,20 +62,9 @@ const labelStyle = {
 
 // ─── Page Component ───────────────────────────────────────────────────────────
 export default function CampaignsPage() {
-  const kpis = [
-    { label: 'Active campaigns', value: '6', delta: '+2 this month', trend: 'up', color: 'purple' },
-    { label: 'Total reach', value: '48K', delta: 'Across all channels', trend: 'up', color: 'blue' },
-    { label: 'Avg. open rate', value: '28.4%', delta: '+3.1% vs last mo.', trend: 'up', color: 'emerald' },
-    { label: 'Conversions', value: '312', delta: '+22% this month', trend: 'up', color: 'amber' },
-  ];
+  const kpis = campaignsKpis;
 
-  const [campaigns, setCampaigns] = useState<Campaign[]>([
-    { name: 'Q3 product launch', channel: 'Email', budget: '₹80K', spent: '₹52K', dates: 'Jun 1 – Jul 15', status: 'Active', badgeChannel: 'purple', badgeStatus: 'emerald' },
-    { name: 'Referral drive — June', channel: 'Social', budget: '₹30K', spent: '₹12K', dates: 'Jun 10 – Jun 30', status: 'Active', badgeChannel: 'blue', badgeStatus: 'emerald' },
-    { name: 'Re-engagement blast', channel: 'Email', budget: '₹15K', spent: '—', dates: 'Jul 1 – Jul 10', status: 'Draft', badgeChannel: 'purple', badgeStatus: 'amber' },
-    { name: 'Google Ads — brand', channel: 'Paid', budget: '₹1.2L', spent: '₹1.2L', dates: 'May 1 – May 31', status: 'Done', badgeChannel: 'rose', badgeStatus: 'rose' },
-    { name: 'Webinar promo', channel: 'Social', budget: '₹20K', spent: '₹8K', dates: 'Jun 20 – Jul 5', status: 'Paused', badgeChannel: 'blue', badgeStatus: 'amber' },
-  ]);
+  const [campaigns, setCampaigns] = useState(campaignsInitial);
 
   const [showNewModal, setShowNewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -91,8 +81,8 @@ export default function CampaignsPage() {
 
   const handleCreate = () => {
     if (!form.name.trim() || !form.budget.trim()) return;
-    const channelBadge: Record<string, string> = { Email: 'purple', Social: 'blue', Paid: 'rose', Content: 'emerald' };
-    const statusBadge: Record<string, string> = { Draft: 'amber', Active: 'emerald', Paused: 'amber', Done: 'rose' };
+    const channelBadge = campaignChannelBadge;
+    const statusBadge = campaignStatusBadge;
     setCampaigns(prev => [...prev, {
       name: form.name, channel: form.channel, budget: form.budget, spent: '—',
       dates: form.startDate && form.endDate ? `${form.startDate} – ${form.endDate}` : 'TBD',
@@ -114,8 +104,8 @@ export default function CampaignsPage() {
 
   const handleSaveEdit = () => {
     if (editingIdx === null) return;
-    const channelBadge: Record<string, string> = { Email: 'purple', Social: 'blue', Paid: 'rose', Content: 'emerald' };
-    const statusBadge: Record<string, string> = { Draft: 'amber', Active: 'emerald', Paused: 'amber', Done: 'rose' };
+    const channelBadge = campaignChannelBadge;
+    const statusBadge = campaignStatusBadge;
     setCampaigns(prev => prev.map((c, i) => i === editingIdx ? {
       ...c, name: form.name, channel: form.channel, budget: form.budget,
       dates: form.startDate && form.endDate ? `${form.startDate} – ${form.endDate}` : c.dates,
@@ -283,12 +273,7 @@ export default function CampaignsPage() {
       {showStatsModal && editingIdx !== null && (
         <Modal title={`Campaign Stats — ${campaigns[editingIdx]?.name}`} onClose={() => setShowStatsModal(false)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {[
-              { label: 'Impressions', value: '24,810', color: 'var(--blue)' },
-              { label: 'Clicks', value: '3,420', color: 'var(--purple)' },
-              { label: 'Conversions', value: '312', color: 'var(--emerald)' },
-              { label: 'CTR', value: '13.8%', color: 'var(--amber)' },
-            ].map(s => (
+            {campaignStats.map(s => (
               <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
                 <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>{s.label}</span>
                 <span style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</span>

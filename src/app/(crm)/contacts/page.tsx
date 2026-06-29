@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { contactsInitial, contactsStaticKpis } from '@/lib/mockData';
 
 type Contact = {
   id: number;
@@ -14,12 +15,7 @@ type Contact = {
   tags: string[];
 };
 
-const initialContacts: Contact[] = [
-  { id: 1, name: 'Rahul Verma', company: 'TechNova', role: 'CEO', phone: '+91 98765 11111', email: 'rahul@technova.in', owner: 'JS', lastContact: '2 days ago', created: '1 month ago', tags: ['Decision Maker', 'VIP'] },
-  { id: 2, name: 'Sneha Kapoor', company: 'CreativeMinds', role: 'Marketing Head', phone: '+91 98112 22222', email: 'sneha@creativeminds.in', owner: 'SA', lastContact: '1 week ago', created: '3 weeks ago', tags: ['Influencer'] },
-  { id: 3, name: 'Anil Desai', company: 'LogisticsPro', role: 'Operations', phone: '+91 97001 33333', email: 'anil@logisticspro.com', owner: 'JS', lastContact: 'Just now', created: '2 months ago', tags: ['Vendor'] },
-  { id: 4, name: 'Pooja Singh', company: 'RetailChain', role: 'Procurement', phone: '+91 96543 44444', email: 'pooja@retailchain.in', owner: 'AM', lastContact: '5 days ago', created: '1 week ago', tags: ['Client'] },
-];
+const initialContacts: Contact[] = contactsInitial;
 
 const emptyForm = {
   name: '', company: '', role: '', phone: '', email: '',
@@ -285,9 +281,7 @@ export default function ContactsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
         {[
           { label: 'Total Contacts', value: contacts.length.toLocaleString(), color: 'blue' },
-          { label: 'Recently Added', value: '12', color: 'purple' },
-          { label: 'Key Accounts', value: '8', color: 'amber' },
-          { label: 'Engaged Contacts', value: '24', color: 'emerald' },
+          ...contactsStaticKpis,
         ].map(s => (
           <div key={s.label} className={`kpi-card ${s.color}`}>
             <div className="kpi-label" style={{ marginBottom: 8 }}>{s.label}</div>

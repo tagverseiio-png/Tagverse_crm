@@ -1,10 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
-
-type Quote = {
-  id: string; client: string; amount: number; sentOn: string;
-  expires: string; status: 'Draft' | 'Sent' | 'Accepted' | 'Expired' | 'Invoiced';
-};
+import QuoteBuilderModal, { Quote } from './QuoteBuilderModal';
 
 const INITIAL_QUOTES: Quote[] = [
   { id: '#Q-1042', client: 'Arka Systems', amount: 120000, sentOn: 'Jun 10', expires: 'Jun 30', status: 'Sent' },
@@ -32,12 +28,9 @@ export default function QuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>(INITIAL_QUOTES);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [mClient, setMClient] = useState('');
-  const [mAmount, setMAmount] = useState('');
-  const [mStatus, setMStatus] = useState<Quote['status']>('Draft');
-  const [mExpires, setMExpires] = useState('');
+  const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
 
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [invQuoteId, setInvQuoteId] = useState<string | null>(null);
@@ -54,42 +47,42 @@ export default function QuotesPage() {
   const pending = quotes.filter(q => q.status === 'Sent').length;
 
   const openNew = () => {
-    setMClient(''); setMAmount(''); setMStatus('Draft'); setMExpires('');
-    setEditingId(null); setIsModalOpen(true);
+    setEditingQuote(null);
+    setIsModalOpen(true);
   };
+  
   const openEdit = (q: Quote) => {
-    setMClient(q.client); setMAmount(String(q.amount)); setMStatus(q.status); setMExpires(q.expires);
-    setEditingId(q.id); setIsModalOpen(true);
+    setEditingQuote(q);
+    setIsModalOpen(true);
   };
-  const handleSave = () => {
-    if (!mClient.trim()) return;
-    if (editingId) {
-      setQuotes(p => p.map(q => q.id === editingId ? { ...q, client: mClient, amount: Number(mAmount), status: mStatus, expires: mExpires } : q));
+  
+  const handleSaveQuote = (savedQuote: Quote) => {
+    if (editingQuote) {
+      setQuotes(p => p.map(q => q.id === savedQuote.id ? savedQuote : q));
     } else {
-      const newQ: Quote = {
-        id: `#Q-${Math.floor(1000 + Math.random() * 9000)}`, client: mClient,
-        amount: Number(mAmount) || 0, sentOn: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
-        expires: mExpires, status: mStatus
-      };
-      setQuotes(p => [newQ, ...p]);
+      setQuotes(p => [savedQuote, ...p]);
     }
     setIsModalOpen(false);
   };
+
   const handleDelete = (id: string) => { setQuotes(p => p.filter(q => q.id !== id)); setIsModalOpen(false); };
 
   const openInvoice = (q: Quote) => {
-    setInvClient(q.client);
-    setInvAmount(String(q.amount));
-    setInvQuoteId(q.id);
+    setEditingQuote(q);
     setIsInvoiceModalOpen(true);
   };
 
-  const handleCreateInvoice = () => {
-    if (invQuoteId) {
-      setQuotes(p => p.map(q => q.id === invQuoteId ? { ...q, client: invClient, amount: Number(invAmount), status: 'Invoiced' } : q));
-    }
+  const handleCreateInvoice = (savedQuote: Quote) => {
+    // The savedQuote might have an #INV- prefix now instead of #Q- 
+    // We try matching by replacing prefixes if necessary
+    setQuotes(p => p.map(q => 
+      (q.id === savedQuote.id || q.id.replace('#Q', '#INV').replace('#QT', '#INV') === savedQuote.id) 
+        ? { ...savedQuote, status: 'Invoiced' } 
+        : q
+    ));
     setIsInvoiceModalOpen(false);
   };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Header */}
@@ -110,7 +103,7 @@ export default function QuotesPage() {
         {[
           { label: 'Total Sent', value: String(quotes.length), delta: '↑ 12% this month', color: 'blue' },
           { label: 'Pending Approval', value: String(pending), delta: 'Awaiting response', color: 'amber' },
-          { label: 'Accepted', value: String(accepted), delta: `${Math.round((accepted / quotes.length) * 100)}% rate`, color: 'emerald' },
+          { label: 'Accepted', value: String(accepted), delta: `${Math.round((accepted / Math.max(1, quotes.length)) * 100)}% rate`, color: 'emerald' },
           { label: 'Total Value', value: fmt(totalValue), delta: 'Across open quotes', color: 'purple' },
         ].map(k => (
           <div key={k.label} className={`kpi-card ${k.color}`}>
@@ -147,7 +140,7 @@ export default function QuotesPage() {
               <tr key={q.id} style={{ cursor: 'pointer' }} onClick={() => openEdit(q)}>
                 <td><span style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace' }}>{q.id}</span></td>
                 <td style={{ fontWeight: 500 }}>{q.client}</td>
-                <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontVariantNumeric: 'tabular-nums' }}>{fmt(q.amount)}</td>
+                <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontVariantNumeric: 'tabular-nums' }}>{q.currency || '₹'}{q.amount.toLocaleString('en-IN')}</td>
                 <td style={{ color: 'var(--text-secondary)' }}>{q.sentOn}</td>
                 <td style={{ color: 'var(--text-secondary)' }}>{q.expires}</td>
                 <td><span className={STATUS_BADGE[q.status]}>{q.status}</span></td>
@@ -177,82 +170,24 @@ export default function QuotesPage() {
         </table>
       </div>
 
-      {/* Modal */}
+      {/* Advanced Quote Builder Modal */}
       {isModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="card" style={{ width: 460, padding: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>{editingId ? 'Edit Quote' : 'Create Quote'}</h3>
-              <button onClick={() => setIsModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18 }}>✕</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {[{ label: 'Client / Company', val: mClient, set: setMClient, placeholder: 'e.g. Arka Systems', type: 'text' }].map(f => (
-                <div key={f.label}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>{f.label}</label>
-                  <input type={f.type} value={f.val} onChange={e => f.set(e.target.value)} placeholder={f.placeholder}
-                    style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-                </div>
-              ))}
-              <div style={{ display: 'flex', gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Amount (₹)</label>
-                  <input type="number" value={mAmount} onChange={e => setMAmount(e.target.value)} placeholder="0"
-                    style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Status</label>
-                  <select value={mStatus} onChange={e => setMStatus(e.target.value as Quote['status'])}
-                    style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }}>
-                    {['Draft', 'Sent', 'Accepted', 'Expired'].map(s => <option key={s}>{s}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Expires</label>
-                <input type="text" value={mExpires} onChange={e => setMExpires(e.target.value)} placeholder="e.g. Jun 30"
-                  style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-              {editingId ? <button className="btn btn-ghost" style={{ color: 'var(--rose)' }} onClick={() => handleDelete(editingId)}>Delete</button> : <div />}
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSave}>{editingId ? 'Save Changes' : 'Create Quote'}</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <QuoteBuilderModal 
+          initialQuote={editingQuote} 
+          onClose={() => setIsModalOpen(false)} 
+          onSave={handleSaveQuote} 
+        />
       )}
 
-      {/* Invoice Modal */}
+      {/* Invoice Modal using the same builder */}
       {isInvoiceModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="card" style={{ width: 400, padding: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Convert to Invoice</h3>
-              <button onClick={() => setIsInvoiceModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18 }}>✕</button>
-            </div>
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Review the details before moving this quote to invoices.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Client</label>
-                <input type="text" value={invClient} onChange={e => setInvClient(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Amount (₹)</label>
-                <input type="number" value={invAmount} onChange={e => setInvAmount(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
-              <button className="btn btn-ghost" onClick={() => setIsInvoiceModalOpen(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleCreateInvoice} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <i className="ti ti-file-invoice"></i> Move to Invoice
-              </button>
-            </div>
-          </div>
-        </div>
+        <QuoteBuilderModal
+          initialQuote={editingQuote}
+          onClose={() => setIsInvoiceModalOpen(false)}
+          onSave={handleCreateInvoice}
+          docType="Invoice"
+          actionLabel="Move to Invoice"
+        />
       )}
     </div>
   );
