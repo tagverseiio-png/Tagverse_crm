@@ -1,422 +1,647 @@
-.taskManagerLayout {
+.container {
   display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 800px;
+  background-color: var(--bg-default);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
   gap: 24px;
 }
 
-@media (max-width: 900px) {
-  .taskManagerLayout {
-    flex-direction: column;
-  }
-}
-
-.filterSidebar {
+.header {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  justify-content: space-between;
+  align-items: center;
 }
 
-@media (max-width: 900px) {
-  .filterSidebar {
-    width: 100%;
-  }
-}
-
-.filterSection {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.filterHeader {
-  font-size: 10px;
+.title {
+  font-size: 24px;
   font-weight: 700;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  background: var(--bg-surface);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.tab {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tabActive {
+  background: var(--purple);
+  color: white;
+}
+
+.mainLayout {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Sidebar / Prioritizer */
+.sidebar {
+  width: 320px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sidebarHeader {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.prioritizerList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prioritizerCard {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+
+.prioritizerCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--purple);
+}
+
+.rankBadge {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.prioritizerContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.prioritizerTitle {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   margin-bottom: 4px;
 }
 
-.filterBtn {
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 10px;
+.prioritizerMeta {
   font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: all var(--transition);
-}
-
-.filterBtn:hover {
-  background: var(--bg-card);
-  color: var(--text-primary);
-}
-
-.filterBtnActive {
-  composes: filterBtn;
-  background: var(--purple-dim) !important;
-  color: var(--purple-light) !important;
-  font-weight: 700;
-}
-
-.mainContent {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-width: 0;
-}
-
-.inlineAddBar {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-
-.inputField {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: var(--text-primary);
-  font-size: 13px;
-  outline: none;
-  flex: 1;
-  min-width: 180px;
-}
-
-.selectField {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: var(--text-primary);
-  font-size: 13px;
-  outline: none;
-  cursor: pointer;
-}
-
-.taskGroupHeader {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.taskGroupBadge {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 3px 10px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  letter-spacing: 0.3px;
-}
-
-.priorityUrgent {
-  background: var(--rose-dim);
-  color: var(--rose-light);
-  border-color: var(--rose);
-}
-
-.priorityHigh {
-  background: var(--amber-dim);
-  color: var(--amber-light);
-  border-color: var(--amber);
-}
-
-.priorityNormal {
-  background: var(--blue-dim);
-  color: var(--blue-light);
-  border-color: var(--blue);
-}
-
-.priorityLow {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-secondary);
-  border-color: var(--border);
-}
-
-.taskList {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.taskItem {
+  color: var(--text-muted);
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  transition: all var(--transition);
-  gap: 16px;
 }
 
-.taskItem:last-child {
-  border-bottom: none;
-}
-
-.taskItem:hover {
-  background: var(--bg-card-hover);
-}
-
-.taskLeft {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  flex: 1;
-}
-
-.taskCheckbox {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  accent-color: var(--purple);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.taskTitle {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.taskTitleDone {
-  composes: taskTitle;
-  text-decoration: line-through;
-  color: var(--text-muted);
-}
-
-.taskRight {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.projectBadge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 12px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.dueBadge {
-  font-size: 11px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  padding: 3px 8px;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-
-.dueBadgeOverdue {
-  composes: dueBadge;
-  background: var(--rose-dim);
-  border-color: var(--rose);
-  color: var(--rose-light);
-  font-weight: 700;
-}
-
-/* ===== View Toggle ===== */
-
-.viewToggle {
-  display: flex;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.viewToggleBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.viewToggleBtn:hover {
-  color: var(--text-primary);
-}
-
-.viewToggleBtnActive {
-  composes: viewToggleBtn;
+.scoreBadge {
   background: var(--purple-dim);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
   color: var(--purple-light);
 }
 
-/* ===== Kanban Board ===== */
-
-.kanbanBoard {
+/* Content Area */
+.contentArea {
+  flex: 1;
+  background: var(--bg-card);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
   display: flex;
-  gap: 20px;
-  min-height: 500px;
-  align-items: flex-start;
+  flex-direction: column;
 }
 
-.kanbanColumn {
+/* List View */
+.listView {
   flex: 1;
-  min-width: 250px;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dealGroup {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.kanbanColumnHeader {
+.dealGroupHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
-.kanbanColumnTitle {
+.dealName {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.healthBadge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.healthGreen {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--emerald);
+  border: 1px solid var(--emerald);
+}
+
+.healthAmber {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+}
+
+.healthRed {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--rose);
+  border: 1px solid var(--rose);
+}
+
+.taskRow {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  gap: 16px;
+}
+
+.taskCheckbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--purple);
+}
+
+.taskTitle {
+  flex: 1;
+  font-size: 14px;
+}
+
+.taskDue {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.taskDueOverdue {
+  color: var(--rose);
+  font-weight: 500;
+}
+
+/* Timeline / Swimlane View */
+.timelineView {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.swimlaneGrid {
+  display: grid;
+  grid-template-columns: 200px repeat(5, minmax(250px, 1fr));
+  min-width: max-content;
+}
+
+.swimlaneHeader {
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+  display: contents;
+}
+
+.swimlaneHeaderCell {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.swimlaneRow {
+  display: contents;
+}
+
+.swimlaneRowHeader {
+  padding: 16px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+}
+
+.swimlaneCell {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-primary);
+  transition: background 0.2s;
+}
+
+.swimlaneCellDragOver {
+  background: var(--bg-card-hover);
+}
+
+.timelineCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
   font-size: 13px;
-  font-weight: 700;
+  cursor: grab;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.timelineCard:active {
+  cursor: grabbing;
+}
+
+.timelineCardTitle {
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+/* Heatmap View */
+.heatmapView {
+  flex: 1;
+  padding: 24px;
+  overflow: auto;
+}
+
+.heatmapGrid {
+  display: grid;
+  grid-template-columns: 150px repeat(7, 1fr);
+  gap: 4px;
+  min-width: 800px;
+}
+
+.heatmapHeaderCell {
+  padding: 12px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.heatmapRowHeader {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  font-weight: 500;
+  font-size: 14px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.heatmapCell {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  transition: transform 0.1s;
+}
+
+.heatmapCell:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.heatmapPopover {
+  position: fixed;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  padding: 16px;
+  width: 300px;
+  z-index: 100;
   color: var(--text-primary);
+}
+
+.heatmapPopoverTitle {
+  font-weight: 600;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.heatmapPopoverTask {
+  padding: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+/* Nudge Engine (Toasts) */
+.toastContainer {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg-card);
+  border-left: 4px solid var(--purple);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  padding: 16px;
+  width: 320px;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.toastTitle {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.toastDesc {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.toastActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.toastBtn {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+}
+
+.toastBtnPrimary {
+  background: var(--purple);
+  color: white;
+}
+
+.toastBtnSecondary {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+/* Quick Capture (Cmd+K) */
+.quickCaptureOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  z-index: 2000;
+}
+
+.quickCaptureModal {
+  background: var(--bg-card);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.quickCaptureInput {
+  width: 100%;
+  padding: 20px 24px;
+  font-size: 18px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.quickCaptureResults {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 12px 0;
+}
+
+.quickCaptureItem {
+  padding: 12px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.quickCaptureItemActive {
+  background: var(--purple);
+  color: white;
+}
+
+.quickCaptureItemActive .quickCaptureItemDesc {
+  color: rgba(255,255,255,0.8);
+}
+
+.quickCaptureItemTitle {
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.quickCaptureItemDesc {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.repAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--purple);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* Create Task Modal & Button */
+.createTaskBtn {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.kanbanColumnCount {
-  font-size: 11px;
+  background: var(--purple);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
   font-weight: 600;
-  color: var(--text-muted);
-  background: var(--bg-primary);
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-.kanbanColumnDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.kanbanCards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.kanbanCard {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 16px;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  position: relative;
-  overflow: hidden;
+  transition: all 0.2s;
 }
 
-.kanbanCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  border-radius: 4px 0 0 4px;
-}
-
-.kanbanCard:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--purple);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+.createTaskBtn:hover {
+  background: var(--purple-light);
   transform: translateY(-1px);
 }
 
-.kanbanCardUrgent::before {
-  background: var(--rose);
+.createTaskModal {
+  background: var(--bg-card);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
 }
 
-.kanbanCardHigh::before {
-  background: var(--amber);
+.createTaskHeader {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-primary);
 }
 
-.kanbanCardNormal::before {
-  background: var(--blue);
+.createTaskBody {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.kanbanCardLow::before {
-  background: var(--border);
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.kanbanCardTitle {
+.formGroup label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.4;
-  padding-left: 8px;
-}
-
-.kanbanCardTitleDone {
-  composes: kanbanCardTitle;
-  text-decoration: line-through;
   color: var(--text-muted);
 }
 
-.kanbanCardMeta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding-left: 8px;
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
 }
 
-.kanbanCardTags {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  border-color: var(--purple);
 }
 
-.kanbanPriorityDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
+.createTaskFooter {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }

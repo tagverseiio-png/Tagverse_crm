@@ -1,539 +1,547 @@
 'use client';
-import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useWorkspace, Task } from '@/context/WorkspaceContext';
-import TaskDetailDrawer from '@/components/workspace/TaskDetailDrawer';
-import { List, LayoutGrid } from 'lucide-react';
+import React, { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
+import { List, LayoutGrid, Activity, Calendar, Layout, Plus, CheckCircle2, Circle, AlertCircle, Clock, X, Bell } from 'lucide-react';
 import styles from './tasks.module.css';
 
+import { REPS, STAGES, DEALS, INITIAL_TASKS, TODAY } from './mockData';
+
+// --- HELPER FUNCTIONS ---
+function formatCurrency(val: number) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+}
+
+function calculateTaskScore(task: any, deal: any) {
+  if (task.done) return 0;
+  
+  const dealScore = deal.value / 1000 * 0.4;
+  
+  const dueDate = new Date(task.due);
+  const diffTime = dueDate.getTime() - TODAY.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  let deadlineScore = 0;
+  if (diffDays < 0) deadlineScore = 50; // Overdue is high priority
+  else if (diffDays === 0) deadlineScore = 40;
+  else if (diffDays <= 3) deadlineScore = 30;
+  else if (diffDays <= 7) deadlineScore = 15;
+  else deadlineScore = 5;
+
+  let activityScore = 0;
+  if (task.lastActivity === 0) activityScore = 20; // Very recent
+  else if (task.lastActivity <= 2) activityScore = 15;
+  else if (task.lastActivity > 5) activityScore = 5;
+
+  return Math.round(dealScore + deadlineScore + activityScore);
+}
+
+// --- MAIN COMPONENT ---
 function TasksContent() {
-  const {
-    members,
-    projects,
-    tasks,
-    addTask,
-    toggleTaskDone,
-  } = useWorkspace();
+  const [tasks, setTasks] = useState(INITIAL_TASKS);
+  const [deals, setDeals] = useState(DEALS);
+  const [viewMode, setViewMode] = useState<'list' | 'timeline' | 'heatmap'>('list');
+  
+  // Nudge Engine State
+  const [toasts, setToasts] = useState<any[]>([]);
 
-  const searchParams = useSearchParams();
+  // Quick Capture State
+  const [showQuickCapture, setShowQuickCapture] = useState(false);
+  const [qcInput, setQcInput] = useState('');
+  const [qcSelectedDeal, setQcSelectedDeal] = useState<string | null>(null);
 
-  // Filters State
-  const [filterOwner, setFilterOwner] = useState<string>('All');
-  const [filterStatus, setFilterStatus] = useState<string>('All');
-  const [filterPriority, setFilterPriority] = useState<string>('All');
-  const [filterProjectId, setFilterProjectId] = useState<string>('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  // Create Task Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newTask, setNewTask] = useState({ title: '', dealId: '', due: '', description: '' });
 
-  // View mode state
-  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  // --- Feature 1: AI Task Prioritizer ---
+  const topTasks = useMemo(() => {
+    const scoredTasks = tasks
+      .filter(t => !t.done)
+      .map(t => {
+        const deal = deals.find(d => d.id === t.dealId);
+        return {
+          ...t,
+          dealName: deal?.title || 'Unknown Deal',
+          score: calculateTaskScore(t, deal)
+        };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+    return scoredTasks;
+  }, [tasks, deals]);
 
-  // Handle search parameters on mount/change
+  // --- Feature 6: Task Health Score ---
+  const getDealHealth = useCallback((dealId: string) => {
+    const dealTasks = tasks.filter(t => t.dealId === dealId);
+    if (dealTasks.length === 0) return { score: 100, status: 'green' };
+    const doneTasks = dealTasks.filter(t => t.done).length;
+    const pct = Math.round((doneTasks / dealTasks.length) * 100);
+    let status = 'green';
+    if (pct < 50) status = 'red';
+    else if (pct <= 80) status = 'amber';
+    return { score: pct, status };
+  }, [tasks]);
+
+  // --- Feature 3: Smart Nudge Engine ---
   useEffect(() => {
-    const memberId = searchParams.get('memberId');
-    if (memberId) {
-      setFilterOwner(memberId);
-    }
-  }, [searchParams]);
-
-  // Inline Form State
-  const [showInlineAdd, setShowInlineAdd] = useState(false);
-  const [inlineTitle, setInlineTitle] = useState('');
-  const [inlineProject, setInlineProject] = useState('');
-  const [inlineOwner, setInlineOwner] = useState('m1');
-  const [inlinePriority, setInlinePriority] = useState<'Low' | 'Normal' | 'High' | 'Urgent'>('Normal');
-  const [inlineDue, setInlineDue] = useState('2026-06-25');
-
-  // Edit Drawer State
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-
-  // Apply filters
-  const getFilteredTasks = () => {
-    return tasks.filter(t => {
-      if (filterOwner !== 'All' && t.owner !== filterOwner) return false;
-      if (filterStatus !== 'All' && t.status !== filterStatus) return false;
-      if (filterPriority !== 'All' && t.priority !== filterPriority) return false;
-      if (filterProjectId !== 'All' && t.projectId !== filterProjectId) return false;
-      if (searchQuery.trim() && !t.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      return true;
+    const newToasts: any[] = [];
+    
+    // 1. Overdue tasks
+    const overdue = tasks.filter(t => {
+      if (t.done) return false;
+      const dueDate = new Date(t.due);
+      return dueDate < TODAY;
     });
-  };
 
-  const filteredTasks = getFilteredTasks();
-
-  const handleSaveInlineTask = () => {
-    if (!inlineTitle.trim()) {
-      alert('Task title is required!');
-      return;
+    if (overdue.length > 0) {
+      newToasts.push({
+        id: 'nudge-overdue',
+        title: `${overdue.length} Overdue Task${overdue.length > 1 ? 's' : ''}`,
+        desc: 'Tasks are past their deadline. Review and prioritize.',
+        type: 'alert'
+      });
     }
-    addTask({
-      title: inlineTitle.trim(),
-      projectId: inlineProject || null,
-      owner: inlineOwner,
-      status: 'To Do',
-      priority: inlinePriority,
-      due: inlineDue,
-      parentType: inlineProject ? 'project' : null,
-      tags: [],
-    });
-    setInlineTitle('');
-    setShowInlineAdd(false);
-  };
 
-  const handleOpenEditDrawer = (taskId: string) => {
-    setSelectedTaskId(taskId);
-    setDrawerOpen(true);
-  };
-
-  // Group Priorities order
-  const priorityOrder = ['Urgent', 'High', 'Normal', 'Low'] as const;
-
-  const isOverdue = (dateStr: string, status: string) => {
-    if (status === 'Done') return false;
-    const today = new Date('2026-06-25');
-    const dueDate = new Date(dateStr);
-    return dueDate < today;
-  };
-
-  // Kanban status columns config
-  const kanbanColumns: { status: Task['status']; color: string }[] = [
-    { status: 'To Do', color: 'var(--blue)' },
-    { status: 'In Progress', color: 'var(--amber)' },
-    { status: 'Done', color: 'var(--emerald)' },
-  ];
-
-  const getPriorityCardClass = (priority: string) => {
-    switch (priority) {
-      case 'Urgent': return styles.kanbanCardUrgent;
-      case 'High': return styles.kanbanCardHigh;
-      case 'Normal': return styles.kanbanCardNormal;
-      case 'Low': return styles.kanbanCardLow;
-      default: return '';
+    // 2. No client reply > 3 days (stalled)
+    const stalledTasks = tasks.filter(t => !t.done && t.lastActivity > 3);
+    if (stalledTasks.length > 0) {
+      newToasts.push({
+        id: 'nudge-stalled',
+        title: 'Stalled Deals Detected',
+        desc: `${stalledTasks.length} tasks have had no client activity in 3+ days.`,
+        type: 'warning'
+      });
     }
+
+    setToasts(newToasts);
+  }, [tasks]);
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  const getPriorityDotColor = (priority: string) => {
-    switch (priority) {
-      case 'Urgent': return 'var(--rose)';
-      case 'High': return 'var(--amber)';
-      case 'Normal': return 'var(--blue)';
-      case 'Low': return 'var(--text-muted)';
-      default: return 'var(--text-muted)';
-    }
+  // --- Feature 5: Quick Capture (Cmd+K) ---
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowQuickCapture(prev => !prev);
+        setQcInput('');
+      }
+      if (e.key === 'Escape' && showQuickCapture) {
+        setShowQuickCapture(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showQuickCapture]);
+
+  const filteredDealsForQc = useMemo(() => {
+    if (!qcInput) return deals;
+    return deals.filter(d => d.title.toLowerCase().includes(qcInput.toLowerCase()));
+  }, [qcInput, deals]);
+
+  const handleCreateQuickTask = (dealId: string) => {
+    if (!qcInput.trim()) return;
+    const newTask = {
+      id: 't' + Date.now(),
+      title: qcInput,
+      dealId: dealId,
+      rep: 'r1', // default to current user
+      due: '2026-06-29', // default today
+      done: false,
+      lastActivity: 0
+    };
+    setTasks(prev => [newTask, ...prev]);
+    setShowQuickCapture(false);
+    setQcInput('');
+  };
+
+  // Drag and drop for timeline
+  const onDragStart = (e: React.DragEvent, taskId: string) => {
+    e.dataTransfer.setData('taskId', taskId);
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const onDrop = (e: React.DragEvent, dealId: string, stage: string) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('taskId');
+    
+    // In our simplified mock, we update the DEAL's stage if a task is moved to a new stage cell, 
+    // to simulate advancing the deal. Or we can just advance the deal stage directly.
+    setDeals(prev => prev.map(d => {
+      if (d.id === dealId) {
+        return { ...d, stage };
+      }
+      return d;
+    }));
+  };
+
+  const toggleTask = (id: string) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className={styles.container}>
       
-      {/* Top action row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+      {/* Header */}
+      <div className={styles.header}>
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>All Workspace Tasks</h2>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Filter, manage, and sprint across different workflows</p>
+          <h1 className={styles.title}>CRM Task Manager</h1>
+          <p className={styles.subtitle}>Manage priorities, track deal timelines, and balance workload.</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          {/* View Toggle */}
-          <div className={styles.viewToggle}>
-            <button
-              className={viewMode === 'list' ? styles.viewToggleBtnActive : styles.viewToggleBtn}
-              onClick={() => setViewMode('list')}
-              title="List View"
-            >
-              <List size={14} />
-              List
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div className={styles.tabs}>
+            <button className={`${styles.tab} ${viewMode === 'list' ? styles.tabActive : ''}`} onClick={() => setViewMode('list')}>
+              <List size={16} /> List
             </button>
-            <button
-              className={viewMode === 'kanban' ? styles.viewToggleBtnActive : styles.viewToggleBtn}
-              onClick={() => setViewMode('kanban')}
-              title="Kanban View"
-            >
-              <LayoutGrid size={14} />
-              Board
+            <button className={`${styles.tab} ${viewMode === 'timeline' ? styles.tabActive : ''}`} onClick={() => setViewMode('timeline')}>
+              <LayoutGrid size={16} /> Timeline
+            </button>
+            <button className={`${styles.tab} ${viewMode === 'heatmap' ? styles.tabActive : ''}`} onClick={() => setViewMode('heatmap')}>
+              <Activity size={16} /> Heatmap
             </button>
           </div>
-          {/* Search bar */}
-          <div style={{ position: 'relative', width: '220px' }}>
-            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px' }}>🔍</span>
-            <input
-              type="text"
-              placeholder="Search by title..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                padding: '6px 10px 6px 30px',
-                fontSize: '12px',
-                color: 'var(--text-primary)',
-                outline: 'none',
-              }}
-            />
-          </div>
-          <button className="btn btn-primary" onClick={() => setShowInlineAdd(!showInlineAdd)}>
-            {showInlineAdd ? 'Cancel Quick Add' : '⚡ Quick Add'}
+          <button className={styles.createTaskBtn} onClick={() => setShowCreateModal(true)}>
+            <Plus size={16} /> Create Task
           </button>
         </div>
       </div>
 
-      <div className={styles.taskManagerLayout}>
-        {/* Left Filters Sidebar */}
-        <div className="card" style={{ width: '220px', flexShrink: 0, padding: '16px' }}>
-          <div className={styles.filterSidebar}>
-            
-            {/* Assignee Filter */}
-            <div className={styles.filterSection}>
-              <span className={styles.filterHeader}>Assignee</span>
-              <button
-                onClick={() => setFilterOwner('All')}
-                className={filterOwner === 'All' ? styles.filterBtnActive : styles.filterBtn}
-              >
-                All Assignees
-              </button>
-              {members.map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setFilterOwner(m.id)}
-                  className={filterOwner === m.id ? styles.filterBtnActive : styles.filterBtn}
-                >
-                  {m.name}
-                </button>
-              ))}
-            </div>
-
-            {/* Status Filter */}
-            <div className={styles.filterSection}>
-              <span className={styles.filterHeader}>Status</span>
-              {['All', 'To Do', 'In Progress', 'Done'].map(st => (
-                <button
-                  key={st}
-                  onClick={() => setFilterStatus(st)}
-                  className={filterStatus === st ? styles.filterBtnActive : styles.filterBtn}
-                >
-                  {st}
-                </button>
-              ))}
-            </div>
-
-            {/* Priority Filter */}
-            <div className={styles.filterSection}>
-              <span className={styles.filterHeader}>Priority</span>
-              {['All', 'Urgent', 'High', 'Normal', 'Low'].map(pr => (
-                <button
-                  key={pr}
-                  onClick={() => setFilterPriority(pr)}
-                  className={filterPriority === pr ? styles.filterBtnActive : styles.filterBtn}
-                >
-                  {pr}
-                </button>
-              ))}
-            </div>
-
-            {/* Project Filter */}
-            <div className={styles.filterSection}>
-              <span className={styles.filterHeader}>Project</span>
-              <button
-                onClick={() => setFilterProjectId('All')}
-                className={filterProjectId === 'All' ? styles.filterBtnActive : styles.filterBtn}
-              >
-                All Projects
-              </button>
-              {projects.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => setFilterProjectId(p.id)}
-                  className={filterProjectId === p.id ? styles.filterBtnActive : styles.filterBtn}
-                >
-                  {p.name}
-                </button>
-              ))}
-            </div>
-
+      <div className={styles.mainLayout}>
+        
+        {/* Feature 1: AI Task Prioritizer Sidebar */}
+        <div className={styles.sidebar}>
+          <div className={styles.sidebarHeader}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertCircle size={16} color="var(--purple)" />
+              Top 5 Today
+            </span>
+          </div>
+          <div className={styles.prioritizerList}>
+            {topTasks.map((t, index) => {
+              const badges = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+              return (
+                <div key={t.id} className={styles.prioritizerCard} onClick={() => toggleTask(t.id)}>
+                  <div className={styles.rankBadge}>{badges[index]}</div>
+                  <div className={styles.prioritizerContent}>
+                    <div className={styles.prioritizerTitle}>{t.title}</div>
+                    <div className={styles.prioritizerMeta}>
+                      <span>{t.dealName}</span>
+                      <span className={styles.scoreBadge}>{t.score} pts</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Right Main Content */}
-        <div className={styles.mainContent}>
-          {/* Inline Quick Add Form Row */}
-          {showInlineAdd && (
-            <div className={styles.inlineAddBar}>
-              <input
-                type="text"
-                placeholder="Task title..."
-                value={inlineTitle}
-                onChange={e => setInlineTitle(e.target.value)}
-                className={styles.inputField}
-              />
-              <select
-                value={inlineProject}
-                onChange={e => setInlineProject(e.target.value)}
-                className={styles.selectField}
-              >
-                <option value="">No Project</option>
-                {projects.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={inlineOwner}
-                onChange={e => setInlineOwner(e.target.value)}
-                className={styles.selectField}
-              >
-                {members.map(m => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={inlinePriority}
-                onChange={e => setInlinePriority(e.target.value as any)}
-                className={styles.selectField}
-              >
-                <option value="Low">Low</option>
-                <option value="Normal">Normal</option>
-                <option value="High">High</option>
-                <option value="Urgent">Urgent</option>
-              </select>
-              <input
-                type="date"
-                value={inlineDue}
-                onChange={e => setInlineDue(e.target.value)}
-                className={styles.selectField}
-              />
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn btn-primary" onClick={handleSaveInlineTask}>
-                  Save
-                </button>
-                <button className="btn btn-ghost" onClick={() => setShowInlineAdd(false)}>
-                  Cancel
-                </button>
+        {/* Content Area */}
+        <div className={styles.contentArea}>
+          
+          {/* LIST VIEW */}
+          {viewMode === 'list' && (
+            <div className={styles.listView}>
+              {deals.map(deal => {
+                const dealTasks = tasks.filter(t => t.dealId === deal.id);
+                if (dealTasks.length === 0) return null;
+                const health = getDealHealth(deal.id);
+                
+                return (
+                  <div key={deal.id} className={styles.dealGroup}>
+                    <div className={styles.dealGroupHeader}>
+                      <span className={styles.dealName}>{deal.title}</span>
+                      <span className={`${styles.healthBadge} ${
+                        health.status === 'green' ? styles.healthGreen : 
+                        health.status === 'amber' ? styles.healthAmber : styles.healthRed
+                      }`}>
+                        Health: {health.score}%
+                      </span>
+                    </div>
+                    {dealTasks.map(t => {
+                      const isOverdue = !t.done && new Date(t.due) < TODAY;
+                      return (
+                        <div key={t.id} className={styles.taskRow}>
+                          <input 
+                            type="checkbox" 
+                            className={styles.taskCheckbox} 
+                            checked={t.done} 
+                            onChange={() => toggleTask(t.id)} 
+                          />
+                          <span className={styles.taskTitle} style={{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--text-muted)' : 'inherit' }}>
+                            {t.title}
+                          </span>
+                          <span className={`${styles.taskDue} ${isOverdue ? styles.taskDueOverdue : ''}`}>
+                            <Clock size={12} /> {t.due}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* TIMELINE / SWIMLANE VIEW (Feature 2) */}
+          {viewMode === 'timeline' && (
+            <div className={styles.timelineView}>
+              <div className={styles.swimlaneGrid}>
+                {/* Header Row */}
+                <div className={styles.swimlaneHeader}>
+                  <div className={styles.swimlaneHeaderCell} style={{ borderRight: '1px solid var(--border)' }}>Deals</div>
+                  {STAGES.map(stage => (
+                    <div key={stage} className={styles.swimlaneHeaderCell}>{stage}</div>
+                  ))}
+                </div>
+
+                {/* Body Rows */}
+                {deals.map(deal => {
+                  const health = getDealHealth(deal.id);
+                  const dealTasks = tasks.filter(t => t.dealId === deal.id);
+
+                  return (
+                    <div key={deal.id} className={styles.swimlaneRow}>
+                      <div className={styles.swimlaneRowHeader}>
+                        <div style={{ fontWeight: 600, fontSize: '13px' }}>{deal.title}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatCurrency(deal.value)}</div>
+                        <span className={`${styles.healthBadge} ${
+                          health.status === 'green' ? styles.healthGreen : 
+                          health.status === 'amber' ? styles.healthAmber : styles.healthRed
+                        }`} style={{ alignSelf: 'flex-start' }}>
+                          Health: {health.score}%
+                        </span>
+                      </div>
+                      
+                      {STAGES.map(stage => (
+                        <div 
+                          key={stage} 
+                          className={styles.swimlaneCell}
+                          onDragOver={onDragOver}
+                          onDrop={(e) => onDrop(e, deal.id, stage)}
+                          style={{ background: deal.stage === stage ? 'var(--bg-card-hover)' : 'var(--bg-primary)' }}
+                        >
+                          {deal.stage === stage && dealTasks.map(t => (
+                            <div 
+                              key={t.id} 
+                              className={styles.timelineCard}
+                              draggable
+                              onDragStart={(e) => onDragStart(e, t.id)}
+                            >
+                              <div className={styles.timelineCardTitle} style={{ textDecoration: t.done ? 'line-through' : 'none' }}>
+                                {t.title}
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{t.due}</span>
+                                {t.done ? <CheckCircle2 size={12} color="var(--emerald)" /> : <Circle size={12} color="var(--text-muted)" />}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* ===== LIST VIEW ===== */}
-          {viewMode === 'list' && (
-            <>
-              {priorityOrder.map(prio => {
-                const categoryTasks = filteredTasks.filter(t => t.priority === prio);
-                if (categoryTasks.length === 0) return null;
-
-                return (
-                  <div key={prio} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div className={styles.taskGroupHeader}>
-                      <span
-                        className={`${styles.taskGroupBadge} ${
-                          prio === 'Urgent'
-                            ? styles.priorityUrgent
-                            : prio === 'High'
-                            ? styles.priorityHigh
-                            : prio === 'Normal'
-                            ? styles.priorityNormal
-                            : styles.priorityLow
-                        }`}
-                      >
-                        ⚠️ {prio} Priority
-                      </span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                        ({categoryTasks.length} tasks)
-                      </span>
+          {/* HEATMAP VIEW (Feature 4) */}
+          {viewMode === 'heatmap' && (
+            <div className={styles.heatmapView}>
+              <div style={{ marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0' }}>Team Workload Heatmap</h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Task density per rep over the next 7 days.</p>
+              </div>
+              <div className={styles.heatmapGrid}>
+                {/* Header Row */}
+                <div className={styles.heatmapHeaderCell}>Rep</div>
+                {[0, 1, 2, 3, 4, 5, 6].map(offset => {
+                  const d = new Date(TODAY);
+                  d.setDate(d.getDate() + offset);
+                  return (
+                    <div key={offset} className={styles.heatmapHeaderCell}>
+                      {d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                     </div>
+                  );
+                })}
 
-                    <div className={styles.taskList}>
-                      {categoryTasks.map(t => {
-                        const project = projects.find(p => p.id === t.projectId);
-                        const ownerMember = members.find(m => m.id === t.owner);
-                        const isTaskOverdue = isOverdue(t.due, t.status);
-
+                {/* Grid Rows */}
+                {REPS.map(rep => {
+                  return (
+                    <React.Fragment key={rep.id}>
+                      <div className={styles.heatmapRowHeader}>
+                        <div className={styles.repAvatar} style={{ marginRight: '8px' }}>{rep.avatar}</div>
+                        {rep.name}
+                      </div>
+                      
+                      {[0, 1, 2, 3, 4, 5, 6].map(offset => {
+                        const d = new Date(TODAY);
+                        d.setDate(d.getDate() + offset);
+                        const dateStr = d.toISOString().split('T')[0];
+                        
+                        // Count tasks for this rep on this date
+                        const dayTasks = tasks.filter(t => t.rep === rep.id && t.due === dateStr);
+                        const count = dayTasks.length;
+                        
+                        // Color intensity based on count
+                        let bg = 'rgba(99, 102, 241, 0.05)';
+                        if (count === 1) bg = 'rgba(99, 102, 241, 0.3)';
+                        if (count === 2) bg = 'rgba(99, 102, 241, 0.6)';
+                        if (count >= 3) bg = 'rgba(99, 102, 241, 1)';
+                        
                         return (
-                          <div
-                            key={t.id}
-                            className={styles.taskItem}
-                            onClick={() => handleOpenEditDrawer(t.id)}
+                          <div 
+                            key={offset} 
+                            className={styles.heatmapCell}
+                            style={{ background: bg, border: count === 0 ? '1px dashed var(--border)' : 'none' }}
+                            title={`${count} tasks for ${rep.name} on ${dateStr}`}
                           >
-                            <div className={styles.taskLeft}>
-                              <input
-                                type="checkbox"
-                                checked={t.status === 'Done'}
-                                onClick={e => e.stopPropagation()}
-                                onChange={() => toggleTaskDone(t.id)}
-                                className={styles.taskCheckbox}
-                              />
-                              <span className={t.status === 'Done' ? styles.taskTitleDone : styles.taskTitle}>
-                                {t.title}
-                              </span>
-                            </div>
-
-                            <div className={styles.taskRight}>
-                              {project && (
-                                <span
-                                  className={styles.projectBadge}
-                                  style={{
-                                    backgroundColor: `${project.color}15`,
-                                    color: project.color,
-                                  }}
-                                >
-                                  {project.name}
-                                </span>
-                              )}
-
-                              <span className={isTaskOverdue ? styles.dueBadgeOverdue : styles.dueBadge}>
-                                ⏱️ {t.due}
-                              </span>
-
-                              {ownerMember && (
-                                <span
-                                  title={ownerMember.name}
-                                  style={{
-                                    width: '24px',
-                                    height: '24px',
-                                    borderRadius: '50%',
-                                    background: 'var(--bg-primary)',
-                                    border: '1px solid var(--border)',
-                                    fontSize: '9px',
-                                    fontWeight: 700,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    textTransform: 'uppercase',
-                                    color: 'var(--text-primary)',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  {ownerMember.avatar}
-                                </span>
-                              )}
-                            </div>
+                            {count > 0 ? count : ''}
                           </div>
-                        );
+                        )
                       })}
-                    </div>
-                  </div>
-                );
-              })}
-            </>
-          )}
-
-          {/* ===== KANBAN VIEW ===== */}
-          {viewMode === 'kanban' && (
-            <div className={styles.kanbanBoard}>
-              {kanbanColumns.map(col => {
-                const columnTasks = filteredTasks.filter(t => t.status === col.status);
-
-                return (
-                  <div key={col.status} className={styles.kanbanColumn}>
-                    <div className={styles.kanbanColumnHeader}>
-                      <span className={styles.kanbanColumnTitle}>
-                        <span className={styles.kanbanColumnDot} style={{ background: col.color }} />
-                        {col.status}
-                      </span>
-                      <span className={styles.kanbanColumnCount}>{columnTasks.length}</span>
-                    </div>
-
-                    <div className={styles.kanbanCards}>
-                      {columnTasks.map(t => {
-                        const project = projects.find(p => p.id === t.projectId);
-                        const ownerMember = members.find(m => m.id === t.owner);
-                        const isTaskOverdue = isOverdue(t.due, t.status);
-
-                        return (
-                          <div
-                            key={t.id}
-                            className={`${styles.kanbanCard} ${getPriorityCardClass(t.priority)}`}
-                            onClick={() => handleOpenEditDrawer(t.id)}
-                          >
-                            <span className={t.status === 'Done' ? styles.kanbanCardTitleDone : styles.kanbanCardTitle}>
-                              {t.title}
-                            </span>
-                            <div className={styles.kanbanCardMeta}>
-                              <div className={styles.kanbanCardTags}>
-                                <span
-                                  className={styles.kanbanPriorityDot}
-                                  style={{ background: getPriorityDotColor(t.priority) }}
-                                  title={t.priority}
-                                />
-                                {project && (
-                                  <span
-                                    className={styles.projectBadge}
-                                    style={{
-                                      backgroundColor: `${project.color}15`,
-                                      color: project.color,
-                                    }}
-                                  >
-                                    {project.name}
-                                  </span>
-                                )}
-                                <span className={isTaskOverdue ? styles.dueBadgeOverdue : styles.dueBadge}>
-                                  ⏱️ {t.due}
-                                </span>
-                              </div>
-
-                              {ownerMember && (
-                                <span
-                                  title={ownerMember.name}
-                                  style={{
-                                    width: '22px',
-                                    height: '22px',
-                                    borderRadius: '50%',
-                                    background: 'var(--bg-primary)',
-                                    border: '1px solid var(--border)',
-                                    fontSize: '9px',
-                                    fontWeight: 700,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    textTransform: 'uppercase',
-                                    color: 'var(--text-primary)',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  {ownerMember.avatar}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {columnTasks.length === 0 && (
-                        <div style={{
-                          padding: '24px 16px',
-                          textAlign: 'center',
-                          color: 'var(--text-muted)',
-                          fontSize: '12px',
-                          background: 'var(--bg-card)',
-                          border: '1px dashed var(--border)',
-                          borderRadius: '12px',
-                        }}>
-                          No tasks
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                    </React.Fragment>
+                  )
+                })}
+              </div>
             </div>
           )}
 
-          {filteredTasks.length === 0 && (
-            <div className="card" style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <h3>No tasks found</h3>
-              <p>Try modifying your sidebar filter choices or quick-add a new task to get started!</p>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Slide-out drawer details panel */}
-      <TaskDetailDrawer
-        isOpen={drawerOpen}
-        taskId={selectedTaskId}
-        onClose={() => setDrawerOpen(false)}
-      />
+      {/* Feature 3: Smart Nudge Toasts */}
+      <div className={styles.toastContainer}>
+        {toasts.map(toast => (
+          <div key={toast.id} className={styles.toast} style={{ borderLeftColor: toast.type === 'alert' ? 'var(--rose)' : 'var(--amber)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <Bell size={16} color={toast.type === 'alert' ? 'var(--rose)' : 'var(--amber)'} />
+                <span className={styles.toastTitle}>{toast.title}</span>
+              </div>
+              <button onClick={() => removeToast(toast.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={14} />
+              </button>
+            </div>
+            <div className={styles.toastDesc}>{toast.desc}</div>
+            <div className={styles.toastActions}>
+              <button className={styles.toastBtnSecondary} onClick={() => removeToast(toast.id)}>Snooze</button>
+              <button className={styles.toastBtnPrimary} onClick={() => removeToast(toast.id)}>View Tasks</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Feature 5: Quick Capture Bar (Cmd+K) */}
+      {showQuickCapture && (
+        <div className={styles.quickCaptureOverlay} onClick={() => setShowQuickCapture(false)}>
+          <div className={styles.quickCaptureModal} onClick={e => e.stopPropagation()}>
+            <input 
+              type="text" 
+              className={styles.quickCaptureInput}
+              placeholder="Type a task name, press Enter to link to a deal..."
+              value={qcInput}
+              onChange={e => setQcInput(e.target.value)}
+              autoFocus
+            />
+            {qcInput && (
+              <div className={styles.quickCaptureResults}>
+                <div style={{ padding: '0 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                  Link to Deal
+                </div>
+                {filteredDealsForQc.map((deal, idx) => (
+                  <div 
+                    key={deal.id} 
+                    className={`${styles.quickCaptureItem} ${idx === 0 ? styles.quickCaptureItemActive : ''}`}
+                    onClick={() => handleCreateQuickTask(deal.id)}
+                  >
+                    <div className={styles.quickCaptureItemTitle}>{deal.title}</div>
+                    <div className={styles.quickCaptureItemDesc}>Stage: {deal.stage} • Value: {formatCurrency(deal.value)}</div>
+                  </div>
+                ))}
+                {filteredDealsForQc.length === 0 && (
+                  <div style={{ padding: '12px 24px', color: 'var(--text-muted)' }}>No deals match.</div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Create Task Modal */}
+      {showCreateModal && (
+        <div className={styles.quickCaptureOverlay} onClick={() => setShowCreateModal(false)}>
+          <div className={styles.createTaskModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.createTaskHeader}>
+              <h2 style={{ margin: 0, fontSize: '18px' }}>Create New Task</h2>
+              <button onClick={() => setShowCreateModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className={styles.createTaskBody}>
+              <div className={styles.formGroup}>
+                <label>Task Title</label>
+                <input 
+                  type="text" 
+                  value={newTask.title} 
+                  onChange={e => setNewTask({...newTask, title: e.target.value})} 
+                  placeholder="E.g., Send follow-up email"
+                  autoFocus
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Related Deal</label>
+                <select value={newTask.dealId} onChange={e => setNewTask({...newTask, dealId: e.target.value})}>
+                  <option value="">Select a deal...</option>
+                  {deals.map(d => <option key={d.id} value={d.id}>{d.title}</option>)}
+                </select>
+              </div>
+              <div className={styles.formGroup}>
+                <label>Due Date</label>
+                <input 
+                  type="date" 
+                  value={newTask.due} 
+                  onChange={e => setNewTask({...newTask, due: e.target.value})} 
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Description</label>
+                <textarea 
+                  value={newTask.description} 
+                  onChange={e => setNewTask({...newTask, description: e.target.value})} 
+                  placeholder="Task details..."
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className={styles.createTaskFooter}>
+              <button className={styles.toastBtnSecondary} onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button className={styles.toastBtnPrimary} onClick={() => {
+                if (!newTask.title || !newTask.dealId) {
+                  alert('Title and Deal are required.');
+                  return;
+                }
+                const createdTask = {
+                  id: 't' + Date.now(),
+                  title: newTask.title,
+                  dealId: newTask.dealId,
+                  rep: 'r1',
+                  due: newTask.due || TODAY.toISOString().split('T')[0],
+                  done: false,
+                  lastActivity: 0
+                };
+                setTasks(prev => [createdTask as any, ...prev]);
+                setShowCreateModal(false);
+                setNewTask({ title: '', dealId: '', due: '', description: '' });
+              }}>Create Task</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -545,4 +553,3 @@ export default function TasksPage() {
     </Suspense>
   );
 }
-
