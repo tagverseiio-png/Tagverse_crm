@@ -22,6 +22,11 @@ const Calendar = ({ size = 16 }: { size?: number }) => (
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 );
+const Plus = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
 const ChevronRight = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="9 18 15 12 9 6" />
@@ -40,6 +45,7 @@ const { upcomingEvents, productivityTracker } = store;
 export default function ActivityPage() {
   const [filter, setFilter] = useState('all');
   const [completedExpanded, setCompletedExpanded] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const meetingsCount = store.activities.filter(a => a.type === 'meeting' && a.status !== 'done').length;
   const tasksCount = store.activities.filter(a => a.type === 'task' && a.status !== 'done').length;
@@ -123,7 +129,12 @@ export default function ActivityPage() {
 
           {/* Active Timeline Column Card */}
           <div className={styles.timelineCard}>
-            <h3 className={styles.timelineTitle}>Chronological Feed</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <h3 className={styles.timelineTitle} style={{ margin: 0 }}>Chronological Feed</h3>
+              <button style={{ padding: '8px 16px', background: 'var(--brand-accent, var(--purple))', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: 13, transition: 'all 0.2s' }} onClick={() => setShowAddModal(true)}>
+                <Plus size={16} /> Add Activity
+              </button>
+            </div>
 
             <div className={styles.timelineWrapper}>
               <div className={styles.timelineGuideline}></div>
@@ -278,6 +289,42 @@ export default function ActivityPage() {
         </div>
 
       </section>
+
+      {/* Add Activity Modal */}
+      {showAddModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setShowAddModal(false)}>
+          <div style={{ background: 'var(--bg-card, #fff)', border: '1px solid var(--border, #eaeaea)', borderRadius: 20, padding: 32, width: '100%', maxWidth: 520, boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>Add New Activity</h2>
+              <button onClick={() => setShowAddModal(false)} style={{ background: 'var(--bg-secondary)', width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Activity Title</label>
+                <input type="text" placeholder="e.g. Acme Corp Contract Review" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Type</label>
+                  <select style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }}>
+                    <option>Meeting</option>
+                    <option>Task</option>
+                    <option>Deadline</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Date & Time</label>
+                  <input type="datetime-local" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }} />
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 32, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+              <button style={{ padding: '10px 16px', borderRadius: 10, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600, color: 'var(--text-muted)', fontSize: 13 }} onClick={() => setShowAddModal(false)}>Cancel</button>
+              <button style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--text-primary)', color: 'var(--bg-card)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13 }} onClick={() => setShowAddModal(false)}>Schedule Activity</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

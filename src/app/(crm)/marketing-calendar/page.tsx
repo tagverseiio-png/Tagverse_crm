@@ -60,7 +60,7 @@ const labelStyle = {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function MarketingCalendarPage() {
-  const [currentMonth] = useState('June 2025');
+  const [currentMonth] = useState('June 2026');
   const [selectedDate, setSelectedDate] = useState<number>(24);
 
   const [events, setEvents] = useState<ScheduledEvent[]>(marketingCalendarEvents);
@@ -70,8 +70,9 @@ export default function MarketingCalendarPage() {
   const [editingEvent, setEditingEvent] = useState<ScheduledEvent | null>(null);
   const [toast, setToast] = useState('');
   const [toastColor, setToastColor] = useState('var(--emerald)');
+  const [detailsEvent, setDetailsEvent] = useState<ScheduledEvent | null>(null);
 
-  const blankForm = { title: '', channel: 'LinkedIn', date: selectedDate, time: '09:00', author: 'Priya S.', type: 'Social', company: '', client: '' };
+  const blankForm = { title: '', channel: 'LinkedIn', date: `2026-06-${String(selectedDate).padStart(2, '0')}`, time: '09:00', author: 'Priya S.', type: 'Social', company: '', client: '' };
   const [form, setForm] = useState(blankForm);
 
   const showToast = (msg: string, color = 'var(--emerald)') => {
@@ -84,9 +85,17 @@ export default function MarketingCalendarPage() {
   const days: { empty: boolean; day?: number; isToday?: boolean; evts?: ScheduledEvent[] }[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) days.push({ empty: true });
   for (let i = 1; i <= daysInMonth; i++) {
-    days.push({ empty: false, day: i, isToday: i === 24, evts: events.filter(e => e.date === i) });
+    days.push({ empty: false, day: i, isToday: i === 24, evts: events.filter(e => {
+      if (typeof e.date === 'number') return e.date === i;
+      if (typeof e.date === 'string') return e.date.startsWith('2026-06-') && Number(e.date.split('-')[2]) === i;
+      return false;
+    })});
   }
-  const selectedEvents = events.filter(e => e.date === selectedDate);
+  const selectedEvents = events.filter(e => {
+    if (typeof e.date === 'number') return e.date === selectedDate;
+    if (typeof e.date === 'string') return e.date.startsWith('2026-06-') && Number(e.date.split('-')[2]) === selectedDate;
+    return false;
+  });
   const allScheduled = events.filter(e => e.status === 'Scheduled');
 
   // Convert 24h "HH:MM" to display "H:MM AM/PM"
@@ -99,7 +108,7 @@ export default function MarketingCalendarPage() {
   const handleSchedule = () => {
     if (!form.title.trim()) return;
     const newEvt: ScheduledEvent = {
-      id: Date.now(), date: Number(form.date), title: form.title,
+      id: Date.now(), date: form.date, title: form.title,
       channel: form.channel, time: to12h(form.time), type: form.type,
       author: form.author, company: form.company, client: form.client,
       badgeChannel: CHANNEL_BADGE[form.channel] || 'blue',
@@ -107,10 +116,10 @@ export default function MarketingCalendarPage() {
       color: CHANNEL_COLOR[form.channel] || 'var(--blue)',
     };
     setEvents(prev => [...prev, newEvt]);
-    setSelectedDate(Number(form.date));
+    setSelectedDate(typeof form.date === 'string' && form.date.startsWith('2026-06-') ? Number(form.date.split('-')[2]) : selectedDate);
     setShowScheduleModal(false);
     showToast('Post scheduled successfully!');
-    setForm({ ...blankForm, date: Number(form.date) });
+    setForm({ ...blankForm, date: form.date });
   };
 
   const openEdit = (evt: ScheduledEvent) => {
@@ -122,14 +131,14 @@ export default function MarketingCalendarPage() {
       const h24 = ampm === 'PM' ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h);
       return `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
     };
-    setForm({ title: evt.title, channel: evt.channel, date: evt.date, time: to24h(evt.time), author: evt.author, type: evt.type, company: evt.company || '', client: evt.client || '' });
+    setForm({ title: evt.title, channel: evt.channel, date: typeof evt.date === 'number' ? `2026-06-${String(evt.date).padStart(2, '0')}` : String(evt.date), time: to24h(evt.time), author: evt.author, type: evt.type, company: evt.company || '', client: evt.client || '' });
     setShowEditModal(true);
   };
 
   const handleSaveEdit = () => {
     if (!editingEvent || !form.title.trim()) return;
     setEvents(prev => prev.map(e => e.id === editingEvent.id ? {
-      ...e, title: form.title, channel: form.channel, date: Number(form.date),
+      ...e, title: form.title, channel: form.channel, date: form.date,
       time: to12h(form.time), type: form.type, author: form.author,
       company: form.company, client: form.client,
       badgeChannel: CHANNEL_BADGE[form.channel] || 'blue',
@@ -177,9 +186,9 @@ export default function MarketingCalendarPage() {
       <div style={{ display: 'grid', gridTemplateColumns: forDate ? '1fr 1fr' : '1fr 1fr', gap: 12 }}>
         {forDate && (
           <div>
-            <label style={labelStyle}>Day (June 2025)</label>
-            <input type="number" min={1} max={30} style={inputStyle} value={form.date}
-              onChange={e => setForm(f => ({ ...f, date: Number(e.target.value) }))} />
+            <label style={labelStyle}>Date</label>
+            <input type="date" style={inputStyle} value={form.date}
+              onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
           </div>
         )}
         <div>
@@ -214,7 +223,7 @@ export default function MarketingCalendarPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 10 }}
-            onClick={() => { setForm({ ...blankForm, date: selectedDate }); setShowScheduleModal(true); }}>
+            onClick={() => { setForm({ ...blankForm, date: `2026-06-${String(selectedDate).padStart(2, '0')}` }); setShowScheduleModal(true); }}>
             <i className="ti ti-plus"></i> Schedule Post
           </button>
         </div>
@@ -266,7 +275,7 @@ export default function MarketingCalendarPage() {
           </div>
 
           <div style={{ marginTop: 24, padding: '16px', background: 'var(--bg-secondary)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>
-            {[['var(--blue)', 'Social'], ['var(--purple)', 'Email'], ['var(--emerald)', 'Content'], ['var(--rose)', 'Video']].map(([clr, lbl]) => (
+            {[['var(--blue)', 'Acme Corp'], ['var(--purple)', 'Globex'], ['var(--emerald)', 'Soylent'], ['var(--rose)', 'Initech']].map(([clr, lbl]) => (
               <span key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: clr, boxShadow: `0 0 8px ${clr}` }} /> {lbl}
               </span>
@@ -286,7 +295,7 @@ export default function MarketingCalendarPage() {
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span className="badge" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>{selectedEvents.length} items</span>
               <button className="btn btn-ghost" style={{ padding: '6px 10px', fontSize: 12, color: 'var(--purple)' }}
-                onClick={() => { setForm({ ...blankForm, date: selectedDate }); setShowScheduleModal(true); }}>
+                onClick={() => { setForm({ ...blankForm, date: `2026-06-${String(selectedDate).padStart(2, '0')}` }); setShowScheduleModal(true); }}>
                 <i className="ti ti-plus"></i>
               </button>
             </div>
@@ -301,13 +310,13 @@ export default function MarketingCalendarPage() {
                 <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Nothing scheduled</div>
                 <div style={{ fontSize: 13, marginTop: 6 }}>No posts planned for this date.</div>
                 <button className="btn btn-ghost" style={{ marginTop: 20, fontSize: 13, color: 'var(--purple)', fontWeight: 600 }}
-                  onClick={() => { setForm({ ...blankForm, date: selectedDate }); setShowScheduleModal(true); }}>
+                  onClick={() => { setForm({ ...blankForm, date: `2026-06-${String(selectedDate).padStart(2, '0')}` }); setShowScheduleModal(true); }}>
                   + Schedule Item
                 </button>
               </div>
             ) : (
               selectedEvents.map(evt => (
-                <div key={evt.id} style={{ padding: 18, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, position: 'relative', overflow: 'hidden', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }} className="hover-lift">
+                <div key={evt.id} style={{ padding: 18, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, position: 'relative', overflow: 'hidden', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }} className="hover-lift" onClick={() => setDetailsEvent(evt)}>
                   <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: evt.color }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                     <span className={`badge ${evt.badgeChannel}`} style={{ fontSize: 11, fontWeight: 600 }}>{evt.channel}</span>
@@ -327,10 +336,10 @@ export default function MarketingCalendarPage() {
                     </div>
                     {evt.status !== 'Published' && (
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 13 }} onClick={() => openEdit(evt)} title="Edit">
+                        <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 13 }} onClick={(e) => { e.stopPropagation(); openEdit(evt); }} title="Edit">
                           <i className="ti ti-edit"></i>
                         </button>
-                        <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 13, color: 'var(--rose)' }} onClick={() => handleDelete(evt.id)} title="Delete">
+                        <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 13, color: 'var(--rose)' }} onClick={(e) => { e.stopPropagation(); handleDelete(evt.id); }} title="Delete">
                           <i className="ti ti-trash"></i>
                         </button>
                       </div>
@@ -362,6 +371,7 @@ export default function MarketingCalendarPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ background: 'var(--bg-secondary)', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             <tr>
+              <th style={{ padding: '16px 24px', fontWeight: 700 }}>Company / Client</th>
               <th style={{ padding: '16px 24px', fontWeight: 700 }}>Content Title</th>
               <th style={{ padding: '16px 24px', fontWeight: 700 }}>Channel</th>
               <th style={{ padding: '16px 24px', fontWeight: 700 }}>Scheduled For</th>
@@ -372,13 +382,16 @@ export default function MarketingCalendarPage() {
           </thead>
           <tbody>
             {allScheduled.length === 0 ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No scheduled posts.</td></tr>
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No scheduled posts.</td></tr>
             ) : allScheduled.map((s) => (
-              <tr key={s.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} className="hover-bg-secondary">
+              <tr key={s.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s', cursor: 'pointer' }} className="hover-bg-secondary" onClick={() => setDetailsEvent(s)}>
+                <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{s.company || '-'}</td>
                 <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--text-primary)' }}>{s.title}</td>
                 <td style={{ padding: '16px 24px' }}><span className={`badge ${s.badgeChannel}`} style={{ fontWeight: 600 }}>{s.channel}</span></td>
                 <td style={{ padding: '16px 24px', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500 }}>
-                  <span style={{ color: 'var(--text-primary)' }}>June {s.date}</span>, {s.time}
+                  <span style={{ color: 'var(--text-primary)' }}>
+                    {typeof s.date === 'number' ? `June ${s.date}` : new Date(s.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  </span>, {s.time}
                 </td>
                 <td style={{ padding: '16px 24px', color: 'var(--text-secondary)', fontSize: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -395,10 +408,10 @@ export default function MarketingCalendarPage() {
                 </td>
                 <td style={{ padding: '16px 24px' }}>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn btn-ghost" style={{ padding: '6px 10px', fontSize: 14, borderRadius: 8, color: 'var(--text-secondary)' }} title="Edit" onClick={() => openEdit(s)}>
+                    <button className="btn btn-ghost" style={{ padding: '6px 10px', fontSize: 14, borderRadius: 8, color: 'var(--text-secondary)' }} title="Edit" onClick={(e) => { e.stopPropagation(); openEdit(s); }}>
                       <i className="ti ti-edit"></i>
                     </button>
-                    <button className="btn btn-ghost" style={{ padding: '6px 10px', fontSize: 14, borderRadius: 8, color: 'var(--rose)' }} title="Delete" onClick={() => handleDelete(s.id)}>
+                    <button className="btn btn-ghost" style={{ padding: '6px 10px', fontSize: 14, borderRadius: 8, color: 'var(--rose)' }} title="Delete" onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}>
                       <i className="ti ti-trash"></i>
                     </button>
                   </div>
@@ -429,6 +442,79 @@ export default function MarketingCalendarPage() {
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 24 }}>
             <button className="btn btn-ghost" onClick={() => setShowEditModal(false)}>Cancel</button>
             <button className="btn btn-primary" onClick={handleSaveEdit}>Save Changes</button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Details Modal */}
+      {detailsEvent && (
+        <Modal title={detailsEvent.title} onClose={() => setDetailsEvent(null)}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Date</div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <i className="ti ti-calendar" style={{ color: 'var(--text-muted)', fontSize: 16 }}></i>
+                  {typeof detailsEvent.date === 'number' ? `June ${detailsEvent.date}, 2026` : new Date(detailsEvent.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Time</div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <i className="ti ti-clock" style={{ color: 'var(--text-muted)', fontSize: 16 }}></i> {detailsEvent.time}
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Channel</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: detailsEvent.color }}></div>
+                  {detailsEvent.channel}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Status</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+                  <i className={detailsEvent.status === 'Published' ? "ti ti-circle-check" : "ti ti-clock-hour-4"} style={{ color: detailsEvent.status === 'Published' ? 'var(--emerald)' : 'var(--amber)', fontSize: 16 }}></i>
+                  {detailsEvent.status}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Assignee</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid var(--border)', padding: '12px 16px', borderRadius: 8 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {detailsEvent.author.split(' ')[0][0]}{detailsEvent.author.split(' ')[1]?.[0] || ''}
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{detailsEvent.author}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Content Creator</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+            <button className="btn btn-ghost" style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }} onClick={() => { handleDelete(detailsEvent.id); setDetailsEvent(null); }}>
+              Delete Post
+            </button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {detailsEvent.status === 'Scheduled' && (
+                <button className="btn btn-ghost" style={{ border: '1px solid var(--border)', fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }} onClick={() => {
+                  setEvents(prev => prev.map(e => e.id === detailsEvent.id ? { ...e, status: 'Published', badgeStatus: 'emerald' } : e));
+                  setDetailsEvent(null);
+                  showToast('Post marked as Published!');
+                }}>
+                  Mark as Published
+                </button>
+              )}
+              <button className="btn btn-primary" style={{ fontSize: 13, fontWeight: 500, padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-card)' }} onClick={() => { setDetailsEvent(null); openEdit(detailsEvent); }}>
+                Reschedule
+              </button>
+            </div>
           </div>
         </Modal>
       )}

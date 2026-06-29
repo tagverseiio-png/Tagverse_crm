@@ -81,7 +81,7 @@ export default function AssetsPage() {
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
     const type = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext) ? 'Image'
       : ['mp4', 'mov', 'avi', 'webm'].includes(ext) ? 'Video'
-      : ['pdf'].includes(ext) ? 'PDF' : 'Document';
+        : ['pdf'].includes(ext) ? 'PDF' : 'Document';
     const sizeMB = (file.size / 1024 / 1024).toFixed(1);
     setUploadedFileName(file.name);
     setUploadForm(f => ({ ...f, name: file.name, type }));
@@ -298,7 +298,8 @@ export default function AssetsPage() {
       )}
 
       {toast && <Toast message={toast} onClose={() => setToast('')} />}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .hover-bg-card:hover { background: var(--bg-card-hover, rgba(255,255,255,0.04)) !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       `}} />

@@ -785,7 +785,7 @@ export const paymentsStatusBadge: Record<string, string> = {
 // ─── Marketing Calendar ───────────────────────────────────────────────────────
 
 export type ScheduledEvent = {
-  id: number; date: number; title: string; channel: string; time: string;
+  id: number; date: number | string; title: string; channel: string; time: string;
   type: string; author: string; badgeChannel: string; badgeStatus: string;
   status: string; color: string; company?: string; client?: string;
 };
@@ -803,18 +803,18 @@ export const marketingCalendarChannelBadge: Record<string, string> = {
 export const marketingCalendarAuthors = ['Priya S.', 'Anita K.', 'Rohan M.'];
 
 export const marketingCalendarEvents: ScheduledEvent[] = [
-  { id: 1,  date: 5,  title: 'Product Launch Teaser',        channel: 'LinkedIn',  time: '9:00 AM',  type: 'Social',  author: 'Priya S.', badgeChannel: 'blue',    badgeStatus: 'emerald', status: 'Published', color: 'var(--blue)'    },
-  { id: 2,  date: 10, title: 'Summer Sale Announce',          channel: 'Twitter',   time: '11:00 AM', type: 'Social',  author: 'Anita K.', badgeChannel: 'blue',    badgeStatus: 'emerald', status: 'Published', color: 'var(--blue)'    },
-  { id: 3,  date: 12, title: 'Mid-Month Newsletter',          channel: 'Email',     time: '8:00 AM',  type: 'Email',   author: 'Rohan M.', badgeChannel: 'purple',  badgeStatus: 'emerald', status: 'Published', color: 'var(--purple)'  },
-  { id: 4,  date: 16, title: 'Feature Spotlight Video',       channel: 'YouTube',   time: '3:00 PM',  type: 'Video',   author: 'Priya S.', badgeChannel: 'rose',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--rose)'    },
-  { id: 5,  date: 18, title: 'Customer Success Story',        channel: 'Blog',      time: '10:00 AM', type: 'Content', author: 'Anita K.', badgeChannel: 'emerald', badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--emerald)' },
-  { id: 6,  date: 20, title: 'Webinar Invite',                channel: 'Email',     time: '9:00 AM',  type: 'Email',   author: 'Rohan M.', badgeChannel: 'purple',  badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--purple)'  },
-  { id: 7,  date: 24, title: 'LinkedIn post — case study',    channel: 'LinkedIn',  time: '10:00 AM', type: 'Social',  author: 'Priya S.', badgeChannel: 'blue',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--blue)'    },
-  { id: 8,  date: 24, title: 'Q3 Goals Overview',             channel: 'Blog',      time: '2:00 PM',  type: 'Content', author: 'Anita K.', badgeChannel: 'emerald', badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--emerald)' },
-  { id: 9,  date: 25, title: 'Partner Announcement',          channel: 'Twitter',   time: '12:00 PM', type: 'Social',  author: 'Rohan M.', badgeChannel: 'blue',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--blue)'    },
-  { id: 10, date: 26, title: 'June Newsletter',               channel: 'Email',     time: '9:00 AM',  type: 'Email',   author: 'Rohan M.', badgeChannel: 'purple',  badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--purple)'  },
-  { id: 11, date: 28, title: 'Instagram reel — product demo', channel: 'Instagram', time: '3:00 PM',  type: 'Social',  author: 'Anita K.', badgeChannel: 'rose',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--rose)'    },
-  { id: 12, date: 30, title: 'Blog: Q3 outlook',              channel: 'Blog',      time: '8:00 AM',  type: 'Content', author: 'Priya S.', badgeChannel: 'emerald', badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--emerald)' },
+  { id: 1,  date: 5,  title: 'Product Launch Teaser',        channel: 'LinkedIn',  time: '9:00 AM',  type: 'Social',  author: 'Priya S.', badgeChannel: 'blue',    badgeStatus: 'emerald', status: 'Published', color: 'var(--blue)',    company: 'Acme Corp' },
+  { id: 2,  date: 10, title: 'Summer Sale Announce',          channel: 'Twitter',   time: '11:00 AM', type: 'Social',  author: 'Anita K.', badgeChannel: 'blue',    badgeStatus: 'emerald', status: 'Published', color: 'var(--blue)',    company: 'Acme Corp' },
+  { id: 3,  date: 12, title: 'Mid-Month Newsletter',          channel: 'Email',     time: '8:00 AM',  type: 'Email',   author: 'Rohan M.', badgeChannel: 'purple',  badgeStatus: 'emerald', status: 'Published', color: 'var(--purple)',  company: 'Globex' },
+  { id: 4,  date: 16, title: 'Feature Spotlight Video',       channel: 'YouTube',   time: '3:00 PM',  type: 'Video',   author: 'Priya S.', badgeChannel: 'rose',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--emerald)', company: 'Soylent' },
+  { id: 5,  date: 18, title: 'Customer Success Story',        channel: 'Blog',      time: '10:00 AM', type: 'Content', author: 'Anita K.', badgeChannel: 'emerald', badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--emerald)', company: 'Soylent' },
+  { id: 6,  date: 20, title: 'Webinar Invite',                channel: 'Email',     time: '9:00 AM',  type: 'Email',   author: 'Rohan M.', badgeChannel: 'purple',  badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--purple)',  company: 'Globex' },
+  { id: 7,  date: 24, title: 'LinkedIn post — case study',    channel: 'LinkedIn',  time: '10:00 AM', type: 'Social',  author: 'Priya S.', badgeChannel: 'blue',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--blue)',    company: 'Acme Corp' },
+  { id: 8,  date: 24, title: 'Q3 Goals Overview',             channel: 'Blog',      time: '2:00 PM',  type: 'Content', author: 'Anita K.', badgeChannel: 'emerald', badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--rose)',    company: 'Initech' },
+  { id: 9,  date: 25, title: 'Partner Announcement',          channel: 'Twitter',   time: '12:00 PM', type: 'Social',  author: 'Rohan M.', badgeChannel: 'blue',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--blue)',    company: 'Acme Corp' },
+  { id: 10, date: 26, title: 'June Newsletter',               channel: 'Email',     time: '9:00 AM',  type: 'Email',   author: 'Rohan M.', badgeChannel: 'purple',  badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--purple)',  company: 'Globex' },
+  { id: 11, date: 28, title: 'Instagram reel — product demo', channel: 'Instagram', time: '3:00 PM',  type: 'Social',  author: 'Anita K.', badgeChannel: 'rose',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--rose)',    company: 'Initech' },
+  { id: 12, date: 30, title: 'Blog: Q3 outlook',              channel: 'Blog',      time: '8:00 AM',  type: 'Content', author: 'Priya S.', badgeChannel: 'emerald', badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--emerald)', company: 'Soylent' },
 ];
 
 // ─── Pipeline ─────────────────────────────────────────────────────────────────
