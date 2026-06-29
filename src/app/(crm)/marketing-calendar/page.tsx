@@ -72,12 +72,9 @@ export default function MarketingCalendarPage() {
   const [toastColor, setToastColor] = useState('var(--emerald)');
   const [detailsEvent, setDetailsEvent] = useState<ScheduledEvent | null>(null);
 
-<<<<<<< HEAD
-  const blankForm = { title: '', channel: 'LinkedIn', date: `2026-06-${String(selectedDate).padStart(2, '0')}`, time: '09:00', author: 'Priya S.', type: 'Social', company: '', client: '' };
-=======
   const POST_COLORS = ['#6366f1','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#06b6d4','#84cc16','#f97316'];
-  const blankForm = { title: '', channel: 'LinkedIn', date: selectedDate, time: '09:00', author: 'Priya S.', company: '', client: '', color: '#6366f1' };
->>>>>>> aae4086dc3e44ed1d474e7bbec8a9bff8bc27b6b
+  const blankForm = { title: '', channel: 'LinkedIn', date: `2026-06-${String(selectedDate).padStart(2, '0')}`, time: '09:00', author: 'Priya S.', type: 'Social', company: '', client: '', color: '#6366f1' };
+
   const [form, setForm] = useState(blankForm);
 
   const showToast = (msg: string, color = 'var(--emerald)') => {
@@ -113,13 +110,8 @@ export default function MarketingCalendarPage() {
   const handleSchedule = () => {
     if (!form.title.trim()) return;
     const newEvt: ScheduledEvent = {
-<<<<<<< HEAD
       id: Date.now(), date: form.date, title: form.title,
-      channel: form.channel, time: to12h(form.time), type: form.type,
-=======
-      id: Date.now(), date: Number(form.date), title: form.title,
-      channel: form.channel, time: to12h(form.time), type: form.channel,
->>>>>>> aae4086dc3e44ed1d474e7bbec8a9bff8bc27b6b
+      channel: form.channel, time: to12h(form.time), type: form.type || form.channel,
       author: form.author, company: form.company, client: form.client,
       badgeChannel: CHANNEL_BADGE[form.channel] || 'blue',
       badgeStatus: 'amber', status: 'Scheduled',
@@ -141,24 +133,15 @@ export default function MarketingCalendarPage() {
       const h24 = ampm === 'PM' ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h);
       return `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
     };
-<<<<<<< HEAD
-    setForm({ title: evt.title, channel: evt.channel, date: typeof evt.date === 'number' ? `2026-06-${String(evt.date).padStart(2, '0')}` : String(evt.date), time: to24h(evt.time), author: evt.author, type: evt.type, company: evt.company || '', client: evt.client || '' });
-=======
-    setForm({ title: evt.title, channel: evt.channel, date: evt.date, time: to24h(evt.time), author: evt.author, company: evt.company || '', client: evt.client || '', color: evt.color || '#6366f1' });
->>>>>>> aae4086dc3e44ed1d474e7bbec8a9bff8bc27b6b
+    setForm({ title: evt.title, channel: evt.channel, date: typeof evt.date === 'number' ? `2026-06-${String(evt.date).padStart(2, '0')}` : String(evt.date), time: to24h(evt.time), author: evt.author, type: evt.type || evt.channel, company: evt.company || '', client: evt.client || '', color: evt.color || '#6366f1' });
     setShowEditModal(true);
   };
 
   const handleSaveEdit = () => {
     if (!editingEvent || !form.title.trim()) return;
     setEvents(prev => prev.map(e => e.id === editingEvent.id ? {
-<<<<<<< HEAD
       ...e, title: form.title, channel: form.channel, date: form.date,
-      time: to12h(form.time), type: form.type, author: form.author,
-=======
-      ...e, title: form.title, channel: form.channel, date: Number(form.date),
-      time: to12h(form.time), type: form.channel, author: form.author,
->>>>>>> aae4086dc3e44ed1d474e7bbec8a9bff8bc27b6b
+      time: to12h(form.time), type: form.type || form.channel, author: form.author,
       company: form.company, client: form.client,
       badgeChannel: CHANNEL_BADGE[form.channel] || 'blue',
       color: form.color,
