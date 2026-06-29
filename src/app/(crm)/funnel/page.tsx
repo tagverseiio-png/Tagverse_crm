@@ -160,7 +160,7 @@ export default function FunnelPage() {
               {[
                 { label: 'Won Deals', pct: '64%', color: 'var(--blue)' },
                 { label: 'Lost Deals', pct: '22%', color: 'var(--rose)', valColor: 'var(--rose)' },
-                { label: 'In Progress', pct: '14%', color: 'var(--blue-light)' },
+                { label: 'In Progress', pct: '14%', color: 'var(--brand-accent)' },
               ].map((ratio) => (
                 <div key={ratio.label}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, marginBottom: 6 }}>

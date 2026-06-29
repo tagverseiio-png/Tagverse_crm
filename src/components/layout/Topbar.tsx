@@ -45,7 +45,7 @@ export default function Topbar({ activePage }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
           <span style={{ fontSize: 13 }}>🔍</span>
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Search anything...</span>
-          <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 20, background: 'rgba(255,255,255,0.06)', padding: '1px 6px', borderRadius: 4 }}>⌘K</span>
+          <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 20, background: 'var(--border)', padding: '1px 6px', borderRadius: 4 }}>⌘K</span>
         </div>
 
 
@@ -74,10 +74,10 @@ export default function Topbar({ activePage }: Props) {
               border: '2px solid rgba(255,255,255,0.25)',
             }}>JL</div>
             <div className="user-info">
-              <div className="name" style={{ color: '#FFFFFF', fontSize: 13, fontWeight: 600 }}>Jose L.</div>
-              <div className="role" style={{ color: 'rgba(224, 208, 255, 0.7)', fontSize: 10 }}>Administrator</div>
+              <div className="name" style={{ color: 'var(--text-primary)', fontSize: 13, fontWeight: 600 }}>Jose L.</div>
+              <div className="role" style={{ color: 'var(--text-muted)', fontSize: 10 }}>Administrator</div>
             </div>
-            <span style={{ fontSize: 10, color: 'rgba(224,208,255,0.6)', marginLeft: '8px', transform: isProfileOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: '8px', transform: isProfileOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
           </div>
 
           {isProfileOpen && (

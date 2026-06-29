@@ -50,7 +50,7 @@ export default function FieldMonitoringPage() {
         {kpis.map((kpi, i) => (
           <div key={i} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: `color-mix(in srgb, var(--${kpi.color}-dim) 50%, transparent)`, color: `var(--${kpi.color}-light)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: `color-mix(in srgb, var(--${kpi.color}-dim) 50%, transparent)`, color: `var(--${kpi.color})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {kpi.icon}
               </div>
             </div>
@@ -58,7 +58,7 @@ export default function FieldMonitoringPage() {
               <div style={{ fontSize: 28, fontWeight: 700 }}>{kpi.value}</div>
               <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{kpi.label}</div>
             </div>
-            <div style={{ fontSize: 12, color: `var(--${kpi.color}-light)`, marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: `var(--${kpi.color})`, marginTop: 4 }}>
               {kpi.delta}
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function FieldMonitoringPage() {
                     <tr key={agent.id}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--blue-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue-light)', fontWeight: 600, fontSize: 13 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--blue-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-accent)', fontWeight: 600, fontSize: 13 }}>
                             {agent.name.charAt(0)}
                           </div>
                           <div>
@@ -108,7 +108,7 @@ export default function FieldMonitoringPage() {
                           <span style={{ 
                             fontSize: 11, padding: '2px 8px', borderRadius: 12, width: 'fit-content',
                             background: agent.status === 'Active' ? 'var(--blue-dim)' : agent.status === 'On Delivery' ? 'var(--emerald-dim)' : agent.status === 'Idle' ? 'var(--amber-dim)' : 'var(--border)',
-                            color: agent.status === 'Active' ? 'var(--blue-light)' : agent.status === 'On Delivery' ? 'var(--emerald-light)' : agent.status === 'Idle' ? 'var(--amber-light)' : 'var(--text-secondary)'
+                            color: agent.status === 'Active' ? 'var(--brand-accent)' : agent.status === 'On Delivery' ? 'var(--emerald)' : agent.status === 'Idle' ? 'var(--amber)' : 'var(--text-secondary)'
                           }}>
                             {agent.status}
                           </span>
@@ -147,7 +147,7 @@ export default function FieldMonitoringPage() {
         <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Activity size={18} color="var(--blue-light)" /> WhatsApp Live Feed
+              <Activity size={18} color="var(--brand-accent)" /> WhatsApp Live Feed
             </h2>
             <span style={{ fontSize: 11, background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', padding: '2px 8px', borderRadius: 12, animation: 'pulse 2s infinite' }}>Live</span>
           </div>

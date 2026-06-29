@@ -7,7 +7,7 @@ const kpis = [
   { label: 'Active Deals', value: '47', delta: '+5 new today', trend: 'up', color: 'blue', icon: '🤝' },
   { label: 'Monthly Revenue', value: '₹2.4L', delta: '+12% vs last month', trend: 'up', color: 'emerald', icon: '💰' },
   { label: 'Invoices Overdue', value: '3', delta: '−2 from last week', trend: 'down', color: 'amber', icon: '🧾' },
-  { label: 'Email Open Rate', value: '34.2%', delta: '+3.1% this campaign', trend: 'up', color: 'rose', icon: '✉' },
+  { label: 'Bounce-Rate', value: '34.2%', delta: '+3.1% this campaign', trend: 'up', color: 'rose', icon: '✉' },
 ];
 
 const pipelineStages = [
@@ -174,7 +174,7 @@ export default function DashboardPage() {
           <div style={{ marginTop: 18, padding: '12px 0', borderTop: '1px solid var(--border)' }}>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Overall Conversion Rate</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 700, color: 'var(--emerald-light)' }}>10.2%</span>
+              <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 700, color: 'var(--emerald)' }}>10.2%</span>
               <span style={{ fontSize: 11, color: 'var(--emerald)', background: 'var(--emerald-dim)', padding: '2px 7px', borderRadius: 8 }}>↑ +1.4%</span>
             </div>
           </div>
@@ -214,7 +214,7 @@ export default function DashboardPage() {
                     <td><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{l.source}</span></td>
                     <td><span className={`badge ${l.stage}`}>{l.stage}</span></td>
                     <td>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: l.score >= 80 ? 'var(--emerald-light)' : l.score >= 60 ? 'var(--amber-light)' : 'var(--rose-light)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: l.score >= 80 ? 'var(--emerald)' : l.score >= 60 ? 'var(--amber)' : 'var(--rose)' }}>
                         {l.score}
                       </span>
                     </td>
@@ -261,13 +261,13 @@ export default function DashboardPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {tasks.map((t, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px' }}>
+              <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>{t.title}</div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{
                     fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 8,
                     background: t.priority === 'high' ? 'var(--rose-dim)' : t.priority === 'medium' ? 'var(--amber-dim)' : 'var(--blue-dim)',
-                    color: t.priority === 'high' ? 'var(--rose-light)' : t.priority === 'medium' ? 'var(--amber-light)' : 'var(--blue-light)',
+                    color: t.priority === 'high' ? 'var(--rose)' : t.priority === 'medium' ? 'var(--amber)' : 'var(--brand-accent)',
                   }}>
                     {t.priority}
                   </span>
@@ -292,7 +292,7 @@ export default function DashboardPage() {
             <div className="section-title">🤖 Automation Hub (n8n)</div>
             <div className="section-sub">Live status of active workflows</div>
           </div>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--emerald-light)', background: 'var(--emerald-dim)', padding: '4px 10px', borderRadius: 8 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--emerald)', background: 'var(--emerald-dim)', padding: '4px 10px', borderRadius: 8 }}>
             <span className="live-dot" style={{ marginRight: 0 }} />
             All systems operational
           </span>
@@ -304,7 +304,7 @@ export default function DashboardPage() {
             { name: 'Billing Cron (Daily 9am)', runs: '62', lastRun: '5h ago', status: 'active' },
             { name: 'Weekly Report Generator', runs: '12', lastRun: '2d ago', status: 'active' },
           ].map((wf) => (
-            <div key={wf.name} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
+            <div key={wf.name} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--emerald)', display: 'inline-block' }} />
                 <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)' }}>{wf.name}</span>

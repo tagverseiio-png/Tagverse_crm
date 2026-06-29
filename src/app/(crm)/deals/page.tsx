@@ -275,7 +275,7 @@ function UserProfileDropdown({ open, ref: dropRef }: { open: boolean; ref: React
       <div style={{ padding: '8px', borderTop: '1px solid var(--border)' }}>
         <button style={{
           width: '100%', padding: '10px',
-          background: 'var(--rose-dim)', color: 'var(--rose-light)',
+          background: 'var(--rose-dim)', color: 'var(--rose)',
           border: '1px solid rgba(244,63,94,0.2)',
           borderRadius: 8, cursor: 'pointer',
           fontSize: 13, fontWeight: 600,
@@ -386,21 +386,21 @@ function DealFormModal({
             <label style={labelStyle}>Deal Name *</label>
             <input style={inputStyle('name')} value={form.name} placeholder="e.g. Website Redesign Project"
               onChange={e => onChange('name', e.target.value)} />
-            {errors.name && <span style={{ fontSize: 11, color: 'var(--rose-light)' }}>{errors.name}</span>}
+            {errors.name && <span style={{ fontSize: 11, color: 'var(--rose)' }}>{errors.name}</span>}
           </div>
           {/* Client */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={labelStyle}>Client / Company *</label>
             <input style={inputStyle('client')} value={form.client} placeholder="e.g. BloomAds"
               onChange={e => onChange('client', e.target.value)} />
-            {errors.client && <span style={{ fontSize: 11, color: 'var(--rose-light)' }}>{errors.client}</span>}
+            {errors.client && <span style={{ fontSize: 11, color: 'var(--rose)' }}>{errors.client}</span>}
           </div>
           {/* Value */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={labelStyle}>Value (₹) *</label>
             <input type="number" style={inputStyle('value')} value={form.value} placeholder="0"
               onChange={e => onChange('value', e.target.value)} />
-            {errors.value && <span style={{ fontSize: 11, color: 'var(--rose-light)' }}>{errors.value}</span>}
+            {errors.value && <span style={{ fontSize: 11, color: 'var(--rose)' }}>{errors.value}</span>}
           </div>
           
           {/* Pipeline */}
@@ -563,7 +563,7 @@ function ViewDealDrawer({ deal, onClose, onEdit }: { deal: Deal; onClose: () => 
         }}>
           <div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Deal Value</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--emerald-light)', fontFamily: 'Outfit, sans-serif', lineHeight: 1.2, marginTop: 2 }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--emerald)', fontFamily: 'Outfit, sans-serif', lineHeight: 1.2, marginTop: 2 }}>
               {fmtVal(deal.value)}
             </div>
           </div>
@@ -581,10 +581,10 @@ function ViewDealDrawer({ deal, onClose, onEdit }: { deal: Deal; onClose: () => 
             <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>Win Probability</span>
             <span style={{
               fontSize: 13, fontWeight: 700,
-              color: deal.probability >= 80 ? 'var(--emerald-light)' : deal.probability >= 50 ? 'var(--amber-light)' : 'var(--rose-light)',
+              color: deal.probability >= 80 ? 'var(--emerald)' : deal.probability >= 50 ? 'var(--amber)' : 'var(--rose)',
             }}>{deal.probability}%</span>
           </div>
-          <div style={{ width: '100%', height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{ width: '100%', height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
             <div style={{
               width: `${deal.probability}%`, height: '100%',
               background: deal.probability >= 80 ? 'var(--emerald)' : deal.probability >= 50 ? 'var(--amber)' : 'var(--rose)',
@@ -628,7 +628,7 @@ function ViewDealDrawer({ deal, onClose, onEdit }: { deal: Deal; onClose: () => 
         }}>
           <button onClick={onEdit} style={{
             flex: 1, padding: '10px',
-            background: 'var(--blue-dim)', color: 'var(--blue-light)',
+            background: 'var(--blue-dim)', color: 'var(--brand-accent)',
             border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8,
             cursor: 'pointer', fontSize: 13, fontWeight: 600,
             fontFamily: 'Inter, sans-serif',
@@ -813,7 +813,7 @@ export default function DealsPage() {
     return (
       <>
         {text.slice(0, idx)}
-        <span style={{ background: 'var(--amber-dim)', color: 'var(--amber-light)', padding: '0 2px', borderRadius: 3, fontWeight: 600 }}>
+        <span style={{ background: 'var(--amber-dim)', color: 'var(--amber)', padding: '0 2px', borderRadius: 3, fontWeight: 600 }}>
           {text.slice(idx, idx + search.length)}
         </span>
         {text.slice(idx + search.length)}
@@ -887,7 +887,7 @@ export default function DealsPage() {
                     padding: '10px 14px', margin: '2px 6px',
                     borderRadius: 8, cursor: 'pointer',
                     background: selectedPipeline === p.id ? 'var(--purple-dim)' : 'transparent',
-                    color: selectedPipeline === p.id ? 'var(--purple-light)' : 'var(--text-secondary)',
+                    color: selectedPipeline === p.id ? 'var(--brand-accent)' : 'var(--text-secondary)',
                     transition: 'all 0.15s',
                     fontSize: 13, fontWeight: selectedPipeline === p.id ? 600 : 400,
                   }}
@@ -905,14 +905,14 @@ export default function DealsPage() {
                     padding: '2px 8px', borderRadius: 6,
                     background: 'var(--bg-card)', color: 'var(--text-muted)',
                   }}>{p.deals}</span>
-                  {selectedPipeline === p.id && <span style={{ color: 'var(--purple-light)', fontSize: 12 }}>✓</span>}
+                  {selectedPipeline === p.id && <span style={{ color: 'var(--brand-accent)', fontSize: 12 }}>✓</span>}
                 </div>
               ))}
               <div style={{ padding: '6px 6px 8px' }}>
                 <div style={{
                   padding: '8px 14px', margin: '0 2px',
                   borderRadius: 8, cursor: 'pointer',
-                  fontSize: 12, color: 'var(--purple-light)',
+                  fontSize: 12, color: 'var(--brand-accent)',
                   display: 'flex', alignItems: 'center', gap: 8,
                   border: '1px dashed var(--border)',
                   transition: 'all 0.2s',
@@ -958,7 +958,7 @@ export default function DealsPage() {
             )}
             <span style={{
               fontSize: 10, color: 'var(--text-muted)',
-              background: 'rgba(255,255,255,0.06)',
+              background: 'var(--bg-glass)',
               padding: '2px 7px', borderRadius: 4,
               border: '1px solid var(--border)',
             }}>⌘K</span>
@@ -994,7 +994,7 @@ export default function DealsPage() {
                     fontSize: 9, fontWeight: 600, padding: '2px 6px',
                     borderRadius: 4,
                     background: s.type === 'Deal' ? 'var(--blue-dim)' : s.type === 'Client' ? 'var(--emerald-dim)' : 'var(--amber-dim)',
-                    color: s.type === 'Deal' ? 'var(--blue-light)' : s.type === 'Client' ? 'var(--emerald-light)' : 'var(--amber-light)',
+                    color: s.type === 'Deal' ? 'var(--brand-accent)' : s.type === 'Client' ? 'var(--emerald)' : 'var(--amber)',
                     textTransform: 'uppercase',
                   }}>{s.type}</span>
                   <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{s.label}</span>
@@ -1182,7 +1182,7 @@ export default function DealsPage() {
                     <tr key={d.id}>
                       <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{highlight(d.name)}</td>
                       <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{highlight(d.client)}</td>
-                      <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontSize: 13 }}>{fmtVal(d.value)}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--emerald)', fontSize: 13 }}>{fmtVal(d.value)}</td>
                       <td><span className={`badge ${stg.color}`}>{stg.label}</span></td>
                       <td>
                         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -1197,7 +1197,7 @@ export default function DealsPage() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <div style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 2, overflow: 'hidden' }}>
+                          <div style={{ width: 40, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
                             <div style={{
                               width: `${d.probability}%`, height: '100%',
                               background: d.probability >= 80 ? 'var(--emerald)' : d.probability >= 50 ? 'var(--amber)' : 'var(--rose)',
@@ -1206,20 +1206,20 @@ export default function DealsPage() {
                           </div>
                           <span style={{
                             fontSize: 12, fontWeight: 700,
-                            color: d.probability >= 80 ? 'var(--emerald-light)' : d.probability >= 50 ? 'var(--amber-light)' : 'var(--rose-light)',
+                            color: d.probability >= 80 ? 'var(--emerald)' : d.probability >= 50 ? 'var(--amber)' : 'var(--rose)',
                           }}>{d.probability}%</span>
                         </div>
                       </td>
                       <td style={{
                         fontSize: 12, fontWeight: d.daysInStage >= 14 ? 600 : 400,
-                        color: d.daysInStage >= 14 ? 'var(--rose-light)' : 'var(--text-muted)',
+                        color: d.daysInStage >= 14 ? 'var(--rose)' : 'var(--text-muted)',
                       }}>
                         {d.daysInStage >= 14 && <span style={{ marginRight: 4 }} title="Deal is rotting">⚠️</span>}
                         {d.daysInStage}d
                       </td>
                       <td style={{
                         fontSize: 12,
-                        color: d.nextFollowUp === 'Today' ? 'var(--amber-light)' : d.nextFollowUp === 'Tomorrow' ? 'var(--blue-light)' : 'var(--text-muted)',
+                        color: d.nextFollowUp === 'Today' ? 'var(--amber)' : d.nextFollowUp === 'Tomorrow' ? 'var(--brand-accent)' : 'var(--text-muted)',
                         fontWeight: d.nextFollowUp === 'Today' ? 600 : 400,
                       }}>
                         {d.nextFollowUp === 'Today' && '⚡ '}
@@ -1243,7 +1243,7 @@ export default function DealsPage() {
                             style={{
                               padding: '4px 10px', fontSize: 11,
                               background: 'rgba(239,68,68,0.1)',
-                              color: 'var(--rose-light)',
+                              color: 'var(--rose)',
                               border: '1px solid var(--rose)',
                               borderRadius: 7, cursor: 'pointer',
                               fontFamily: 'Inter, sans-serif', fontWeight: 600,
@@ -1294,7 +1294,7 @@ export default function DealsPage() {
 
                   {/* Deal Cards */}
                   <div style={{
-                    background: 'rgba(255,255,255,0.02)',
+                    background: 'var(--bg-glass)',
                     border: '1px solid var(--border)',
                     borderTop: 'none',
                     borderRadius: '0 0 10px 10px',
@@ -1316,9 +1316,9 @@ export default function DealsPage() {
                           ))}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--emerald-light)' }}>{fmtVal(d.value)}</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--emerald)' }}>{fmtVal(d.value)}</span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 10, fontWeight: d.daysInStage >= 14 ? 600 : 400, color: d.daysInStage >= 14 ? 'var(--rose-light)' : 'var(--text-muted)' }}>
+                            <span style={{ fontSize: 10, fontWeight: d.daysInStage >= 14 ? 600 : 400, color: d.daysInStage >= 14 ? 'var(--rose)' : 'var(--text-muted)' }}>
                               {d.daysInStage >= 14 && <span style={{ marginRight: 2 }}>⚠️</span>}
                               {d.daysInStage}d
                             </span>
@@ -1336,7 +1336,7 @@ export default function DealsPage() {
                           style={{
                             position: 'absolute', top: 4, right: 4,
                             background: 'transparent', border: 'none',
-                            color: 'var(--rose-light)', cursor: 'pointer', fontSize: 12,
+                            color: 'var(--rose)', cursor: 'pointer', fontSize: 12,
                           }}
                         >✕</button>
                       </div>
