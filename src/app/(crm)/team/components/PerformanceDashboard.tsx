@@ -1,55 +1,131 @@
 'use client';
 import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from 'recharts';
 import { reps } from '../mockData';
 
 export default function PerformanceDashboard() {
-  const [timeframe, setTimeframe] = useState<'week'|'month'>('month');
+  const [timeframe, setTimeframe] = useState<'week' | 'month'>('month');
 
-  // Chart 1: Revenue per rep
-  const revenueData = reps.map(r => ({ name: r.name, revenue: r.revenue, color: r.color }));
+  // Sorted descending by revenue — highest earner on top
+  const revenueData = [...reps]
+    .sort((a, b) => b.revenue - a.revenue)
+    .map(r => ({ name: r.name.split(' ')[0], fullName: r.name, revenue: r.revenue, color: r.color }));
 
-  // Chart 2: Deals closed vs tasks done
-  const totalDeals = reps.reduce((acc, r) => acc + r.dealsClosed, 0);
-  const totalTasks = reps.reduce((acc, r) => acc + r.tasksDone, 0);
+  const totalDeals  = reps.reduce((acc, r) => acc + r.dealsClosed, 0);
+  const totalTasks  = reps.reduce((acc, r) => acc + r.tasksDone,   0);
   const pieData = [
-    { name: 'Deals Closed', value: totalDeals, color: '#10b981' },
-    { name: 'Tasks Completed', value: totalTasks, color: '#3b82f6' }
+    { name: 'Deals Closed',    value: totalDeals, color: '#10b981' },
+    { name: 'Tasks Completed', value: totalTasks,  color: '#8b5cf6' },
   ];
 
+  const CustomBarTooltip = ({ active, payload }: any) => {
+    if (active && payload?.length) {
+      const d = payload[0].payload;
+      return (
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 10,
+            padding: '8px 14px',
+            fontFamily: 'Inter, sans-serif',
+          }}
+        >
+          <p style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{d.fullName}</p>
+          <p style={{ color: 'var(--emerald)', fontWeight: 600, fontSize: 13 }}>
+            ${d.revenue.toLocaleString()}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const CustomPieTooltip = ({ active, payload }: any) => {
+    if (active && payload?.length) {
+      const d = payload[0];
+      return (
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 10,
+            padding: '8px 14px',
+            fontFamily: 'Inter, sans-serif',
+          }}
+        >
+          <p style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{d.name}</p>
+          <p style={{ color: d.payload.color, fontWeight: 600, fontSize: 13 }}>{d.value}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in zoom-in duration-300">
-      <div className="flex justify-between items-center">
-        <h2 className="section-title">Performance Dashboard</h2>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => setTimeframe('week')}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${timeframe === 'week' ? 'bg-[var(--brand-accent)] text-white' : 'bg-[var(--bg-card-hover)] text-[var(--text-secondary)] border border-[var(--border)]'}`}
-          >
-            This Week
-          </button>
-          <button 
-            onClick={() => setTimeframe('month')}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${timeframe === 'month' ? 'bg-[var(--brand-accent)] text-white' : 'bg-[var(--bg-card-hover)] text-[var(--text-secondary)] border border-[var(--border)]'}`}
-          >
-            This Month
-          </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 className="section-title">Performance Dashboard</h2>
+          <p className="section-sub" style={{ marginTop: 2 }}>Revenue ranking & activity breakdown</p>
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {(['week', 'month'] as const).map(tf => (
+            <button
+              key={tf}
+              onClick={() => setTimeframe(tf)}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 999,
+                fontFamily: 'Inter, sans-serif',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: 'none',
+                transition: 'all 0.18s ease',
+                background: timeframe === tf ? 'var(--brand-accent)' : 'var(--bg-card-hover)',
+                color:      timeframe === tf ? '#fff'                : 'var(--text-muted)',
+                boxShadow:  timeframe === tf ? 'var(--shadow-glow-purple)' : 'none',
+              }}
+            >
+              {tf === 'week' ? 'This Week' : 'This Month'}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Bar Chart */}
-        <div className="card w-full flex flex-col">
-          <h3 className="section-sub uppercase tracking-wider mb-6">Revenue per Rep</h3>
-          <div className="h-72 w-full mt-auto">
+      {/* Charts grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+
+        {/* ── Revenue bar chart (sorted) ── */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <p className="kpi-label" style={{ marginBottom: 16 }}>Revenue per Rep</p>
+          <div style={{ flex: 1, height: 280 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={revenueData} layout="vertical" margin={{ top: 0, right: 20, left: 60, bottom: 0 }}>
+              <BarChart
+                data={revenueData}
+                layout="vertical"
+                margin={{ top: 0, right: 16, left: 0, bottom: 0 }}
+                barCategoryGap="30%"
+              >
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
-                <Tooltip cursor={{ fill: 'var(--bg-card-hover)' }} contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border)', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} />
-                <Bar dataKey="revenue" radius={[0, 4, 4, 0]} barSize={20}>
-                  {revenueData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: 'var(--text-secondary)', fontSize: 12, fontFamily: 'Inter, sans-serif', fontWeight: 500 }}
+                  width={70}
+                />
+                <Tooltip content={<CustomBarTooltip />} cursor={{ fill: 'rgba(123,47,255,0.06)' }} />
+                <Bar dataKey="revenue" radius={[0, 6, 6, 0]} maxBarSize={18}>
+                  {revenueData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
                   ))}
                 </Bar>
               </BarChart>
@@ -57,37 +133,60 @@ export default function PerformanceDashboard() {
           </div>
         </div>
 
-        {/* Action Distribution Pie Chart */}
-        <div className="card w-full flex flex-col">
-          <h3 className="section-sub uppercase tracking-wider mb-6">Activity Distribution</h3>
-          <div className="h-72 w-full relative">
+        {/* ── Donut chart ── */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <p className="kpi-label" style={{ marginBottom: 16, alignSelf: 'flex-start' }}>Activity Distribution</p>
+
+          <div style={{ position: 'relative', width: '100%', height: 220 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={pieData}
-                  innerRadius={70}
-                  outerRadius={100}
-                  paddingAngle={5}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={68}
+                  outerRadius={95}
+                  paddingAngle={4}
                   dataKey="value"
                   stroke="none"
+                  startAngle={90}
+                  endAngle={-270}
                 >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  {pieData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border)', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} />
+                <Tooltip content={<CustomPieTooltip />} />
               </PieChart>
             </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-3xl font-bold text-[var(--text-primary)]" style={{ fontFamily: 'Outfit' }}>{totalDeals + totalTasks}</span>
-              <span className="text-xs text-[var(--text-muted)]">Total Actions</span>
+
+            {/* Centre label */}
+            <div
+              style={{
+                position: 'absolute', inset: 0,
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                pointerEvents: 'none',
+              }}
+            >
+              <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 30, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
+                {totalDeals + totalTasks}
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, fontFamily: 'Inter', fontWeight: 500 }}>
+                Total Actions
+              </span>
             </div>
           </div>
-          <div className="flex justify-center gap-6 mt-4">
+
+          {/* Legend */}
+          <div style={{ display: 'flex', gap: 24, marginTop: 16 }}>
             {pieData.map(item => (
-              <div key={item.name} className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="text-sm font-medium text-[var(--text-secondary)]">{item.name}</span>
+              <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: item.color, flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', fontFamily: 'Inter' }}>{item.name}</p>
+                  <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Outfit', lineHeight: 1 }}>{item.value}</p>
+                </div>
               </div>
             ))}
           </div>
