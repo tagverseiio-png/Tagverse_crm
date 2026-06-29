@@ -3,6 +3,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useWorkspace, Task } from '@/context/WorkspaceContext';
 import TaskDetailDrawer from '@/components/workspace/TaskDetailDrawer';
+import { List, LayoutGrid } from 'lucide-react';
 import styles from './tasks.module.css';
 
 function TasksContent() {
@@ -22,6 +23,9 @@ function TasksContent() {
   const [filterPriority, setFilterPriority] = useState<string>('All');
   const [filterProjectId, setFilterProjectId] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // View mode state
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
 
   // Handle search parameters on mount/change
   useEffect(() => {
@@ -91,6 +95,33 @@ function TasksContent() {
     return dueDate < today;
   };
 
+  // Kanban status columns config
+  const kanbanColumns: { status: Task['status']; color: string }[] = [
+    { status: 'To Do', color: 'var(--blue)' },
+    { status: 'In Progress', color: 'var(--amber)' },
+    { status: 'Done', color: 'var(--emerald)' },
+  ];
+
+  const getPriorityCardClass = (priority: string) => {
+    switch (priority) {
+      case 'Urgent': return styles.kanbanCardUrgent;
+      case 'High': return styles.kanbanCardHigh;
+      case 'Normal': return styles.kanbanCardNormal;
+      case 'Low': return styles.kanbanCardLow;
+      default: return '';
+    }
+  };
+
+  const getPriorityDotColor = (priority: string) => {
+    switch (priority) {
+      case 'Urgent': return 'var(--rose)';
+      case 'High': return 'var(--amber)';
+      case 'Normal': return 'var(--blue)';
+      case 'Low': return 'var(--text-muted)';
+      default: return 'var(--text-muted)';
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
@@ -101,6 +132,25 @@ function TasksContent() {
           <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Filter, manage, and sprint across different workflows</p>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {/* View Toggle */}
+          <div className={styles.viewToggle}>
+            <button
+              className={viewMode === 'list' ? styles.viewToggleBtnActive : styles.viewToggleBtn}
+              onClick={() => setViewMode('list')}
+              title="List View"
+            >
+              <List size={14} />
+              List
+            </button>
+            <button
+              className={viewMode === 'kanban' ? styles.viewToggleBtnActive : styles.viewToggleBtn}
+              onClick={() => setViewMode('kanban')}
+              title="Kanban View"
+            >
+              <LayoutGrid size={14} />
+              Board
+            </button>
+          </div>
           {/* Search bar */}
           <div style={{ position: 'relative', width: '220px' }}>
             <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px' }}>🔍</span>
@@ -203,7 +253,7 @@ function TasksContent() {
           </div>
         </div>
 
-        {/* Right Main Task List */}
+        {/* Right Main Content */}
         <div className={styles.mainContent}>
           {/* Inline Quick Add Form Row */}
           {showInlineAdd && (
@@ -265,103 +315,209 @@ function TasksContent() {
             </div>
           )}
 
-          {/* Grouped Priorities */}
-          {priorityOrder.map(prio => {
-            const categoryTasks = filteredTasks.filter(t => t.priority === prio);
-            if (categoryTasks.length === 0) return null;
+          {/* ===== LIST VIEW ===== */}
+          {viewMode === 'list' && (
+            <>
+              {priorityOrder.map(prio => {
+                const categoryTasks = filteredTasks.filter(t => t.priority === prio);
+                if (categoryTasks.length === 0) return null;
 
-            return (
-              <div key={prio} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div className={styles.taskGroupHeader}>
-                  <span
-                    className={`${styles.taskGroupBadge} ${
-                      prio === 'Urgent'
-                        ? styles.priorityUrgent
-                        : prio === 'High'
-                        ? styles.priorityHigh
-                        : prio === 'Normal'
-                        ? styles.priorityNormal
-                        : styles.priorityLow
-                    }`}
-                  >
-                    ⚠️ {prio} Priority
-                  </span>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                    ({categoryTasks.length} tasks)
-                  </span>
-                </div>
-
-                <div className={styles.taskList}>
-                  {categoryTasks.map(t => {
-                    const project = projects.find(p => p.id === t.projectId);
-                    const ownerMember = members.find(m => m.id === t.owner);
-                    const isTaskOverdue = isOverdue(t.due, t.status);
-
-                    return (
-                      <div
-                        key={t.id}
-                        className={styles.taskItem}
-                        onClick={() => handleOpenEditDrawer(t.id)}
+                return (
+                  <div key={prio} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div className={styles.taskGroupHeader}>
+                      <span
+                        className={`${styles.taskGroupBadge} ${
+                          prio === 'Urgent'
+                            ? styles.priorityUrgent
+                            : prio === 'High'
+                            ? styles.priorityHigh
+                            : prio === 'Normal'
+                            ? styles.priorityNormal
+                            : styles.priorityLow
+                        }`}
                       >
-                        <div className={styles.taskLeft}>
-                          <input
-                            type="checkbox"
-                            checked={t.status === 'Done'}
-                            onClick={e => e.stopPropagation()}
-                            onChange={() => toggleTaskDone(t.id)}
-                            className={styles.taskCheckbox}
-                          />
-                          <span className={t.status === 'Done' ? styles.taskTitleDone : styles.taskTitle}>
-                            {t.title}
-                          </span>
-                        </div>
+                        ⚠️ {prio} Priority
+                      </span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        ({categoryTasks.length} tasks)
+                      </span>
+                    </div>
 
-                        <div className={styles.taskRight}>
-                          {project && (
-                            <span
-                              className={styles.projectBadge}
-                              style={{
-                                backgroundColor: `${project.color}15`,
-                                color: project.color,
-                              }}
-                            >
-                              {project.name}
+                    <div className={styles.taskList}>
+                      {categoryTasks.map(t => {
+                        const project = projects.find(p => p.id === t.projectId);
+                        const ownerMember = members.find(m => m.id === t.owner);
+                        const isTaskOverdue = isOverdue(t.due, t.status);
+
+                        return (
+                          <div
+                            key={t.id}
+                            className={styles.taskItem}
+                            onClick={() => handleOpenEditDrawer(t.id)}
+                          >
+                            <div className={styles.taskLeft}>
+                              <input
+                                type="checkbox"
+                                checked={t.status === 'Done'}
+                                onClick={e => e.stopPropagation()}
+                                onChange={() => toggleTaskDone(t.id)}
+                                className={styles.taskCheckbox}
+                              />
+                              <span className={t.status === 'Done' ? styles.taskTitleDone : styles.taskTitle}>
+                                {t.title}
+                              </span>
+                            </div>
+
+                            <div className={styles.taskRight}>
+                              {project && (
+                                <span
+                                  className={styles.projectBadge}
+                                  style={{
+                                    backgroundColor: `${project.color}15`,
+                                    color: project.color,
+                                  }}
+                                >
+                                  {project.name}
+                                </span>
+                              )}
+
+                              <span className={isTaskOverdue ? styles.dueBadgeOverdue : styles.dueBadge}>
+                                ⏱️ {t.due}
+                              </span>
+
+                              {ownerMember && (
+                                <span
+                                  title={ownerMember.name}
+                                  style={{
+                                    width: '24px',
+                                    height: '24px',
+                                    borderRadius: '50%',
+                                    background: 'var(--bg-primary)',
+                                    border: '1px solid var(--border)',
+                                    fontSize: '9px',
+                                    fontWeight: 700,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    textTransform: 'uppercase',
+                                    color: 'var(--text-primary)',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {ownerMember.avatar}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* ===== KANBAN VIEW ===== */}
+          {viewMode === 'kanban' && (
+            <div className={styles.kanbanBoard}>
+              {kanbanColumns.map(col => {
+                const columnTasks = filteredTasks.filter(t => t.status === col.status);
+
+                return (
+                  <div key={col.status} className={styles.kanbanColumn}>
+                    <div className={styles.kanbanColumnHeader}>
+                      <span className={styles.kanbanColumnTitle}>
+                        <span className={styles.kanbanColumnDot} style={{ background: col.color }} />
+                        {col.status}
+                      </span>
+                      <span className={styles.kanbanColumnCount}>{columnTasks.length}</span>
+                    </div>
+
+                    <div className={styles.kanbanCards}>
+                      {columnTasks.map(t => {
+                        const project = projects.find(p => p.id === t.projectId);
+                        const ownerMember = members.find(m => m.id === t.owner);
+                        const isTaskOverdue = isOverdue(t.due, t.status);
+
+                        return (
+                          <div
+                            key={t.id}
+                            className={`${styles.kanbanCard} ${getPriorityCardClass(t.priority)}`}
+                            onClick={() => handleOpenEditDrawer(t.id)}
+                          >
+                            <span className={t.status === 'Done' ? styles.kanbanCardTitleDone : styles.kanbanCardTitle}>
+                              {t.title}
                             </span>
-                          )}
+                            <div className={styles.kanbanCardMeta}>
+                              <div className={styles.kanbanCardTags}>
+                                <span
+                                  className={styles.kanbanPriorityDot}
+                                  style={{ background: getPriorityDotColor(t.priority) }}
+                                  title={t.priority}
+                                />
+                                {project && (
+                                  <span
+                                    className={styles.projectBadge}
+                                    style={{
+                                      backgroundColor: `${project.color}15`,
+                                      color: project.color,
+                                    }}
+                                  >
+                                    {project.name}
+                                  </span>
+                                )}
+                                <span className={isTaskOverdue ? styles.dueBadgeOverdue : styles.dueBadge}>
+                                  ⏱️ {t.due}
+                                </span>
+                              </div>
 
-                          <span className={isTaskOverdue ? styles.dueBadgeOverdue : styles.dueBadge}>
-                            ⏱️ {t.due}
-                          </span>
+                              {ownerMember && (
+                                <span
+                                  title={ownerMember.name}
+                                  style={{
+                                    width: '22px',
+                                    height: '22px',
+                                    borderRadius: '50%',
+                                    background: 'var(--bg-primary)',
+                                    border: '1px solid var(--border)',
+                                    fontSize: '9px',
+                                    fontWeight: 700,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    textTransform: 'uppercase',
+                                    color: 'var(--text-primary)',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {ownerMember.avatar}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
 
-                          {ownerMember && (
-                            <span
-                              title={ownerMember.name}
-                              style={{
-                                width: '24px',
-                                height: '24px',
-                                borderRadius: '50%',
-                                background: 'var(--bg-primary)',
-                                border: '1px solid var(--border)',
-                                fontSize: '9px',
-                                fontWeight: 700,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                textTransform: 'uppercase',
-                                color: 'var(--text-primary)',
-                              }}
-                            >
-                              {ownerMember.avatar}
-                            </span>
-                          )}
+                      {columnTasks.length === 0 && (
+                        <div style={{
+                          padding: '24px 16px',
+                          textAlign: 'center',
+                          color: 'var(--text-muted)',
+                          fontSize: '12px',
+                          background: 'var(--bg-card)',
+                          border: '1px dashed var(--border)',
+                          borderRadius: '12px',
+                        }}>
+                          No tasks
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {filteredTasks.length === 0 && (
             <div className="card" style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -389,3 +545,4 @@ export default function TasksPage() {
     </Suspense>
   );
 }
+

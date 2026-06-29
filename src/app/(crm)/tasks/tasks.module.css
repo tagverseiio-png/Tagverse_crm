@@ -10,8 +10,6 @@
 }
 
 .filterSidebar {
-  width: 220px;
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -26,7 +24,7 @@
 .filterSection {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .filterHeader {
@@ -35,6 +33,7 @@
   text-transform: uppercase;
   color: var(--text-muted);
   letter-spacing: 0.5px;
+  margin-bottom: 4px;
 }
 
 .filterBtn {
@@ -110,17 +109,18 @@
 .taskGroupHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .taskGroupBadge {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 6px;
   border: 1px solid transparent;
+  letter-spacing: 0.3px;
 }
 
 .priorityUrgent {
@@ -160,10 +160,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: all var(--transition);
+  gap: 16px;
 }
 
 .taskItem:last-child {
@@ -189,6 +190,7 @@
   border: 1px solid var(--border);
   accent-color: var(--purple);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .taskTitle {
@@ -209,28 +211,30 @@
 .taskRight {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
 .projectBadge {
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 12px;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .dueBadge {
   font-size: 11px;
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: 6px;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
 }
 
 .dueBadgeOverdue {
@@ -239,4 +243,180 @@
   border-color: var(--rose);
   color: var(--rose-light);
   font-weight: 700;
+}
+
+/* ===== View Toggle ===== */
+
+.viewToggle {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.viewToggleBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewToggleBtn:hover {
+  color: var(--text-primary);
+}
+
+.viewToggleBtnActive {
+  composes: viewToggleBtn;
+  background: var(--purple-dim);
+  color: var(--purple-light);
+}
+
+/* ===== Kanban Board ===== */
+
+.kanbanBoard {
+  display: flex;
+  gap: 20px;
+  min-height: 500px;
+  align-items: flex-start;
+}
+
+.kanbanColumn {
+  flex: 1;
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kanbanColumnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.kanbanColumnTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanbanColumnCount {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-primary);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.kanbanColumnDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.kanbanCards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kanbanCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.kanbanCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+}
+
+.kanbanCard:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--purple);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.kanbanCardUrgent::before {
+  background: var(--rose);
+}
+
+.kanbanCardHigh::before {
+  background: var(--amber);
+}
+
+.kanbanCardNormal::before {
+  background: var(--blue);
+}
+
+.kanbanCardLow::before {
+  background: var(--border);
+}
+
+.kanbanCardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+  padding-left: 8px;
+}
+
+.kanbanCardTitleDone {
+  composes: kanbanCardTitle;
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.kanbanCardMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-left: 8px;
+}
+
+.kanbanCardTags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.kanbanPriorityDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
 }

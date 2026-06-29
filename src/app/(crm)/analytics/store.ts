@@ -20,15 +20,7 @@ export interface Widget {
   config: WidgetConfig;
 }
 
-export interface LayoutItem {
-  i: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  minW?: number;
-  minH?: number;
-}
+// Removing LayoutItem since we are using fluid layout with dnd-kit
 
 export interface GlobalFilters {
   dateRange: string;
@@ -40,14 +32,14 @@ export interface GlobalFilters {
 interface AnalyticsState {
   isEditMode: boolean;
   activeViewId: string;
-  layout: LayoutItem[];
+  // layout: LayoutItem[]; // Removed in favor of fluid layout
   widgets: Widget[];
   selectedWidgetId: string | null;
   globalFilters: GlobalFilters;
 
   setEditMode: (isEdit: boolean) => void;
   setGlobalFilters: (filters: Partial<GlobalFilters>) => void;
-  setLayout: (layout: LayoutItem[]) => void;
+  reorderWidgets: (startIndex: number, endIndex: number) => void;
   addWidget: (type: WidgetType, x?: number, y?: number) => void;
   removeWidget: (id: string) => void;
   updateWidgetConfig: (id: string, config: Partial<WidgetConfig>) => void;
@@ -58,7 +50,7 @@ interface AnalyticsState {
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-const initialLayout = analyticsInitialLayout;
+// const initialLayout = analyticsInitialLayout;
 
 const initialWidgets = analyticsInitialWidgets as Widget[];
 
@@ -67,7 +59,7 @@ export const useAnalyticsStore = create<AnalyticsState>()(
     (set) => ({
       isEditMode: false,
       activeViewId: 'default',
-      layout: initialLayout,
+      // layout: initialLayout,
       widgets: initialWidgets,
       selectedWidgetId: null,
       globalFilters: {
@@ -83,7 +75,12 @@ export const useAnalyticsStore = create<AnalyticsState>()(
         globalFilters: { ...state.globalFilters, ...filters }
       })),
 
-      setLayout: (layout) => set({ layout }),
+      reorderWidgets: (startIndex, endIndex) => set((state) => {
+        const result = Array.from(state.widgets);
+        const [removed] = result.splice(startIndex, 1);
+        result.splice(endIndex, 0, removed);
+        return { widgets: result };
+      }),
 
       addWidget: (type, x = 0, y = 100) => set((state) => {
         const id = `w_${generateId()}`;
@@ -94,23 +91,13 @@ export const useAnalyticsStore = create<AnalyticsState>()(
           config: { module: 'Deals', metric: 'count', colorTheme: 'blue' }
         };
 
-        const w = type === 'kpi' ? 3 : 6;
-        const h = type === 'kpi' ? 4 : 11;
-        const minW = type === 'kpi' ? 2 : 4;
-        const minH = type === 'kpi' ? 3 : 8;
-
-        const newLayoutItem: LayoutItem = {
-          i: id, x, y, w, h, minW, minH
-        };
         return {
           widgets: [...state.widgets, newWidget],
-          layout: [...state.layout, newLayoutItem]
         };
       }),
 
       removeWidget: (id) => set((state) => ({
         widgets: state.widgets.filter((w) => w.id !== id),
-        layout: state.layout.filter((l) => l.i !== id),
         selectedWidgetId: state.selectedWidgetId === id ? null : state.selectedWidgetId
       })),
 
@@ -130,7 +117,7 @@ export const useAnalyticsStore = create<AnalyticsState>()(
     }),
     {
       name: 'crm-analytics-dashboard-v2',
-      partialize: (state) => ({ layout: state.layout, widgets: state.widgets, globalFilters: state.globalFilters }),
+      partialize: (state) => ({ widgets: state.widgets, globalFilters: state.globalFilters }),
     }
   )
 );

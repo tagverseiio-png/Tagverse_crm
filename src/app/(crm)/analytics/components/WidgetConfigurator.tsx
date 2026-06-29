@@ -15,7 +15,7 @@ export function WidgetConfigurator() {
   const inputStyle = { width: '100%', padding: '8px 12px', fontSize: 13, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-primary)', outline: 'none' };
 
   return (
-    <div style={{ width: 320, flexShrink: 0, borderLeft: '1px solid var(--border)', paddingLeft: 24 }}>
+    <div style={{ width: 320, flexShrink: 0, borderLeft: '1px solid var(--border)', padding: '0 24px', background: 'var(--bg-primary)', position: 'relative', zIndex: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Configure Widget</h3>
         <button onClick={() => selectWidget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
