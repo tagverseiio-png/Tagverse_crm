@@ -1,5 +1,6 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { workspaceInitialMembers, workspaceInitialProjects, workspaceInitialTasks, workspaceInitialEvents } from '@/lib/mockData';
 
 export interface Member {
   id: string;
@@ -63,37 +64,10 @@ interface WorkspaceContextType {
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
-const initialMembers: Member[] = [
-  { id: 'm1', name: 'Sarah Connor', role: 'Admin', department: 'Management', avatar: 'SC', email: 'sarah@acme.co' },
-  { id: 'm2', name: 'John Doe', role: 'Member', department: 'Engineering', avatar: 'JD', email: 'john@acme.co' },
-  { id: 'm3', name: 'Ellen Ripley', role: 'Member', department: 'Design', avatar: 'ER', email: 'ripley@acme.co' },
-  { id: 'm4', name: 'Marcus Wright', role: 'Guest', department: 'Marketing', avatar: 'MW', email: 'marcus@acme.co' }
-];
-
-const initialProjects: Project[] = [
-  { id: 'p1', name: 'Brand Identity Redesign', status: 'Active', members: ['m3', 'm4'], linkedDeal: 'deal-102', progress: 0, budget: { est: 25000, actual: 18500 }, color: '#6366f1' },
-  { id: 'p2', name: 'API Integration Sprint', status: 'Active', members: ['m2'], linkedDeal: 'deal-105', progress: 0, budget: { est: 45000, actual: 32000 }, color: '#3b82f6' },
-  { id: 'p3', name: 'SaaS Beta Launch Prep', status: 'Planning', members: ['m1', 'm2', 'm3'], linkedDeal: 'deal-109', progress: 0, budget: { est: 80000, actual: 5000 }, color: '#10b981' }
-];
-
-const initialTasks: Task[] = [
-  { id: 't1', title: 'Complete high-fidelity dashboard wireframes', projectId: 'p1', owner: 'm3', status: 'In Progress', priority: 'High', due: '2026-06-28', parentType: 'project', tags: ['design', 'ui'] },
-  { id: 't2', title: 'Refactor Auth middleware for token expiration', projectId: 'p2', owner: 'm2', status: 'To Do', priority: 'High', due: '2026-06-26', parentType: 'project', tags: ['backend', 'security'] },
-  { id: 't3', title: 'Draft email onboarding sequence copy', projectId: 'p3', owner: 'm4', status: 'To Do', priority: 'Normal', due: '2026-06-30', parentType: 'project', tags: ['copywriting', 'marketing'] },
-  { id: 't4', title: 'Conduct user research database schema validation', projectId: 'p2', owner: 'm2', status: 'Done', priority: 'Low', due: '2026-06-22', parentType: 'project', tags: ['database'] },
-  { id: 't5', title: 'Write unit tests for Stripe payment webhooks', projectId: 'p2', owner: 'm2', status: 'In Progress', priority: 'Urgent', due: '2026-06-25', parentType: 'project', tags: ['stripe', 'testing'] },
-  { id: 't6', title: 'Finalize brand color palette system styles', projectId: 'p1', owner: 'm3', status: 'Done', priority: 'Normal', due: '2026-06-20', parentType: 'project', tags: ['design', 'branding'] },
-  { id: 't7', title: 'Define SLA protocols and response times documentation', projectId: null, owner: 'm1', status: 'To Do', priority: 'Normal', due: '2026-07-02', parentType: null, tags: ['docs'] },
-  { id: 't8', title: 'Set up Google Analytics marketing dashboard pixels', projectId: 'p3', owner: 'm4', status: 'To Do', priority: 'Low', due: '2026-06-27', parentType: 'project', tags: ['analytics'] }
-];
-
-const initialEvents: CalendarEvent[] = [
-  { id: 'e1', title: 'Sprint Planning Alignment', date: '2026-06-25', time: '10:00', attendees: ['m1', 'm2', 'm3'], linkedRecord: { type: 'project', id: 'p2' }, color: '#3b82f6' },
-  { id: 'e2', title: 'UI Design Review', date: '2026-06-25', time: '14:30', attendees: ['m1', 'm3'], linkedRecord: { type: 'project', id: 'p1' }, color: '#6366f1' },
-  { id: 'e3', title: 'Marketing Sync Meeting', date: '2026-06-26', time: '11:00', attendees: ['m1', 'm4'], linkedRecord: null, color: '#10b981' },
-  { id: 'e4', title: 'Prisma DB Migration Rollout', date: '2026-06-22', time: '09:00', attendees: ['m2'], linkedRecord: { type: 'project', id: 'p2' }, color: '#3b82f6' },
-  { id: 'e5', title: 'Client Feedback Call', date: '2026-06-29', time: '15:00', attendees: ['m1', 'm3'], linkedRecord: { type: 'project', id: 'p1' }, color: '#6366f1' }
-];
+const initialMembers: Member[] = workspaceInitialMembers as Member[];
+const initialProjects: Project[] = workspaceInitialProjects as Project[];
+const initialTasks: Task[] = workspaceInitialTasks as Task[];
+const initialEvents: CalendarEvent[] = workspaceInitialEvents as CalendarEvent[];
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [members] = useState<Member[]>(initialMembers);

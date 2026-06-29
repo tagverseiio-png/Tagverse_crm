@@ -1,44 +1,17 @@
 'use client';
 import { useState, useMemo } from 'react';
-
-type Payment = {
-  id: string; client: string; invoiceId: string; amount: number;
-  date: string; method: 'UPI' | 'NEFT' | 'Cheque' | 'Pending';
-  status: 'Received' | 'Pending' | 'Failed';
-};
-
-const INITIAL_PAYMENTS: Payment[] = [
-  { id: '#PAY-881', client: 'Arka Systems', invoiceId: 'INV-2089', amount: 120000, date: 'Jun 14', method: 'NEFT', status: 'Received' },
-  { id: '#PAY-880', client: 'BlueStar Media', invoiceId: 'INV-2090', amount: 45500, date: 'Jun 12', method: 'Cheque', status: 'Failed' },
-  { id: '#PAY-879', client: 'Indra Logistics', invoiceId: 'INV-2087', amount: 240000, date: 'Jun 9', method: 'UPI', status: 'Received' },
-  { id: '#PAY-878', client: 'Nexus Retail', invoiceId: 'INV-2091', amount: 85000, date: '—', method: 'Pending', status: 'Pending' },
-  { id: '#PAY-877', client: 'Vega Partners', invoiceId: 'INV-2088', amount: 60000, date: 'May 30', method: 'NEFT', status: 'Failed' },
-  { id: '#PAY-876', client: 'GrowthLab Inc.', invoiceId: 'INV-2085', amount: 35000, date: 'May 25', method: 'UPI', status: 'Received' },
-];
-
-const RECENT_ACTIVITY = [
-  { icon: 'ti-circle-check', iconBg: 'var(--emerald-dim)', iconColor: 'var(--emerald-light)', title: '₹1,20,000 received — Arka Systems', meta: 'INV-2089 · Jun 14 · NEFT' },
-  { icon: 'ti-circle-x', iconBg: 'var(--rose-dim)', iconColor: 'var(--rose-light)', title: '₹45,500 failed — BlueStar Media', meta: 'INV-2090 · Jun 12 · Cheque returned' },
-  { icon: 'ti-circle-check', iconBg: 'var(--emerald-dim)', iconColor: 'var(--emerald-light)', title: '₹2,40,000 received — Indra Logistics', meta: 'INV-2087 · Jun 9 · UPI' },
-  { icon: 'ti-clock', iconBg: 'var(--amber-dim)', iconColor: 'var(--amber)', title: '₹85,000 pending — Nexus Retail', meta: 'INV-2091 · Due Jun 26' },
-];
-
-const COLLECTION_METHODS = [
-  { label: 'UPI / Online', amount: '₹5.4L', pct: 55, color: 'var(--emerald)' },
-  { label: 'NEFT / Wire', amount: '₹3.2L', pct: 33, color: 'var(--blue)' },
-  { label: 'Cheque', amount: '₹1.2L', pct: 12, color: 'var(--amber)' },
-];
+import {
+  type Payment,
+  paymentsData as INITIAL_PAYMENTS,
+  paymentsRecentActivity as RECENT_ACTIVITY,
+  paymentsCollectionMethods as COLLECTION_METHODS,
+  paymentsStatusBadge as STATUS_BADGE,
+} from '@/lib/mockData';
 
 function fmt(v: number) {
   if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
   return `₹${v.toLocaleString('en-IN')}`;
 }
-
-const STATUS_BADGE: Record<string, string> = {
-  Received: 'badge emerald',
-  Pending: 'badge amber',
-  Failed: 'badge rose',
-};
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>(INITIAL_PAYMENTS);

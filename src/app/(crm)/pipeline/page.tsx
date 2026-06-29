@@ -2,49 +2,7 @@
 import { useState } from 'react';
 import { MessageSquare, CheckCircle, Package, AlertTriangle, Send } from 'lucide-react';
 
-const initialPipeline = [
-  {
-    id: 'new', label: 'New Enquiry', color: 'new', headerColor: 'var(--blue)',
-    deals: [
-      { id: 1, name: 'Riya Sharma', company: 'BloomAds', value: 45000, owner: 'JS', days: 0, source: 'Meta Ads' },
-      { id: 2, name: 'Karthik R.', company: 'TechVibe', value: 80000, owner: 'AM', days: 1, source: 'Form' },
-    ],
-  },
-  {
-    id: 'sample', label: 'Sample Delivered', color: 'engaged', headerColor: 'var(--purple)',
-    deals: [
-      { id: 4, name: 'Hotel Manager', company: 'Ilara Hotel & Spa', value: 120000, owner: 'SA', days: 3, source: 'WhatsApp' },
-      { id: 5, name: 'Purchase Head', company: 'Yalis Restaurant', value: 60000, owner: 'JS', days: 2, source: 'WhatsApp' },
-    ],
-  },
-  {
-    id: 'quote', label: 'Quote Sent', color: 'qualified', headerColor: 'var(--amber)',
-    deals: [
-      { id: 6, name: 'Procurement', company: 'Educational Inst.', value: 95000, owner: 'AM', days: 5, source: 'WhatsApp' },
-      { id: 7, name: 'Divya T.', company: 'BrandNest', value: 210000, owner: 'SA', days: 4, source: 'Meta Ads' },
-    ],
-  },
-  {
-    id: 'negotiation', label: 'Negotiation', color: 'negotiation', headerColor: 'var(--amber)',
-    deals: [
-      { id: 9, name: 'Owner', company: 'Hot Dosai', value: 350000, owner: 'AM', days: 12, source: 'Cold Email' },
-    ],
-  },
-  {
-    id: 'confirmed', label: 'Order Confirmed', color: 'won', headerColor: 'var(--emerald)',
-    deals: [
-      { id: 11, name: 'Khader Bhai', company: 'Khader Bhai Biriyani', value: 420000, owner: 'SA', days: 18, source: 'WhatsApp' },
-    ],
-  },
-];
-
-const mockWhatsAppActivity = [
-  { id: 1, sender: 'Client', text: 'Hi, we need some samples for our hotel. Can you deliver 5L hand wash and floor cleaner?', time: '10:30 AM', date: '27/06/2026' },
-  { id: 2, sender: 'Agent (Thamizh T.)', text: 'Priority - samples needed for Ilara Hotel & Spa. Added to queue.', time: '10:45 AM', date: '27/06/2026', internal: true },
-  { id: 3, sender: 'Agent (Thamizh T.)', text: 'Sample Delivered at Ilara Hotel. Awaiting feedback.', time: '02:15 PM', date: '28/06/2026', internal: true },
-  { id: 4, sender: 'Client', text: 'Thanks. The samples look good. Can you send a quote for 1000+ cans?', time: '11:00 AM', date: 'Today' },
-];
-
+import { pipelineInitial, pipelineWhatsAppActivity } from '@/lib/mockData';
 function fmtVal(v: number) {
   if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
   return `₹${(v / 1000).toFixed(0)}K`;
@@ -52,7 +10,7 @@ function fmtVal(v: number) {
 
 export default function PipelinePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [pipelineState, setPipelineState] = useState(initialPipeline);
+  const [pipelineState, setPipelineState] = useState(pipelineInitial);
   const [view, setView] = useState<'kanban' | 'list'>('kanban');
   // Fields for new / edit deal
   const [newDealName, setNewDealName] = useState('');
@@ -302,7 +260,7 @@ export default function PipelinePage() {
                   
                   {/* Messages Feed */}
                   <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {mockWhatsAppActivity.map(msg => (
+                    {pipelineWhatsAppActivity.map(msg => (
                       <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.internal ? 'flex-end' : 'flex-start' }}>
                         <span style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>{msg.sender} • {msg.date} {msg.time}</span>
                         <div style={{ 

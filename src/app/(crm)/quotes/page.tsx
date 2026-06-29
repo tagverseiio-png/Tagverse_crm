@@ -2,14 +2,9 @@
 import { useState, useMemo } from 'react';
 import QuoteBuilderModal, { Quote } from './QuoteBuilderModal';
 
-const INITIAL_QUOTES: Quote[] = [
-  { id: '#Q-1042', client: 'Arka Systems', amount: 120000, sentOn: 'Jun 10', expires: 'Jun 30', status: 'Sent' },
-  { id: '#Q-1041', client: 'Nexus Retail', amount: 85000, sentOn: 'Jun 8', expires: 'Jun 28', status: 'Accepted' },
-  { id: '#Q-1040', client: 'Indra Logistics', amount: 240000, sentOn: 'Jun 5', expires: 'Jun 25', status: 'Sent' },
-  { id: '#Q-1039', client: 'Vega Partners', amount: 60000, sentOn: 'May 28', expires: 'Jun 17', status: 'Expired' },
-  { id: '#Q-1038', client: 'BlueStar Media', amount: 45500, sentOn: 'May 20', expires: 'Jun 10', status: 'Accepted' },
-  { id: '#Q-1037', client: 'GrowthLab Inc.', amount: 95000, sentOn: 'May 15', expires: 'Jun 4', status: 'Draft' },
-];
+import { quotesInitial } from '@/lib/mockData';
+
+const INITIAL_QUOTES: Quote[] = quotesInitial as Quote[];
 
 function fmt(v: number) {
   if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;

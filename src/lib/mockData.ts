@@ -691,3 +691,250 @@ export const funnelAiInsights = [
   { title: 'Bottleneck at Demo Stage', text: 'Average time in Proposal/Demo stage has increased to 18 days. Consider automated follow-up sequences.', type: 'warning' },
   { title: 'Closing High Velocity', text: 'Win rate at negotiation is up 5% this month. Great performance on discount management!', type: 'success' },
 ];
+
+// ─── Invoices ─────────────────────────────────────────────────────────────────
+
+export const invoicesData = [
+  { id: '#INV-2091', client: 'Nexus Retail',    amount: 85000,  sentOn: 'Jun 12', expires: 'Jun 26', status: 'Sent'    },
+  { id: '#INV-2090', client: 'BlueStar Media',  amount: 45500,  sentOn: 'Jun 8',  expires: 'Jun 22', status: 'Overdue' },
+  { id: '#INV-2089', client: 'Arka Systems',    amount: 120000, sentOn: 'Jun 1',  expires: 'Jun 15', status: 'Paid'    },
+  { id: '#INV-2088', client: 'Vega Partners',   amount: 60000,  sentOn: 'May 25', expires: 'Jun 8',  status: 'Overdue' },
+  { id: '#INV-2087', client: 'Indra Logistics', amount: 240000, sentOn: 'May 18', expires: 'Jun 1',  status: 'Paid'    },
+  { id: '#INV-2086', client: 'GrowthLab Inc.',  amount: 35000,  sentOn: 'May 10', expires: 'May 24', status: 'Draft'   },
+];
+
+export const invoicesStatusBadge: Record<string, string> = {
+  Draft:   'badge',
+  Sent:    'badge amber',
+  Paid:    'badge emerald',
+  Overdue: 'badge rose',
+};
+
+// ─── Leads ────────────────────────────────────────────────────────────────────
+
+export type Lead = {
+  id: number;
+  name: string;
+  company: string;
+  phone: string;
+  email: string;
+  source: string;
+  stage: string;
+  score: number;
+  owner: string;
+  whatsapp: boolean;
+  created: string;
+  intent: string;
+};
+
+export const leadsInitial: Lead[] = [
+  { id: 1,  name: 'Riya Sharma', company: 'BloomAds',   phone: '+91 98765 43210', email: 'riya@bloomads.in',   source: 'Meta Ads',     stage: 'new',         score: 82, owner: 'JS', whatsapp: true,  created: '2m ago',  intent: 'SEO + Social'        },
+  { id: 2,  name: 'Arjun Mehta', company: 'GrowthLab',  phone: '+91 98112 33445', email: 'arjun@growthlab.io', source: 'Website Form', stage: 'engaged',     score: 71, owner: 'SA', whatsapp: true,  created: '28m ago', intent: 'Email Marketing'     },
+  { id: 3,  name: 'Priya K.',    company: 'NexaDigital', phone: '+91 97001 22334', email: 'priya@nexa.co',      source: 'Referral',     stage: 'engaged',     score: 67, owner: 'JS', whatsapp: false, created: '1h ago',  intent: 'Full CRM'            },
+  { id: 4,  name: 'Sameer P.',   company: 'MediaCo',    phone: '+91 96543 11222', email: 'sameer@mediaco.in',  source: 'LinkedIn',     stage: 'qualified',   score: 88, owner: 'AM', whatsapp: true,  created: '3h ago',  intent: 'Social Media'        },
+  { id: 5,  name: 'Divya T.',    company: 'BrandNest',  phone: '+91 95432 10111', email: 'divya@brandnest.com',source: 'Meta Ads',     stage: 'qualified',   score: 91, owner: 'SA', whatsapp: true,  created: '5h ago',  intent: 'SEO + Content'       },
+  { id: 6,  name: 'Raj Verma',   company: 'ScaleUp',    phone: '+91 94321 09000', email: 'raj@scaleup.in',     source: 'LinkedIn DM',  stage: 'proposal',    score: 94, owner: 'JS', whatsapp: true,  created: '1d ago',  intent: 'Full CRM + Revenue'  },
+  { id: 7,  name: 'Ananya S.',   company: 'ClickFarm',  phone: '+91 93210 08999', email: 'ananya@clickfarm.io',source: 'Cold Email',   stage: 'negotiation', score: 78, owner: 'AM', whatsapp: false, created: '2d ago',  intent: 'Analytics'           },
+  { id: 8,  name: 'Vikram L.',   company: 'AdSphere',   phone: '+91 92109 07888', email: 'vikram@adsphere.com',source: 'Referral',     stage: 'negotiation', score: 85, owner: 'JS', whatsapp: true,  created: '2d ago',  intent: 'Email + Social'      },
+  { id: 9,  name: 'Nisha D.',    company: 'BoldMark',   phone: '+91 91098 06777', email: 'nisha@boldmark.in',  source: 'Meta Ads',     stage: 'won',         score: 97, owner: 'SA', whatsapp: true,  created: '5d ago',  intent: 'Full Suite'          },
+  { id: 10, name: 'Mohit B.',    company: 'SprintCo',   phone: '+91 90987 05666', email: 'mohit@sprintco.io',  source: 'Cold Email',   stage: 'lost',        score: 40, owner: 'AM', whatsapp: false, created: '7d ago',  intent: 'SEO'                 },
+];
+
+export const leadsStageFilters = ['all', 'new', 'engaged', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
+
+export const leadsSources = ['Meta Ads', 'Website Form', 'Referral', 'LinkedIn', 'LinkedIn DM', 'Cold Email', 'Other'];
+
+export const leadsStages = ['new', 'engaged', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
+
+// ─── Payments ─────────────────────────────────────────────────────────────────
+
+export type Payment = {
+  id: string; client: string; invoiceId: string; amount: number;
+  date: string; method: 'UPI' | 'NEFT' | 'Cheque' | 'Pending';
+  status: 'Received' | 'Pending' | 'Failed';
+};
+
+export const paymentsData: Payment[] = [
+  { id: '#PAY-881', client: 'Arka Systems',    invoiceId: 'INV-2089', amount: 120000, date: 'Jun 14',  method: 'NEFT',    status: 'Received' },
+  { id: '#PAY-880', client: 'BlueStar Media',  invoiceId: 'INV-2090', amount: 45500,  date: 'Jun 12',  method: 'Cheque',  status: 'Failed'   },
+  { id: '#PAY-879', client: 'Indra Logistics', invoiceId: 'INV-2087', amount: 240000, date: 'Jun 9',   method: 'UPI',     status: 'Received' },
+  { id: '#PAY-878', client: 'Nexus Retail',    invoiceId: 'INV-2091', amount: 85000,  date: '—',       method: 'Pending', status: 'Pending'  },
+  { id: '#PAY-877', client: 'Vega Partners',   invoiceId: 'INV-2088', amount: 60000,  date: 'May 30',  method: 'NEFT',    status: 'Failed'   },
+  { id: '#PAY-876', client: 'GrowthLab Inc.',  invoiceId: 'INV-2085', amount: 35000,  date: 'May 25',  method: 'UPI',     status: 'Received' },
+];
+
+export const paymentsRecentActivity = [
+  { icon: 'ti-circle-check', iconBg: 'var(--emerald-dim)', iconColor: 'var(--emerald-light)', title: '₹1,20,000 received — Arka Systems',    meta: 'INV-2089 · Jun 14 · NEFT'          },
+  { icon: 'ti-circle-x',     iconBg: 'var(--rose-dim)',    iconColor: 'var(--rose-light)',    title: '₹45,500 failed — BlueStar Media',      meta: 'INV-2090 · Jun 12 · Cheque returned' },
+  { icon: 'ti-circle-check', iconBg: 'var(--emerald-dim)', iconColor: 'var(--emerald-light)', title: '₹2,40,000 received — Indra Logistics',  meta: 'INV-2087 · Jun 9 · UPI'             },
+  { icon: 'ti-clock',        iconBg: 'var(--amber-dim)',   iconColor: 'var(--amber)',         title: '₹85,000 pending — Nexus Retail',       meta: 'INV-2091 · Due Jun 26'              },
+];
+
+export const paymentsCollectionMethods = [
+  { label: 'UPI / Online', amount: '₹5.4L', pct: 55, color: 'var(--emerald)' },
+  { label: 'NEFT / Wire',  amount: '₹3.2L', pct: 33, color: 'var(--blue)'    },
+  { label: 'Cheque',       amount: '₹1.2L', pct: 12, color: 'var(--amber)'   },
+];
+
+export const paymentsStatusBadge: Record<string, string> = {
+  Received: 'badge emerald',
+  Pending:  'badge amber',
+  Failed:   'badge rose',
+};
+
+// ─── Marketing Calendar ───────────────────────────────────────────────────────
+
+export type ScheduledEvent = {
+  id: number; date: number; title: string; channel: string; time: string;
+  type: string; author: string; badgeChannel: string; badgeStatus: string;
+  status: string; color: string; company?: string; client?: string;
+};
+
+export const marketingCalendarChannelColor: Record<string, string> = {
+  LinkedIn: 'var(--blue)', Twitter: 'var(--blue)', Instagram: 'var(--rose)',
+  Email: 'var(--purple)', Blog: 'var(--emerald)', YouTube: 'var(--rose)',
+};
+
+export const marketingCalendarChannelBadge: Record<string, string> = {
+  LinkedIn: 'blue', Twitter: 'blue', Instagram: 'rose',
+  Email: 'purple', Blog: 'emerald', YouTube: 'rose',
+};
+
+export const marketingCalendarAuthors = ['Priya S.', 'Anita K.', 'Rohan M.'];
+
+export const marketingCalendarEvents: ScheduledEvent[] = [
+  { id: 1,  date: 5,  title: 'Product Launch Teaser',        channel: 'LinkedIn',  time: '9:00 AM',  type: 'Social',  author: 'Priya S.', badgeChannel: 'blue',    badgeStatus: 'emerald', status: 'Published', color: 'var(--blue)'    },
+  { id: 2,  date: 10, title: 'Summer Sale Announce',          channel: 'Twitter',   time: '11:00 AM', type: 'Social',  author: 'Anita K.', badgeChannel: 'blue',    badgeStatus: 'emerald', status: 'Published', color: 'var(--blue)'    },
+  { id: 3,  date: 12, title: 'Mid-Month Newsletter',          channel: 'Email',     time: '8:00 AM',  type: 'Email',   author: 'Rohan M.', badgeChannel: 'purple',  badgeStatus: 'emerald', status: 'Published', color: 'var(--purple)'  },
+  { id: 4,  date: 16, title: 'Feature Spotlight Video',       channel: 'YouTube',   time: '3:00 PM',  type: 'Video',   author: 'Priya S.', badgeChannel: 'rose',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--rose)'    },
+  { id: 5,  date: 18, title: 'Customer Success Story',        channel: 'Blog',      time: '10:00 AM', type: 'Content', author: 'Anita K.', badgeChannel: 'emerald', badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--emerald)' },
+  { id: 6,  date: 20, title: 'Webinar Invite',                channel: 'Email',     time: '9:00 AM',  type: 'Email',   author: 'Rohan M.', badgeChannel: 'purple',  badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--purple)'  },
+  { id: 7,  date: 24, title: 'LinkedIn post — case study',    channel: 'LinkedIn',  time: '10:00 AM', type: 'Social',  author: 'Priya S.', badgeChannel: 'blue',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--blue)'    },
+  { id: 8,  date: 24, title: 'Q3 Goals Overview',             channel: 'Blog',      time: '2:00 PM',  type: 'Content', author: 'Anita K.', badgeChannel: 'emerald', badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--emerald)' },
+  { id: 9,  date: 25, title: 'Partner Announcement',          channel: 'Twitter',   time: '12:00 PM', type: 'Social',  author: 'Rohan M.', badgeChannel: 'blue',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--blue)'    },
+  { id: 10, date: 26, title: 'June Newsletter',               channel: 'Email',     time: '9:00 AM',  type: 'Email',   author: 'Rohan M.', badgeChannel: 'purple',  badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--purple)'  },
+  { id: 11, date: 28, title: 'Instagram reel — product demo', channel: 'Instagram', time: '3:00 PM',  type: 'Social',  author: 'Anita K.', badgeChannel: 'rose',    badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--rose)'    },
+  { id: 12, date: 30, title: 'Blog: Q3 outlook',              channel: 'Blog',      time: '8:00 AM',  type: 'Content', author: 'Priya S.', badgeChannel: 'emerald', badgeStatus: 'amber',   status: 'Scheduled', color: 'var(--emerald)' },
+];
+
+// ─── Pipeline ─────────────────────────────────────────────────────────────────
+
+export const pipelineInitial = [
+  {
+    id: 'new', label: 'New Enquiry', color: 'new', headerColor: 'var(--blue)',
+    deals: [
+      { id: 1, name: 'Riya Sharma', company: 'BloomAds', value: 45000, owner: 'JS', days: 0, source: 'Meta Ads' },
+      { id: 2, name: 'Karthik R.', company: 'TechVibe', value: 80000, owner: 'AM', days: 1, source: 'Form' },
+    ],
+  },
+  {
+    id: 'sample', label: 'Sample Delivered', color: 'engaged', headerColor: 'var(--purple)',
+    deals: [
+      { id: 4, name: 'Hotel Manager', company: 'Ilara Hotel & Spa', value: 120000, owner: 'SA', days: 3, source: 'WhatsApp' },
+      { id: 5, name: 'Purchase Head', company: 'Yalis Restaurant', value: 60000, owner: 'JS', days: 2, source: 'WhatsApp' },
+    ],
+  },
+  {
+    id: 'quote', label: 'Quote Sent', color: 'qualified', headerColor: 'var(--amber)',
+    deals: [
+      { id: 6, name: 'Procurement', company: 'Educational Inst.', value: 95000, owner: 'AM', days: 5, source: 'WhatsApp' },
+      { id: 7, name: 'Divya T.', company: 'BrandNest', value: 210000, owner: 'SA', days: 4, source: 'Meta Ads' },
+    ],
+  },
+  {
+    id: 'negotiation', label: 'Negotiation', color: 'negotiation', headerColor: 'var(--amber)',
+    deals: [
+      { id: 9, name: 'Owner', company: 'Hot Dosai', value: 350000, owner: 'AM', days: 12, source: 'Cold Email' },
+    ],
+  },
+  {
+    id: 'confirmed', label: 'Order Confirmed', color: 'won', headerColor: 'var(--emerald)',
+    deals: [
+      { id: 11, name: 'Khader Bhai', company: 'Khader Bhai Biriyani', value: 420000, owner: 'SA', days: 18, source: 'WhatsApp' },
+    ],
+  },
+];
+
+export const pipelineWhatsAppActivity = [
+  { id: 1, sender: 'Client', text: 'Hi, we need some samples for our hotel. Can you deliver 5L hand wash and floor cleaner?', time: '10:30 AM', date: '27/06/2026' },
+  { id: 2, sender: 'Agent (Thamizh T.)', text: 'Priority - samples needed for Ilara Hotel & Spa. Added to queue.', time: '10:45 AM', date: '27/06/2026', internal: true },
+  { id: 3, sender: 'Agent (Thamizh T.)', text: 'Sample Delivered at Ilara Hotel. Awaiting feedback.', time: '02:15 PM', date: '28/06/2026', internal: true },
+  { id: 4, sender: 'Client', text: 'Thanks. The samples look good. Can you send a quote for 1000+ cans?', time: '11:00 AM', date: 'Today' },
+];
+
+// ─── Quotes ───────────────────────────────────────────────────────────────────
+
+export const quotesInitial = [
+  { id: '#Q-1042', client: 'Arka Systems', amount: 120000, sentOn: 'Jun 10', expires: 'Jun 30', status: 'Sent' },
+  { id: '#Q-1041', client: 'Nexus Retail', amount: 85000, sentOn: 'Jun 8', expires: 'Jun 28', status: 'Accepted' },
+  { id: '#Q-1040', client: 'Indra Logistics', amount: 240000, sentOn: 'Jun 5', expires: 'Jun 25', status: 'Sent' },
+  { id: '#Q-1039', client: 'Vega Partners', amount: 60000, sentOn: 'May 28', expires: 'Jun 17', status: 'Expired' },
+  { id: '#Q-1038', client: 'BlueStar Media', amount: 45500, sentOn: 'May 20', expires: 'Jun 10', status: 'Accepted' },
+  { id: '#Q-1037', client: 'GrowthLab Inc.', amount: 95000, sentOn: 'May 15', expires: 'Jun 4', status: 'Draft' },
+];
+
+// ─── Workspace ────────────────────────────────────────────────────────────────
+
+export const workspaceInitialMembers = [
+  { id: 'm1', name: 'Sarah Connor', role: 'Admin', department: 'Management', avatar: 'SC', email: 'sarah@acme.co' },
+  { id: 'm2', name: 'John Doe', role: 'Member', department: 'Engineering', avatar: 'JD', email: 'john@acme.co' },
+  { id: 'm3', name: 'Ellen Ripley', role: 'Member', department: 'Design', avatar: 'ER', email: 'ripley@acme.co' },
+  { id: 'm4', name: 'Marcus Wright', role: 'Guest', department: 'Marketing', avatar: 'MW', email: 'marcus@acme.co' }
+];
+
+export const workspaceInitialProjects = [
+  { id: 'p1', name: 'Brand Identity Redesign', status: 'Active', members: ['m3', 'm4'], linkedDeal: 'deal-102', progress: 0, budget: { est: 25000, actual: 18500 }, color: '#6366f1' },
+  { id: 'p2', name: 'API Integration Sprint', status: 'Active', members: ['m2'], linkedDeal: 'deal-105', progress: 0, budget: { est: 45000, actual: 32000 }, color: '#3b82f6' },
+  { id: 'p3', name: 'SaaS Beta Launch Prep', status: 'Planning', members: ['m1', 'm2', 'm3'], linkedDeal: 'deal-109', progress: 0, budget: { est: 80000, actual: 5000 }, color: '#10b981' }
+];
+
+export const workspaceInitialTasks = [
+  { id: 't1', title: 'Complete high-fidelity dashboard wireframes', projectId: 'p1', owner: 'm3', status: 'In Progress', priority: 'High', due: '2026-06-28', parentType: 'project', tags: ['design', 'ui'] },
+  { id: 't2', title: 'Refactor Auth middleware for token expiration', projectId: 'p2', owner: 'm2', status: 'To Do', priority: 'High', due: '2026-06-26', parentType: 'project', tags: ['backend', 'security'] },
+  { id: 't3', title: 'Draft email onboarding sequence copy', projectId: 'p3', owner: 'm4', status: 'To Do', priority: 'Normal', due: '2026-06-30', parentType: 'project', tags: ['copywriting', 'marketing'] },
+  { id: 't4', title: 'Conduct user research database schema validation', projectId: 'p2', owner: 'm2', status: 'Done', priority: 'Low', due: '2026-06-22', parentType: 'project', tags: ['database'] },
+  { id: 't5', title: 'Write unit tests for Stripe payment webhooks', projectId: 'p2', owner: 'm2', status: 'In Progress', priority: 'Urgent', due: '2026-06-25', parentType: 'project', tags: ['stripe', 'testing'] },
+  { id: 't6', title: 'Finalize brand color palette system styles', projectId: 'p1', owner: 'm3', status: 'Done', priority: 'Normal', due: '2026-06-20', parentType: 'project', tags: ['design', 'branding'] },
+  { id: 't7', title: 'Define SLA protocols and response times documentation', projectId: null, owner: 'm1', status: 'To Do', priority: 'Normal', due: '2026-07-02', parentType: null, tags: ['docs'] },
+  { id: 't8', title: 'Set up Google Analytics marketing dashboard pixels', projectId: 'p3', owner: 'm4', status: 'To Do', priority: 'Low', due: '2026-06-27', parentType: 'project', tags: ['analytics'] }
+];
+
+export const workspaceInitialEvents = [
+  { id: 'e1', title: 'Sprint Planning Alignment', date: '2026-06-25', time: '10:00', attendees: ['m1', 'm2', 'm3'], linkedRecord: { type: 'project', id: 'p2' }, color: '#3b82f6' },
+  { id: 'e2', title: 'UI Design Review', date: '2026-06-25', time: '14:30', attendees: ['m1', 'm3'], linkedRecord: { type: 'project', id: 'p1' }, color: '#6366f1' },
+  { id: 'e3', title: 'Marketing Sync Meeting', date: '2026-06-26', time: '11:00', attendees: ['m1', 'm4'], linkedRecord: null, color: '#10b981' },
+  { id: 'e4', title: 'Prisma DB Migration Rollout', date: '2026-06-22', time: '09:00', attendees: ['m2'], linkedRecord: { type: 'project', id: 'p2' }, color: '#3b82f6' },
+  { id: 'e5', title: 'Client Feedback Call', date: '2026-06-29', time: '15:00', attendees: ['m1', 'm3'], linkedRecord: { type: 'project', id: 'p1' }, color: '#6366f1' }
+];
+
+// ─── Social Media ─────────────────────────────────────────────────────────────
+
+export const socialKpis = [
+  { label: 'Total followers', value: '24.6K', delta: '+480 this month',       trend: 'up',   color: 'purple'  },
+  { label: 'Posts this month', value: '38',   delta: 'Across 3 channels',     trend: 'up',   color: 'blue'    },
+  { label: 'Avg. engagement',  value: '5.8%', delta: '+1.2% vs last mo.',     trend: 'up',   color: 'emerald' },
+  { label: 'Pending approval', value: '5',    delta: 'Needs review',          trend: 'down', color: 'rose'    },
+];
+
+export const socialPlatforms = [
+  {
+    name: 'LinkedIn', handle: '@YourBrand', followers: '11.2K', icon: 'in',
+    colorBg: 'var(--blue-dim)', colorText: 'var(--blue-light)', growth: '68%', barColor: 'var(--blue)',
+    metrics: [{ v: '6.1%', l: 'Eng. rate' }, { v: '18', l: 'Posts' }, { v: '4.2K', l: 'Impressions' }],
+  },
+  {
+    name: 'Instagram', handle: '@YourBrand', followers: '9.4K', icon: 'ig',
+    colorBg: 'var(--rose-dim)', colorText: 'var(--rose-light)', growth: '52%', barColor: 'var(--rose)',
+    metrics: [{ v: '7.3%', l: 'Eng. rate' }, { v: '14', l: 'Posts' }, { v: '3.8K', l: 'Impressions' }],
+  },
+  {
+    name: 'Twitter / X', handle: '@YourBrand', followers: '4.0K', icon: '𝕏',
+    colorBg: 'var(--emerald-dim)', colorText: 'var(--emerald-light)', growth: '28%', barColor: 'var(--emerald)',
+    metrics: [{ v: '3.2%', l: 'Eng. rate' }, { v: '6', l: 'Posts' }, { v: '1.1K', l: 'Impressions' }],
+  },
+];
+
+export const socialPendingPosts = [
+  { platform: 'LinkedIn',  colorText: 'var(--blue-light)', text: 'Excited to share our latest case study on how Arka Systems improved retention by 42% using our platform...' },
+  { platform: 'Instagram', colorText: 'var(--rose-light)', text: "🚀 Big things are coming this July. Stay tuned for our Q3 product launch — you won't want to miss it." },
+];

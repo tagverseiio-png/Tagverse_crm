@@ -1,27 +1,12 @@
 'use client';
 import { useState, useMemo } from 'react';
 import QuoteBuilderModal, { Quote as Invoice } from '../quotes/QuoteBuilderModal';
-
-const INITIAL_INVOICES: Invoice[] = [
-  { id: '#INV-2091', client: 'Nexus Retail', amount: 85000, sentOn: 'Jun 12', expires: 'Jun 26', status: 'Sent' },
-  { id: '#INV-2090', client: 'BlueStar Media', amount: 45500, sentOn: 'Jun 8', expires: 'Jun 22', status: 'Overdue' },
-  { id: '#INV-2089', client: 'Arka Systems', amount: 120000, sentOn: 'Jun 1', expires: 'Jun 15', status: 'Paid' },
-  { id: '#INV-2088', client: 'Vega Partners', amount: 60000, sentOn: 'May 25', expires: 'Jun 8', status: 'Overdue' },
-  { id: '#INV-2087', client: 'Indra Logistics', amount: 240000, sentOn: 'May 18', expires: 'Jun 1', status: 'Paid' },
-  { id: '#INV-2086', client: 'GrowthLab Inc.', amount: 35000, sentOn: 'May 10', expires: 'May 24', status: 'Draft' },
-];
+import { invoicesData as INITIAL_INVOICES, invoicesStatusBadge as STATUS_BADGE } from '@/lib/mockData';
 
 function fmt(v: number) {
   if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
   return `₹${v.toLocaleString('en-IN')}`;
 }
-
-const STATUS_BADGE: Record<string, string> = {
-  Draft: 'badge',
-  Sent: 'badge amber',
-  Paid: 'badge emerald',
-  Overdue: 'badge rose',
-};
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>(INITIAL_INVOICES);

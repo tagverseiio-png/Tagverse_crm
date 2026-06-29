@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { socialKpis, socialPlatforms, socialPendingPosts } from '@/lib/mockData';
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
@@ -54,23 +55,10 @@ const labelStyle = {
 type PendingPost = { platform: string; colorText: string; text: string };
 
 export default function SocialMediaPage() {
-  const kpis = [
-    { label: 'Total followers', value: '24.6K', delta: '+480 this month', trend: 'up', color: 'purple' },
-    { label: 'Posts this month', value: '38', delta: 'Across 3 channels', trend: 'up', color: 'blue' },
-    { label: 'Avg. engagement', value: '5.8%', delta: '+1.2% vs last mo.', trend: 'up', color: 'emerald' },
-    { label: 'Pending approval', value: '5', delta: 'Needs review', trend: 'down', color: 'rose' },
-  ];
+  const kpis = socialKpis;
+  const platforms = socialPlatforms;
 
-  const platforms = [
-    { name: 'LinkedIn', handle: '@YourBrand', followers: '11.2K', icon: 'in', colorBg: 'var(--blue-dim)', colorText: 'var(--blue-light)', growth: '68%', barColor: 'var(--blue)', metrics: [{ v: '6.1%', l: 'Eng. rate' }, { v: '18', l: 'Posts' }, { v: '4.2K', l: 'Impressions' }] },
-    { name: 'Instagram', handle: '@YourBrand', followers: '9.4K', icon: 'ig', colorBg: 'var(--rose-dim)', colorText: 'var(--rose-light)', growth: '52%', barColor: 'var(--rose)', metrics: [{ v: '7.3%', l: 'Eng. rate' }, { v: '14', l: 'Posts' }, { v: '3.8K', l: 'Impressions' }] },
-    { name: 'Twitter / X', handle: '@YourBrand', followers: '4.0K', icon: '𝕏', colorBg: 'var(--emerald-dim)', colorText: 'var(--emerald-light)', growth: '28%', barColor: 'var(--emerald)', metrics: [{ v: '3.2%', l: 'Eng. rate' }, { v: '6', l: 'Posts' }, { v: '1.1K', l: 'Impressions' }] },
-  ];
-
-  const [pending, setPending] = useState<PendingPost[]>([
-    { platform: 'LinkedIn', colorText: 'var(--blue-light)', text: 'Excited to share our latest case study on how Arka Systems improved retention by 42% using our platform...' },
-    { platform: 'Instagram', colorText: 'var(--rose-light)', text: "🚀 Big things are coming this July. Stay tuned for our Q3 product launch — you won't want to miss it." },
-  ]);
+  const [pending, setPending] = useState<PendingPost[]>(socialPendingPosts);
 
   const [showNewPost, setShowNewPost] = useState(false);
   const [toast, setToast] = useState('');
