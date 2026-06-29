@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
+import ContractWizard from './ContractWizard';
 
 type Contract = {
   id: string; client: string; valuePerYear: number; start: string;
@@ -50,14 +51,14 @@ export default function ContractsPage() {
 
   const openNew = () => { setMClient(''); setMValue(''); setMStart(''); setMEnd(''); setMStatus('Active'); setEditingId(null); setIsModalOpen(true); };
   const openEdit = (c: Contract) => { setMClient(c.client); setMValue(String(c.valuePerYear)); setMStart(c.start); setMEnd(c.end); setMStatus(c.status); setEditingId(c.id); setIsModalOpen(true); };
-  const handleSave = () => {
-    if (!mClient.trim()) return;
+  const handleSaveWizard = (data: any) => {
+    if (!data.client?.trim()) return;
     if (editingId) {
-      setContracts(p => p.map(c => c.id === editingId ? { ...c, client: mClient, valuePerYear: Number(mValue), start: mStart, end: mEnd, status: mStatus } : c));
+      setContracts(p => p.map(c => c.id === editingId ? { ...c, client: data.client, valuePerYear: Number(data.valuePerYear), start: data.start, end: data.end, status: data.status } : c));
     } else {
       setContracts(p => [{
-        id: `#CTR-${Math.floor(56 + Math.random() * 100)}`, client: mClient,
-        valuePerYear: Number(mValue) || 0, start: mStart, end: mEnd, progress: 0, status: mStatus
+        id: `#CTR-${Math.floor(56 + Math.random() * 100)}`, client: data.client,
+        valuePerYear: Number(data.valuePerYear) || 0, start: data.start, end: data.end, progress: 0, status: data.status
       }, ...p]);
     }
     setIsModalOpen(false);
@@ -157,56 +158,15 @@ export default function ContractsPage() {
         </table>
       </div>
 
-      {/* Modal */}
+      {/* Modal / Wizard */}
       {isModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="card" style={{ width: 480, padding: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>{editingId ? 'Edit Contract' : 'New Contract'}</h3>
-              <button onClick={() => setIsModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18 }}>✕</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Client</label>
-                <input type="text" value={mClient} onChange={e => setMClient(e.target.value)} placeholder="e.g. Arka Systems"
-                  style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-              </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Value / Year (₹)</label>
-                  <input type="number" value={mValue} onChange={e => setMValue(e.target.value)} placeholder="0"
-                    style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Status</label>
-                  <select value={mStatus} onChange={e => setMStatus(e.target.value as Contract['status'])}
-                    style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }}>
-                    {['Active', 'Pending Signature', 'Expiring', 'Terminated'].map(s => <option key={s}>{s}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Start Date</label>
-                  <input type="text" value={mStart} onChange={e => setMStart(e.target.value)} placeholder="e.g. Jan 1 2025"
-                    style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>End Date</label>
-                  <input type="text" value={mEnd} onChange={e => setMEnd(e.target.value)} placeholder="e.g. Dec 31 2025"
-                    style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', fontSize: 13 }} />
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-              {editingId ? <button className="btn btn-ghost" style={{ color: 'var(--rose)' }} onClick={() => handleDelete(editingId)}>Delete</button> : <div />}
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSave}>{editingId ? 'Save Changes' : 'Create Contract'}</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ContractWizard
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveWizard}
+          initialData={editingId ? {
+            client: mClient, valuePerYear: mValue, start: mStart, end: mEnd, status: mStatus
+          } : undefined}
+        />
       )}
     </div>
   );
