@@ -290,3 +290,76 @@
 .quote-builder-wrapper .df-left { font-size: 11.5px; color: var(--ink4); }
 .quote-builder-wrapper .df-right { font-size: 11.5px; color: var(--ink4); text-align: right; }
 .quote-builder-wrapper .df-brand { font-weight: 700; color: var(--brand); font-size: 13px; }
+
+/* NEW QUOTE PREVIEW */
+.quote-builder-wrapper .new-quote-sheet {
+  --nq-ink: #1a1a2e;
+  --nq-muted: #74738a;
+  --nq-line: #e2e1ea;
+  --nq-bg: #eceaf2;
+  --nq-card: #ffffff;
+  --nq-violet: #433d8b;
+  --nq-violet-soft: #f4f3fa;
+
+  width: 100%;
+  max-width: 640px;
+  background: var(--nq-card);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(26,26,46,0.06), 0 16px 40px rgba(26,26,46,0.08);
+  border: 1px solid var(--nq-line);
+  font-family: 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif;
+  color: var(--nq-ink);
+  margin: 0 auto;
+}
+
+.quote-builder-wrapper .new-quote-sheet .topbar { height: 4px; background: var(--nq-violet); }
+.quote-builder-wrapper .new-quote-sheet .header { display: flex; justify-content: space-between; align-items: flex-start; padding: 36px 36px 24px; }
+.quote-builder-wrapper .new-quote-sheet .brand { display: flex; align-items: center; gap: 10px; }
+.quote-builder-wrapper .new-quote-sheet .brand .mark { width: 28px; height: 28px; border-radius: 5px; background: var(--nq-violet); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.quote-builder-wrapper .new-quote-sheet .brand .name { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.quote-builder-wrapper .new-quote-sheet .brand .name span { color: var(--nq-violet); }
+.quote-builder-wrapper .new-quote-sheet .tagline { font-size: 11.5px; color: var(--nq-muted); margin: 5px 0 0 38px; letter-spacing: 0.01em; }
+.quote-builder-wrapper .new-quote-sheet .doc-title { text-align: right; }
+.quote-builder-wrapper .new-quote-sheet .doc-title h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: 400; margin: 0; letter-spacing: 0.02em; color: var(--nq-ink); }
+.quote-builder-wrapper .new-quote-sheet .doc-title .id { font-size: 11.5px; color: var(--nq-muted); margin-top: 6px; letter-spacing: 0.02em; }
+
+.quote-builder-wrapper .new-quote-sheet .meta { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--nq-line); border-bottom: 1px solid var(--nq-line); }
+.quote-builder-wrapper .new-quote-sheet .meta > div { padding: 14px 36px; }
+.quote-builder-wrapper .new-quote-sheet .meta > div + div { border-left: 1px solid var(--nq-line); }
+.quote-builder-wrapper .new-quote-sheet .meta label { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--nq-muted); text-transform: uppercase; margin-bottom: 5px; }
+.quote-builder-wrapper .new-quote-sheet .meta .value { font-size: 13.5px; font-weight: 600; }
+
+.quote-builder-wrapper .new-quote-sheet .parties { display: grid; grid-template-columns: 1fr 1fr; padding: 28px 36px; gap: 28px; }
+.quote-builder-wrapper .new-quote-sheet .parties label { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--nq-muted); text-transform: uppercase; margin-bottom: 9px; }
+.quote-builder-wrapper .new-quote-sheet .parties h3 { margin: 0 0 7px; font-size: 14px; font-weight: 600; }
+.quote-builder-wrapper .new-quote-sheet .parties p { margin: 0; font-size: 12.5px; line-height: 1.7; color: #54526a; }
+.quote-builder-wrapper .new-quote-sheet .parties .prepared h3 { color: var(--nq-violet); }
+
+.quote-builder-wrapper .new-quote-sheet .scope { margin: 0 36px 20px; padding: 10px 16px; background: var(--nq-violet-soft); border-left: 2px solid var(--nq-violet); font-size: 12.5px; display: flex; align-items: center; gap: 9px; }
+.quote-builder-wrapper .new-quote-sheet .scope .tag { color: var(--nq-violet); font-weight: 700; font-size: 10.5px; letter-spacing: 0.06em; }
+
+.quote-builder-wrapper .new-quote-sheet table { width: calc(100% - 72px); margin: 0 36px; border-collapse: collapse; }
+.quote-builder-wrapper .new-quote-sheet thead th { text-align: left; font-size: 10px; letter-spacing: 0.08em; color: var(--nq-muted); text-transform: uppercase; padding: 0 0 9px; border-bottom: 1px solid var(--nq-ink); font-weight: 600; }
+.quote-builder-wrapper .new-quote-sheet thead th.num { text-align: right; }
+.quote-builder-wrapper .new-quote-sheet tbody td { padding: 14px 0; border-bottom: 1px solid var(--nq-line); font-size: 13px; vertical-align: top; }
+.quote-builder-wrapper .new-quote-sheet tbody td.num { text-align: right; color: #54526a; }
+.quote-builder-wrapper .new-quote-sheet tbody td.item { font-weight: 600; }
+.quote-builder-wrapper .new-quote-sheet tbody td.amount { text-align: right; font-weight: 600; }
+.quote-builder-wrapper .new-quote-sheet tbody td.empty-td { text-align: center; color: var(--nq-muted); font-style: italic; font-size: 13px; font-weight: 400; padding: 28px; }
+
+.quote-builder-wrapper .new-quote-sheet .totals { margin: 18px 36px 0; display: flex; justify-content: flex-end; }
+.quote-builder-wrapper .new-quote-sheet .totals table { width: 240px; margin: 0; }
+.quote-builder-wrapper .new-quote-sheet .totals td { padding: 6px 0; border: none; font-size: 12.5px; }
+.quote-builder-wrapper .new-quote-sheet .totals td.label { color: var(--nq-muted); }
+.quote-builder-wrapper .new-quote-sheet .totals td.value { text-align: right; }
+.quote-builder-wrapper .new-quote-sheet .totals tr.grand td { padding-top: 12px; border-top: 1px solid var(--nq-ink); font-size: 15px; font-weight: 700; }
+
+.quote-builder-wrapper .new-quote-sheet .notes { margin: 30px 36px 0; padding-top: 20px; border-top: 1px solid var(--nq-line); }
+.quote-builder-wrapper .new-quote-sheet .notes label { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--nq-muted); text-transform: uppercase; margin-bottom: 9px; }
+.quote-builder-wrapper .new-quote-sheet .notes p { margin: 0 0 10px; font-size: 12.5px; line-height: 1.7; color: #54526a; }
+.quote-builder-wrapper .new-quote-sheet .notes .terms span { font-weight: 700; color: var(--nq-ink); }
+
+.quote-builder-wrapper .new-quote-sheet .footer { margin-top: 30px; padding: 18px 36px; background: var(--nq-violet-soft); border-top: 1px solid var(--nq-line); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #a6a4b8; }
+.quote-builder-wrapper .new-quote-sheet .footer .brand-foot { color: var(--nq-violet); font-weight: 600; }
+.quote-builder-wrapper .new-quote-sheet .footer .right { text-align: right; color: var(--nq-muted); }
