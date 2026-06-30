@@ -8,7 +8,7 @@ import {
   FileText, TrendingUp, DollarSign, Users, GitMerge,
   Filter, Download, Calendar, Play, Trash2, Plus, Clock,
   ChevronUp, ChevronDown, ChevronsUpDown, RefreshCw,
-  CheckCircle, AlertCircle, FileSpreadsheet, File,
+  CheckCircle, AlertCircle, FileSpreadsheet, File, X,
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -147,6 +147,7 @@ export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<'table'|'saved'|'scheduled'>('table');
   const [sortKey, setSortKey]     = useState('revenue');
   const [sortDir, setSortDir]     = useState<SortDir>('desc');
+  const [previewModal, setPreviewModal] = useState<'pdf' | 'excel' | null>(null);
 
   // Saved reports state
   const [saved, setSaved]           = useState(SAVED_REPORTS);
@@ -285,6 +286,10 @@ export default function ReportsPage() {
             return (
               <button
                 key={ex.label}
+                onClick={() => {
+                  if (ex.label === 'PDF') setPreviewModal('pdf');
+                  else if (ex.label === 'Excel' || ex.label === 'CSV') setPreviewModal('excel');
+                }}
                 className="btn btn-ghost"
                 style={{ padding:'6px 12px', fontSize:12, gap:5 }}
               >
@@ -571,6 +576,143 @@ export default function ReportsPage() {
         </div>
       )}
 
+      {/* ── Preview Modal ── */}
+      {previewModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          zIndex: 9999, padding: '2rem'
+        }}>
+          <div style={{
+            background: 'var(--bg-primary)',
+            width: '100%', maxWidth: previewModal === 'pdf' ? 794 : 1000,
+            height: '90vh', borderRadius: 12, display: 'flex', flexDirection: 'column',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            overflow: 'hidden'
+          }}>
+            {/* Modal Header */}
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
+                  {previewModal === 'pdf' ? 'Analytical Report Preview (PDF)' : 'Spreadsheet Preview (Excel)'}
+                </h3>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>A4 layout optimized for export</p>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => {
+                    if (previewModal === 'excel') {
+                      // Basic CSV export
+                      const header = COLUMNS.map(c => c.label).join(',');
+                      const rows = TABLE_ROWS.map(r => `${r.agent},${r.region},${r.product},${r.deals},${r.revenue},${r.conversion}%,${r.pipeline},${r.status}`).join('\\n');
+                      const blob = new Blob([header + '\\n' + rows], { type: 'text/csv' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'CRM_Report.csv';
+                      a.click();
+                    } else {
+                      window.print();
+                    }
+                  }}
+                  style={{ gap: 6 }}
+                >
+                  <Download size={14} /> Export {previewModal === 'pdf' ? 'PDF' : 'Excel'}
+                </button>
+                <button className="btn btn-ghost" onClick={() => setPreviewModal(null)} style={{ padding: 8 }}>
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="print-area" style={{ flex: 1, overflowY: 'auto', padding: 40, background: previewModal === 'pdf' ? '#fff' : 'var(--bg-primary)' }}>
+              {previewModal === 'pdf' ? (
+                <div style={{ color: '#000', fontFamily: 'serif', maxWidth: 700, margin: '0 auto' }}>
+                  <h1 style={{ fontSize: 28, borderBottom: '2px solid #000', paddingBottom: 10, marginBottom: 20 }}>CRM Analytical Report</h1>
+                  <p style={{ fontSize: 12, color: '#555', marginBottom: 30 }}>Generated on: {new Date().toLocaleDateString()}</p>
+                  
+                  <h2 style={{ fontSize: 18, marginTop: 20, marginBottom: 10 }}>1. Executive Summary</h2>
+                  <p style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
+                    This analytical report provides a comprehensive overview of the CRM performance across selected agents and regions. 
+                    The data indicates strong performance in key metrics, with a total revenue of <strong>$659,000</strong> and <strong>145</strong> deals closed.
+                    The active pipeline remains robust at <strong>$1.2M</strong>, suggesting healthy future conversion opportunities.
+                  </p>
+
+                  <h2 style={{ fontSize: 18, marginTop: 20, marginBottom: 10 }}>2. Key Performance Indicators</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 30 }}>
+                    {SUMMARY_CARDS.map(card => (
+                      <div key={card.label} style={{ padding: 15, border: '1px solid #ddd', borderRadius: 8 }}>
+                        <div style={{ fontSize: 12, color: '#666', textTransform: 'uppercase' }}>{card.label}</div>
+                        <div style={{ fontSize: 24, fontWeight: 'bold', margin: '5px 0' }}>{card.value}</div>
+                        <div style={{ fontSize: 12, color: card.up ? 'green' : 'red' }}>
+                          {card.up ? '↑' : '↓'} {card.delta} vs previous period
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <h2 style={{ fontSize: 18, marginTop: 20, marginBottom: 10 }}>3. Top Performers & Regional Breakdown</h2>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 10 }}>
+                    <thead>
+                      <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #000' }}>
+                        <th style={{ padding: 10, textAlign: 'left' }}>Agent</th>
+                        <th style={{ padding: 10, textAlign: 'left' }}>Region</th>
+                        <th style={{ padding: 10, textAlign: 'right' }}>Deals</th>
+                        <th style={{ padding: 10, textAlign: 'right' }}>Revenue</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {TABLE_ROWS.slice(0, 5).map((row, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #ddd' }}>
+                          <td style={{ padding: 10 }}>{row.agent}</td>
+                          <td style={{ padding: 10 }}>{row.region}</td>
+                          <td style={{ padding: 10, textAlign: 'right' }}>{row.deals}</td>
+                          <td style={{ padding: 10, textAlign: 'right' }}>${row.revenue.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p style={{ fontSize: 12, color: '#555', marginTop: 30, textAlign: 'center' }}>
+                    -- End of Report --
+                  </p>
+                </div>
+              ) : (
+                <div style={{ width: '100%', overflowX: 'auto', background: 'var(--bg-primary)' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 13 }}>
+                    <thead>
+                      <tr>
+                        {COLUMNS.map(c => (
+                          <th key={c.key} style={{ padding: '8px 12px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', textAlign: 'left', fontWeight: 'bold' }}>
+                            {c.label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {TABLE_ROWS.map((row, idx) => (
+                        <tr key={idx}>
+                          <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>{row.agent}</td>
+                          <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>{row.region}</td>
+                          <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>{row.product}</td>
+                          <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>{row.deals}</td>
+                          <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>${row.revenue.toLocaleString()}</td>
+                          <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>{row.conversion}%</td>
+                          <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>${row.pipeline.toLocaleString()}</td>
+                          <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>{row.status}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Inline style for select elements */}
       <style>{`
         .report-select {
@@ -597,6 +739,22 @@ export default function ReportsPage() {
         @keyframes pulse {
           0%, 100% { opacity: 0.6; }
           50% { opacity: 1; }
+        }
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .print-area, .print-area * {
+            visibility: visible;
+          }
+          .print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 0 !important;
+            background: white !important;
+          }
         }
       `}</style>
     </div>
