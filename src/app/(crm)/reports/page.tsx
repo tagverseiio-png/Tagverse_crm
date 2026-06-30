@@ -47,6 +47,14 @@ const PIPELINE_CHART = [
   { stage:'Closed Won',  value:58,  color:'#10b981' },
 ];
 
+const AI_FUNNEL_DATA = [
+  { stage: 'Raw Leads', value: 2500, color: '#3b82f6' },
+  { stage: 'MQLs',      value: 1200, color: '#8b5cf6' },
+  { stage: 'SQLs',      value: 600,  color: '#10b981' },
+  { stage: 'Oppty',     value: 250,  color: '#f59e0b' },
+  { stage: 'Won',       value: 150,  color: '#ec4899' },
+];
+
 const SAVED_REPORTS = [
   { id:'r1', name:'Q2 Sales Summary',          type:'sales',      createdAt:'2026-06-15', lastRun:'2026-06-28', status:'success' },
   { id:'r2', name:'Monthly Revenue Breakdown', type:'revenue',    createdAt:'2026-06-01', lastRun:'2026-06-29', status:'success' },
@@ -635,11 +643,52 @@ export default function ReportsPage() {
                   <p style={{ fontSize: 12, color: '#555', marginBottom: 30 }}>Generated on: {new Date().toLocaleDateString()}</p>
                   
                   <h2 style={{ fontSize: 18, marginTop: 20, marginBottom: 10 }}>1. Executive Summary</h2>
-                  <p style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
+                  <p style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 15 }}>
                     This analytical report provides a comprehensive overview of the CRM performance across selected agents and regions. 
                     The data indicates strong performance in key metrics, with a total revenue of <strong>$659,000</strong> and <strong>145</strong> deals closed.
                     The active pipeline remains robust at <strong>$1.2M</strong>, suggesting healthy future conversion opportunities.
                   </p>
+
+                  {/* AI Summary Placeholder */}
+                  <div style={{ padding: '20px', background: '#f8f9fa', borderLeft: '4px solid #6366f1', marginBottom: 25, borderRadius: '0 8px 8px 0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <h4 style={{ margin: 0, fontSize: 16, color: '#4f46e5', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        ✨ Comprehensive AI Insights <span style={{ fontSize: 10, background: '#e0e7ff', padding: '2px 6px', borderRadius: 4, color: '#3730a3', fontWeight: 'normal' }}>API Placeholder</span>
+                      </h4>
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                      <div>
+                        <p style={{ margin: '0 0 10px 0', fontSize: 13, lineHeight: 1.6, color: '#444' }}>
+                          <strong>📈 Accounts & Revenue:</strong> Sustaining 142 Active accounts with an impressively low churn rate (1.2%). The total pipeline velocity remains high at $1.2M.
+                        </p>
+                        <p style={{ margin: '0 0 10px 0', fontSize: 13, lineHeight: 1.6, color: '#444' }}>
+                          <strong>🎯 Campaign Performance:</strong> Overall marketing ROI is at 284%. Google Ads is the most efficient channel (490% ROI), while Meta Ads drives the highest raw lead volume.
+                        </p>
+                        <p style={{ margin: '0 0 10px 0', fontSize: 13, lineHeight: 1.6, color: '#444' }}>
+                          <strong>⚡ Lead Velocity:</strong> Average time-to-close improved by 2 days, now at 12 days. The transition from MQL to SQL maintains a strong 50% conversion rate.
+                        </p>
+                        <em style={{ color: '#777', fontSize: 11, display: 'block', marginTop: 10 }}>Note: Insights and charts below are mock placeholders for future AI database integration.</em>
+                      </div>
+                      
+                      {/* AI Funnel Chart */}
+                      <div style={{ background: '#fff', padding: 12, borderRadius: 8, border: '1px solid #eaeaea' }}>
+                        <p style={{ margin: '0 0 8px 0', fontSize: 12, fontWeight: 600, color: '#555', textAlign: 'center' }}>Lead Conversion Funnel</p>
+                        <div style={{ height: 160 }}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={AI_FUNNEL_DATA} layout="vertical" margin={{ top:0, right:15, left:50, bottom:0 }}>
+                              <XAxis type="number" hide />
+                              <YAxis dataKey="stage" type="category" axisLine={false} tickLine={false} tick={{ fill:'#777', fontSize:10 }} />
+                              <Tooltip content={<ChartTip />} />
+                              <Bar dataKey="value" name="Leads" radius={[0,4,4,0]} maxBarSize={12}>
+                                {AI_FUNNEL_DATA.map((e, i) => <Cell key={i} fill={e.color} />)}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   <h2 style={{ fontSize: 18, marginTop: 20, marginBottom: 10 }}>2. Key Performance Indicators</h2>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 30 }}>
@@ -681,6 +730,53 @@ export default function ReportsPage() {
                 </div>
               ) : (
                 <div style={{ width: '100%', overflowX: 'auto', background: 'var(--bg-primary)' }}>
+                  
+                  {/* AI Summary Placeholder for Spreadsheet View */}
+                  <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 20 }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: 15, color: 'var(--brand-accent)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      ✨ Detailed AI Data Summary <span style={{ fontSize: 10, background: 'rgba(123,47,255,0.1)', padding: '2px 6px', borderRadius: 4, color: 'var(--brand-highlight)', fontWeight: 'normal' }}>API Placeholder</span>
+                    </h4>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 24 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <div style={{ padding: '6px 12px', background: 'var(--bg-card)', borderRadius: 6, border: '1px solid var(--border)', flex: 1 }}>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Accounts</div>
+                            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>142 <span style={{ fontSize: 12, color: 'var(--emerald)' }}>(1.2% churn)</span></div>
+                          </div>
+                          <div style={{ padding: '6px 12px', background: 'var(--bg-card)', borderRadius: 6, border: '1px solid var(--border)', flex: 1 }}>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Avg Campaign ROI</div>
+                            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>284% <span style={{ fontSize: 12, color: 'var(--emerald)' }}>↑</span></div>
+                          </div>
+                          <div style={{ padding: '6px 12px', background: 'var(--bg-card)', borderRadius: 6, border: '1px solid var(--border)', flex: 1 }}>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Time to Close</div>
+                            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>12 Days <span style={{ fontSize: 12, color: 'var(--emerald)' }}>(-2d)</span></div>
+                          </div>
+                        </div>
+                        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+                          <strong>Insights:</strong> Pipeline is highly efficient this period. The transition from MQL to SQL holds a steady 50% conversion. Google Ads and Meta Ads combined are responsible for 70% of inbound SQLs. <em style={{ opacity: 0.7 }}>(Note: Future implementation will auto-generate this via AI API.)</em>
+                        </p>
+                      </div>
+
+                      {/* Small Chart */}
+                      <div style={{ background: 'var(--bg-card)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
+                        <p style={{ margin: '0 0 4px 0', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>Funnel Drop-off Analysis</p>
+                        <div style={{ height: 100 }}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={AI_FUNNEL_DATA} layout="vertical" margin={{ top:0, right:15, left:40, bottom:0 }}>
+                              <XAxis type="number" hide />
+                              <YAxis dataKey="stage" type="category" axisLine={false} tickLine={false} tick={{ fill:'var(--text-muted)', fontSize:10 }} />
+                              <Tooltip content={<ChartTip />} />
+                              <Bar dataKey="value" name="Leads" radius={[0,4,4,0]} maxBarSize={10}>
+                                {AI_FUNNEL_DATA.map((e, i) => <Cell key={i} fill={e.color} />)}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 13 }}>
                     <thead>
                       <tr>
