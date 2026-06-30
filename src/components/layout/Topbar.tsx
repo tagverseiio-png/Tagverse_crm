@@ -26,16 +26,16 @@ const pageInfo: Record<string, { title: string; sub: string }> = {
   webhooks: { title: 'Webhooks', sub: 'Inbound and outbound webhook management' },
   settings: { title: 'Settings', sub: 'Account, team and notification preferences' },
 };
-const RioLogo = ({ size = 24 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="url(#rio-line-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+const TaraLogo = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="url(#tara-line-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
     <defs>
-      <linearGradient id="rio-line-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <linearGradient id="tara-line-grad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#7B2FFF" />
         <stop offset="100%" stopColor="#C084FC" />
       </linearGradient>
     </defs>
-    <path d="M 3 16 L 3 10 C 3 6.5 8 6.5 8 10 C 8 12.5 3 12.5 3 13.5 L 8 16 L 12 16 L 12 10 L 12 16 L 16 16 C 16 12 22 12 22 16 C 22 20 16 20 16 16" />
-    <circle cx="12" cy="6" r="1.5" fill="#C084FC" stroke="none" />
+    <path d="M 6 8 L 18 8 M 12 8 L 12 18 C 12 20 14 20 16 19" />
+    <circle cx="12" cy="4" r="1.5" fill="#C084FC" stroke="none" />
   </svg>
 );
 
@@ -113,9 +113,9 @@ export default function Topbar({ activePage }: Props) {
             borderRadius: 8,
             boxShadow: '0 2px 8px rgba(123, 47, 255, 0.1)'
           }}
-          title="Ask Rio"
+          title="Ask Tara"
         >
-          <RioLogo size={24} />
+          <TaraLogo size={24} />
         </button>
 
         <button className="btn btn-ghost" style={{ position: 'relative' }}>
@@ -415,9 +415,9 @@ export default function Topbar({ activePage }: Props) {
                   background: 'linear-gradient(135deg, rgba(123, 47, 255, 0.05), rgba(155, 48, 255, 0.1))',
                   border: '1px solid rgba(123, 47, 255, 0.2)'
                 }}>
-                  <RioLogo size={22} />
+                  <TaraLogo size={22} />
                 </div>
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 15 }}>Ask Rio</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 15 }}>Ask Tara</span>
               </div>
               <button
                 onClick={() => setIsChatSidebarOpen(false)} // Close sidebar when closing chat
@@ -471,7 +471,7 @@ export default function Topbar({ activePage }: Props) {
                         WebkitTextFillColor: 'transparent',
                         display: 'inline-block'
                       }}>
-                        Hi, Rio
+                        Hi, Tara
                       </span>
                       <span>👋</span>
                     </h1>
@@ -509,7 +509,7 @@ export default function Topbar({ activePage }: Props) {
                             background: 'linear-gradient(135deg, rgba(123, 47, 255, 0.05), rgba(155, 48, 255, 0.1))',
                             border: '1px solid rgba(123, 47, 255, 0.2)', flexShrink: 0
                           }}>
-                            <RioLogo size={18} />
+                            <TaraLogo size={18} />
                           </div>
                         )}
                         <div style={{
@@ -569,7 +569,7 @@ export default function Topbar({ activePage }: Props) {
                     </div>
                   )}
                   <textarea
-                    placeholder="Message Rio for key data insights."
+                    placeholder="Message Tara for key data insights."
                     value={chatMessage}
                     onChange={(e) => setChatMessage(e.target.value)}
                     onFocus={() => setIsInputFocused(true)}
