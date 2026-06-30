@@ -306,6 +306,7 @@
   background: var(--nq-card);
   border-radius: 4px;
   overflow: hidden;
+  flex-shrink: 0;
   box-shadow: 0 1px 3px rgba(26,26,46,0.06), 0 16px 40px rgba(26,26,46,0.08);
   border: 1px solid var(--nq-line);
   font-family: 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif;
@@ -328,7 +329,7 @@
 .quote-builder-wrapper .new-quote-sheet .meta > div { padding: 14px 36px; }
 .quote-builder-wrapper .new-quote-sheet .meta > div + div { border-left: 1px solid var(--nq-line); }
 .quote-builder-wrapper .new-quote-sheet .meta label { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--nq-muted); text-transform: uppercase; margin-bottom: 5px; }
-.quote-builder-wrapper .new-quote-sheet .meta .value { font-size: 13.5px; font-weight: 600; }
+.quote-builder-wrapper .new-quote-sheet .meta .value { font-size: 13.5px; font-weight: 600; display: flex; align-items: center; }
 
 .quote-builder-wrapper .new-quote-sheet .parties { display: grid; grid-template-columns: 1fr 1fr; padding: 28px 36px; gap: 28px; }
 .quote-builder-wrapper .new-quote-sheet .parties label { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--nq-muted); text-transform: uppercase; margin-bottom: 9px; }
@@ -360,6 +361,11 @@
 .quote-builder-wrapper .new-quote-sheet .notes p { margin: 0 0 10px; font-size: 12.5px; line-height: 1.7; color: #54526a; }
 .quote-builder-wrapper .new-quote-sheet .notes .terms span { font-weight: 700; color: var(--nq-ink); }
 
-.quote-builder-wrapper .new-quote-sheet .footer { margin-top: 30px; padding: 18px 36px; background: var(--nq-violet-soft); border-top: 1px solid var(--nq-line); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #a6a4b8; }
+.quote-builder-wrapper .new-quote-sheet .doc-sig { margin-top: 30px; padding: 18px 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; border-top: 1px solid var(--nq-line); background: var(--nq-bg); }
+.quote-builder-wrapper .new-quote-sheet .sig-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--nq-muted); margin-bottom: 12px; }
+.quote-builder-wrapper .new-quote-sheet .sig-line { border-bottom: 1px solid var(--nq-muted); height: 30px; margin-bottom: 5px; }
+.quote-builder-wrapper .new-quote-sheet .sig-sub { font-size: 10.5px; color: var(--nq-muted); }
+
+.quote-builder-wrapper .new-quote-sheet .footer { padding: 18px 36px; background: var(--nq-violet-soft); border-top: 1px solid var(--nq-line); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #a6a4b8; }
 .quote-builder-wrapper .new-quote-sheet .footer .brand-foot { color: var(--nq-violet); font-weight: 600; }
 .quote-builder-wrapper .new-quote-sheet .footer .right { text-align: right; color: var(--nq-muted); }

@@ -60,6 +60,8 @@ export default function QuoteBuilderModal({ initialQuote, onClose, onSave, docTy
   const [issued, setIssued] = useState(iso(today));
   const [expires, setExpires] = useState(iso(exp30));
 
+  const [template, setTemplate] = useState('modern');
+
   const [currency, setCurrency] = useState(initialQuote?.currency || '₹');
   const [company, setCompany] = useState(initialQuote?.client || '');
   const [contact, setContact] = useState(initialQuote?.contact || '');
@@ -73,7 +75,8 @@ export default function QuoteBuilderModal({ initialQuote, onClose, onSave, docTy
   ]);
   const [activeItemId, setActiveItemId] = useState<number | null>(null);
 
-  const [gstRate, setGstRate] = useState(initialQuote?.gstRate ?? 18);
+  const [cgstRate, setCgstRate] = useState((initialQuote?.gstRate ?? 18) / 2);
+  const [sgstRate, setSgstRate] = useState((initialQuote?.gstRate ?? 18) / 2);
   const [discountRate, setDiscountRate] = useState(initialQuote?.discountRate ?? 0);
   const [terms, setTerms] = useState(initialQuote?.terms || '50% advance, 50% on delivery');
   const [delivery, setDelivery] = useState(initialQuote?.delivery || '');
@@ -113,8 +116,9 @@ export default function QuoteBuilderModal({ initialQuote, onClose, onSave, docTy
 
   const subtotal = items.reduce((s, i) => s + i.qty * i.price, 0);
   const discountAmt = subtotal * (discountRate / 100);
-  const gstAmt = (subtotal - discountAmt) * (gstRate / 100);
-  const total = subtotal - discountAmt + gstAmt;
+  const cgstAmt = (subtotal - discountAmt) * (cgstRate / 100);
+  const sgstAmt = (subtotal - discountAmt) * (sgstRate / 100);
+  const total = subtotal - discountAmt + cgstAmt + sgstAmt;
 
   const handleSave = () => {
     onSave({
@@ -129,7 +133,7 @@ export default function QuoteBuilderModal({ initialQuote, onClose, onSave, docTy
       phone,
       scope,
       lineItems: items,
-      gstRate,
+      gstRate: cgstRate + sgstRate,
       discountRate,
       notes,
       terms,
@@ -183,6 +187,13 @@ export default function QuoteBuilderModal({ initialQuote, onClose, onSave, docTy
             <div className="panel">
               <div className="ps">
                 <div className="ps-title">Document</div>
+                <div className="pf">
+                  <label>Template</label>
+                  <select className="pi" value={template} onChange={e => setTemplate(e.target.value)}>
+                    <option value="modern">Modern Design</option>
+                    <option value="classic">Classic Design</option>
+                  </select>
+                </div>
                 <div className="pr">
                   <div className="pf">
                     <label>{docType} ID</label>
@@ -269,9 +280,15 @@ export default function QuoteBuilderModal({ initialQuote, onClose, onSave, docTy
               <div className="ps">
                 <div className="ps-title">Pricing</div>
                 <div className="tot-row">
-                  <span>GST</span>
-                  <select value={gstRate} onChange={e => setGstRate(Number(e.target.value))}>
-                    <option value="0">None (0%)</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option>
+                  <span>CGST</span>
+                  <select value={cgstRate} onChange={e => setCgstRate(Number(e.target.value))}>
+                    <option value="0">None (0%)</option><option value="2.5">2.5%</option><option value="6">6%</option><option value="9">9%</option><option value="14">14%</option>
+                  </select>
+                </div>
+                <div className="tot-row">
+                  <span>SGST</span>
+                  <select value={sgstRate} onChange={e => setSgstRate(Number(e.target.value))}>
+                    <option value="0">None (0%)</option><option value="2.5">2.5%</option><option value="6">6%</option><option value="9">9%</option><option value="14">14%</option>
                   </select>
                 </div>
                 <div className="tot-row">
@@ -303,99 +320,117 @@ export default function QuoteBuilderModal({ initialQuote, onClose, onSave, docTy
             </div>
 
             <div className="preview">
-              {docType === 'Quote' ? (
+              {template === 'modern' ? (
                 <div className="new-quote-sheet">
                   <div className="topbar"></div>
-                  
-                  <div className="header">
-                    <div>
-                      <div className="brand">
-                        <div className="mark">✦</div>
-                        <div className="name">tagverse<span>.io</span></div>
-                      </div>
-                      <div className="tagline">Digital Growth Partner</div>
+                
+                <div className="header">
+                  <div>
+                    <div className="brand">
+                      <div className="mark">✦</div>
+                      <div className="name">tagverse<span>.io</span></div>
                     </div>
-                    <div className="doc-title">
-                      <h1>Quotation</h1>
-                      <div className="id">{qid}</div>
-                    </div>
+                    <div className="tagline">Digital Growth Partner</div>
                   </div>
-
-                  <div className="meta">
-                    <div>
-                      <label>Date Issued</label>
-                      <div className="value">{fmtDate(issued)}</div>
-                    </div>
-                    <div>
-                      <label>Valid Until</label>
-                      <div className="value">{fmtDate(expires)}</div>
-                    </div>
-                  </div>
-
-                  <div className="parties">
-                    <div>
-                      <label>Bill To</label>
-                      <h3>{company || 'Client Company'}</h3>
-                      <p>{contact || 'Contact Name'}<br/>{email || 'email@company.com'}<br/>{phone || '+91 00000 00000'}</p>
-                    </div>
-                    <div className="prepared">
-                      <label>Prepared By</label>
-                      <h3>tagverse.io</h3>
-                      <p>Digital Growth Partner<br/>contact@tagverse.io<br/>www.tagverse.io</p>
-                    </div>
-                  </div>
-
-                  <div className="scope"><span className="tag">SCOPE</span> {scope || 'Project / Scope Title'}</div>
-
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Description</th>
-                        <th className="num">Qty</th>
-                        <th className="num">Unit Price</th>
-                        <th className="num">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.length === 0 ? (
-                        <tr><td className="empty-td" colSpan={4}>Add line items using the panel on the left</td></tr>
-                      ) : items.map((it) => (
-                        <tr key={it.id}>
-                          <td className="item">{it.desc || <em style={{ color: 'var(--nq-muted)', fontWeight: 400 }}>Untitled</em>}</td>
-                          <td className="num">{it.qty}</td>
-                          <td className="num">{currency}{it.price.toLocaleString('en-IN')}</td>
-                          <td className="amount">{currency}{(it.qty * it.price).toLocaleString('en-IN')}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="totals">
-                    <table>
-                      <tbody>
-                        <tr><td className="label">Subtotal</td><td className="value">{currency}{subtotal.toLocaleString('en-IN')}</td></tr>
-                        {discountRate > 0 && (
-                          <tr><td className="label">Discount ({discountRate}%)</td><td className="value">−{currency}{Math.round(discountAmt).toLocaleString('en-IN')}</td></tr>
-                        )}
-                        {gstRate > 0 && (
-                          <tr><td className="label">GST ({gstRate}%)</td><td className="value">{currency}{Math.round(gstAmt).toLocaleString('en-IN')}</td></tr>
-                        )}
-                        <tr className="grand"><td className="label">Total</td><td className="value">{currency}{Math.round(total).toLocaleString('en-IN')}</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="notes">
-                    <label>Notes & Terms</label>
-                    <p style={{ whiteSpace: 'pre-wrap' }}>{notes}</p>
-                    <p className="terms"><span>Payment:</span> {terms} &nbsp;&nbsp;<span>Delivery:</span> {delivery || '—'}</p>
-                  </div>
-
-                  <div className="footer">
-                    <div>This quotation is confidential and intended solely for the named recipient.</div>
-                    <div className="right"><span className="brand-foot">tagverse.io</span><br/>contact@tagverse.io · www.tagverse.io</div>
+                  <div className="doc-title">
+                    <h1>{docType === 'Invoice' ? 'Invoice' : 'Quotation'}</h1>
+                    <div className="id">{qid}</div>
                   </div>
                 </div>
+
+                <div className="meta">
+                  <div>
+                    <label>Date Issued</label>
+                    <div className="value">{fmtDate(issued)}</div>
+                  </div>
+                  <div>
+                    <label>{docType === 'Invoice' ? 'Due Date' : 'Valid Until'}</label>
+                    <div className="value">{fmtDate(expires)}</div>
+                  </div>
+                </div>
+
+                <div className="parties">
+                  <div>
+                    <label>Bill To</label>
+                    <h3>{company || 'Client Company'}</h3>
+                    <p>{contact || 'Contact Name'}<br/>{email || 'email@company.com'}<br/>{phone || '+91 00000 00000'}</p>
+                  </div>
+                  <div className="prepared">
+                    <label>Prepared By</label>
+                    <h3>tagverse.io</h3>
+                    <p>Digital Growth Partner<br/>contact@tagverse.io<br/>www.tagverse.io</p>
+                  </div>
+                </div>
+
+                <div className="scope"><span className="tag">SCOPE</span> {scope || 'Project / Scope Title'}</div>
+
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Description</th>
+                      <th className="num">Qty</th>
+                      <th className="num">Unit Price</th>
+                      <th className="num">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.length === 0 ? (
+                      <tr><td className="empty-td" colSpan={4}>Add line items using the panel on the left</td></tr>
+                    ) : items.map((it) => (
+                      <tr key={it.id}>
+                        <td className="item">{it.desc || <em style={{ color: 'var(--nq-muted)', fontWeight: 400 }}>Untitled</em>}</td>
+                        <td className="num">{it.qty}</td>
+                        <td className="num">{currency}{it.price.toLocaleString('en-IN')}</td>
+                        <td className="amount">{currency}{(it.qty * it.price).toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div className="totals">
+                  <table>
+                    <tbody>
+                      <tr><td className="label">Subtotal</td><td className="value">{currency}{subtotal.toLocaleString('en-IN')}</td></tr>
+                      {discountRate > 0 && (
+                        <tr><td className="label">Discount ({discountRate}%)</td><td className="value">−{currency}{Math.round(discountAmt).toLocaleString('en-IN')}</td></tr>
+                      )}
+                      {cgstRate > 0 && (
+                        <tr><td className="label">CGST ({cgstRate}%)</td><td className="value">{currency}{Math.round(cgstAmt).toLocaleString('en-IN')}</td></tr>
+                      )}
+                      {sgstRate > 0 && (
+                        <tr><td className="label">SGST ({sgstRate}%)</td><td className="value">{currency}{Math.round(sgstAmt).toLocaleString('en-IN')}</td></tr>
+                      )}
+                      <tr className="grand"><td className="label">Total</td><td className="value">{currency}{Math.round(total).toLocaleString('en-IN')}</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="notes">
+                  <label>Notes & Terms</label>
+                  <p style={{ whiteSpace: 'pre-wrap' }}>{notes}</p>
+                  <p className="terms"><span>Payment:</span> {terms} &nbsp;&nbsp;<span>Delivery:</span> {delivery || '—'}</p>
+                </div>
+
+                {docType === 'Invoice' && (
+                  <div className="doc-sig">
+                    <div className="sig-block">
+                      <div className="sig-label">Authorised by — tagverse.io</div>
+                      <div className="sig-line"></div>
+                      <div className="sig-sub">Signature &amp; Date</div>
+                    </div>
+                    <div className="sig-block">
+                      <div className="sig-label">Accepted by — Client</div>
+                      <div className="sig-line"></div>
+                      <div className="sig-sub">Signature &amp; Date</div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="footer" style={docType === 'Invoice' ? { marginTop: 0 } : {}}>
+                  <div>This {docType === 'Invoice' ? 'invoice' : 'quotation'} is confidential and intended solely for the named recipient.</div>
+                  <div className="right"><span className="brand-foot">tagverse.io</span><br/>contact@tagverse.io · www.tagverse.io</div>
+                </div>
+              </div>
               ) : (
                 <div className="doc">
 
@@ -422,7 +457,6 @@ export default function QuoteBuilderModal({ initialQuote, onClose, onSave, docTy
                   <div className="doc-meta">
                     <div className="dm"><div className="dm-key">Date Issued</div><div className="dm-val">{fmtDate(issued)}</div></div>
                     <div className="dm"><div className="dm-key">{docType === 'Invoice' ? 'Due Date' : 'Valid Until'}</div><div className="dm-val">{fmtDate(expires)}</div></div>
-                    <div className="dm"><div className="dm-key">Status</div><div><span className={`status-pill ${getStatusClass(status)}`}>{status === 'Invoiced' ? 'INVOICED' : status.toUpperCase()}</span></div></div>
                   </div>
 
                   <div className="doc-parties">
@@ -482,8 +516,11 @@ export default function QuoteBuilderModal({ initialQuote, onClose, onSave, docTy
                       {discountRate > 0 && (
                         <div className="dtot-row"><span>Discount ({discountRate}%)</span><span className="v">−{currency}{Math.round(discountAmt).toLocaleString('en-IN')}</span></div>
                       )}
-                      {gstRate > 0 && (
-                        <div className="dtot-row"><span>GST ({gstRate}%)</span><span className="v">{currency}{Math.round(gstAmt).toLocaleString('en-IN')}</span></div>
+                      {cgstRate > 0 && (
+                        <div className="dtot-row"><span>CGST ({cgstRate}%)</span><span className="v">{currency}{Math.round(cgstAmt).toLocaleString('en-IN')}</span></div>
+                      )}
+                      {sgstRate > 0 && (
+                        <div className="dtot-row"><span>SGST ({sgstRate}%)</span><span className="v">{currency}{Math.round(sgstAmt).toLocaleString('en-IN')}</span></div>
                       )}
                       <div className="dtot-grand"><span>Total</span><span className="v">{currency}{Math.round(total).toLocaleString('en-IN')}</span></div>
                     </div>
@@ -498,18 +535,20 @@ export default function QuoteBuilderModal({ initialQuote, onClose, onSave, docTy
                     </div>
                   </div>
 
-                  <div className="doc-sig">
-                    <div className="sig-block">
-                      <div className="sig-label">Authorised by — tagverse.io</div>
-                      <div className="sig-line"></div>
-                      <div className="sig-sub">Signature &amp; Date</div>
+                  {docType === 'Invoice' && (
+                    <div className="doc-sig">
+                      <div className="sig-block">
+                        <div className="sig-label">Authorised by — tagverse.io</div>
+                        <div className="sig-line"></div>
+                        <div className="sig-sub">Signature &amp; Date</div>
+                      </div>
+                      <div className="sig-block">
+                        <div className="sig-label">Accepted by — Client</div>
+                        <div className="sig-line"></div>
+                        <div className="sig-sub">Signature &amp; Date</div>
+                      </div>
                     </div>
-                    <div className="sig-block">
-                      <div className="sig-label">Accepted by — Client</div>
-                      <div className="sig-line"></div>
-                      <div className="sig-sub">Signature &amp; Date</div>
-                    </div>
-                  </div>
+                  )}
 
                   <div className="doc-footer">
                     <div className="df-left">This {docType === 'Invoice' ? 'invoice' : 'quotation'} is confidential and intended solely for the named recipient.</div>
