@@ -86,20 +86,33 @@
 
 ## Phase 1 schema checklist (derived from this ADR)
 
-- [ ] `User`, `Account`, `Session`, `VerificationToken` — NextAuth Prisma adapter tables
-- [ ] `Contact.type` enum + `convertedAt`
-- [ ] `Task.contextType` enum + `projectId` (nullable)
-- [ ] No `tenant_id` anywhere
-- [ ] `OrganizationSettings` model with `currency` field
-- [ ] No multi-tenant Prisma middleware
+- [x] `User`, `Account`, `Session`, `VerificationToken` — NextAuth Prisma adapter tables
+- [x] `Contact.type` enum + `convertedAt`
+- [x] `Task.contextType` enum + `projectId` (nullable)
+- [x] No `tenant_id` anywhere
+- [x] `OrganizationSettings` model with `currency` field
+- [x] No multi-tenant Prisma middleware
 
-## Dependencies to add (not yet installed)
+## Dependencies (installed)
 
 | Concern | Package(s) |
 |---|---|
-| Auth | `next-auth`, `@auth/prisma-adapter` |
+| Auth | `next-auth` (v4.24), `@auth/prisma-adapter` |
 | Validation | `zod` |
 | File storage | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` |
-| Real-time (war room, Phase 4) | `socket.io`, `socket.io-redis-adapter` |
+| Password hashing | `bcryptjs` |
+| Seed script runner | `tsx` (dev dependency) |
+| Real-time (war room, Phase 4) | `socket.io`, `socket.io-redis-adapter` — not yet installed, deferred |
 
-`bullmq` and `ioredis` are already present in `package.json`.
+`bullmq` and `ioredis` were already present in `package.json`.
+
+## Phase 1 implementation notes
+
+- Route protection uses **`src/proxy.ts`**, not `middleware.ts` — this Next.js version (16.2.9) renamed the middleware file convention to "Proxy" (confirmed via `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`). Anyone extending route protection later should keep using `proxy.ts`.
+- Prisma 7 uses `prisma.config.ts` (`defineConfig`) instead of a `package.json#prisma` key for schema path and seed command.
+- Seed script (`prisma/seed.ts`) is intentionally minimal for Phase 1 — one admin user (`admin@tagverse.com` / `password123`) and one `OrganizationSettings` row. Full `mockData.ts` → DB seeding is Phase 2+ work, once the CRM-core models (Company, Pipeline, etc.) exist.
+
+## Known environment limitation (not a code defect)
+
+`npx prisma generate` (and therefore `prisma migrate dev` / `db push`) cannot complete in this sandboxed session: the schema-engine binary download from `binaries.prisma.sh` is reset by the sandbox's egress proxy every attempt (confirmed via `DEBUG=prisma:* npx prisma generate` — the proxy is correctly detected and used, but the connection is reset mid-download, not a clean 403). This blocks generating `@prisma/client` types locally in this environment, so full `tsc` verification against real Prisma types wasn't possible here.
+**Action needed:** run `npm install && npx prisma generate` in an environment with unrestricted access to `binaries.prisma.sh` (or a local dev machine) before running migrations or the dev server.
