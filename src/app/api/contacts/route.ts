@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
     const contact = await prisma.contact.create({ data: parsed.data });
     return apiSuccess(contact, undefined, 201);
   } catch (err) {
+    console.error('POST /api/contacts failed:', err);
     return apiErrorFromUnknown(err);
   }
 }
