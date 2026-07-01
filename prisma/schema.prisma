@@ -319,6 +319,32 @@ model Activity {
   company     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
 }
 
+// Field Worker Tracking — FMCG-style field agents (deliveries, check-ins)
+model FieldAgent {
+  id             String   @id @default(uuid())
+  name           String
+  phone          String?
+  status         String   @default("Idle") // Active, On Delivery, Idle, Offline
+  location       String?
+  tasksCompleted Int      @default(0)
+  battery        String?
+  lastUpdate     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  feedEntries    FieldActivityFeed[]
+}
+
+model FieldActivityFeed {
+  id        String     @id @default(uuid())
+  agentId   String
+  agent     FieldAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  action    String
+  target    String
+  iconType  String     @default("activity") // check, mapPin, alert, package, activity
+  createdAt DateTime   @default(now())
+}
+
 // Workspace - Tasks
 // Unified across the deal/project/contact task surfaces (ADR-0001 decision 3).
 // projectId has no FK constraint yet — the Project model arrives in Phase 4.
