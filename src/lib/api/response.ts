@@ -19,6 +19,12 @@ export function apiErrorFromUnknown(error: unknown) {
   if (error instanceof ZodError) {
     return apiError(error.issues.map((issue) => issue.message).join(', '), 422);
   }
+  if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+    const meta = (error as { meta?: { target?: string[] | string; modelName?: string } }).meta;
+    const target = meta?.target;
+    const field = Array.isArray(target) ? target.join(', ') : typeof target === 'string' ? target : 'a unique field';
+    return apiError(`A record with this ${field} already exists`, 409);
+  }
   if (error instanceof Error) {
     return apiError(error.message, 500);
   }

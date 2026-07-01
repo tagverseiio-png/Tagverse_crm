@@ -50,6 +50,11 @@ function ContactModal({
           </div>
           <button onClick={onClose} style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 16 }}>✕</button>
         </div>
+        {errors.form && (
+          <div style={{ padding: '10px 14px', background: 'var(--rose-dim)', border: '1px solid rgba(244,63,94,0.3)', borderRadius: 8, color: 'var(--rose)', fontSize: 12, fontWeight: 500 }}>
+            {errors.form}
+          </div>
+        )}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={labelStyle}>Full Name *</label>
@@ -189,7 +194,13 @@ export default function ContactsPage() {
         tags: addForm.tags.split(',').map(t => t.trim()).filter(Boolean),
       }),
     });
-    if (res.ok) { setShowAdd(false); fetchContacts(); }
+    if (res.ok) {
+      setShowAdd(false);
+      fetchContacts();
+    } else {
+      const json = await res.json().catch(() => ({}));
+      setAddErrors({ form: json.error || 'Failed to create contact' });
+    }
   };
 
   const openEdit = (c: Contact) => {
@@ -209,7 +220,13 @@ export default function ContactsPage() {
         tags: editForm.tags.split(',').map(t => t.trim()).filter(Boolean),
       }),
     });
-    if (res.ok) { setEditContact(null); fetchContacts(); }
+    if (res.ok) {
+      setEditContact(null);
+      fetchContacts();
+    } else {
+      const json = await res.json().catch(() => ({}));
+      setEditErrors({ form: json.error || 'Failed to update contact' });
+    }
   };
 
   const handleDelete = async () => {
