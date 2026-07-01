@@ -1,12 +1,20 @@
 'use client';
+import { useState, useEffect } from 'react';
+
+function fmtINR(v: number) {
+  if (v >= 10000000) return `₹${(v / 10000000).toFixed(1)}Cr`;
+  if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
+  if (v >= 1000) return `₹${(v / 1000).toFixed(0)}K`;
+  return `₹${v}`;
+}
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
-const kpis = [
-  { label: 'Total Leads', value: '1,284', delta: '+18% this week', trend: 'up', color: 'purple', icon: '👤' },
-  { label: 'Active Deals', value: '47', delta: '+5 new today', trend: 'up', color: 'blue', icon: '🤝' },
-  { label: 'Monthly Revenue', value: '₹2.4L', delta: '+12% vs last month', trend: 'up', color: 'emerald', icon: '💰' },
-  { label: 'Invoices Overdue', value: '3', delta: '−2 from last week', trend: 'down', color: 'amber', icon: '🧾' },
-  { label: 'Bounce-Rate', value: '34.2%', delta: '+3.1% this campaign', trend: 'up', color: 'rose', icon: '✉' },
+const staticKpis = [
+  { label: 'Total Leads', value: '—', delta: 'Loading...', trend: 'up' as const, color: 'purple', icon: '👤' },
+  { label: 'Active Deals', value: '—', delta: 'Loading...', trend: 'up' as const, color: 'blue', icon: '🤝' },
+  { label: 'Monthly Revenue', value: '—', delta: 'Loading...', trend: 'up' as const, color: 'emerald', icon: '💰' },
+  { label: 'Invoices Overdue', value: '—', delta: 'Loading...', trend: 'down' as const, color: 'amber', icon: '🧾' },
+  { label: 'Bounce-Rate', value: '34.2%', delta: '+3.1% this campaign', trend: 'up' as const, color: 'rose', icon: '✉' },
 ];
 
 const pipelineStages = [
@@ -117,6 +125,25 @@ function DealCard({ name, company, value, owner }: { name: string; company: stri
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
+  const [kpis, setKpis] = useState(staticKpis);
+
+  useEffect(() => {
+    fetch('/api/dashboard/kpis')
+      .then(r => r.json())
+      .then(json => {
+        if (!json.success) return;
+        const d = json.data;
+        setKpis([
+          { label: 'Total Leads', value: String(d.totalLeads), delta: 'All time', trend: 'up', color: 'purple', icon: '👤' },
+          { label: 'Active Deals', value: String(d.activeDeals), delta: 'In pipeline', trend: 'up', color: 'blue', icon: '🤝' },
+          { label: 'Monthly Revenue', value: fmtINR(d.monthlyRevenue), delta: 'Won this month', trend: 'up', color: 'emerald', icon: '💰' },
+          { label: 'Invoices Overdue', value: String(d.overdueInvoices), delta: 'Needs attention', trend: 'down', color: 'amber', icon: '🧾' },
+          { label: 'Bounce-Rate', value: '34.2%', delta: '+3.1% this campaign', trend: 'up', color: 'rose', icon: '✉' },
+        ]);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 

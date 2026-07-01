@@ -26,9 +26,10 @@ model User {
   // Relationships
   accounts     Account[]
   sessions     Session[]
-  contacts     Contact[] @relation("AssignedContacts")
-  deals        Deal[]    @relation("AssignedDeals")
-  tasks        Task[]    @relation("AssignedTasks")
+  contacts     Contact[]  @relation("AssignedContacts")
+  deals        Deal[]     @relation("AssignedDeals")
+  tasks        Task[]     @relation("AssignedTasks")
+  activities   Activity[] @relation("ActivityCreator")
 }
 
 model Account {
@@ -77,43 +78,111 @@ model OrganizationSettings {
   updatedAt    DateTime @updatedAt
 }
 
+// Company accounts — separate from Contact, linked optionally (Phase 2)
+model Company {
+  id        String    @id @default(uuid())
+  name      String
+  industry  String?
+  stage     String?
+  health    Int?
+  logo      String?
+  color     String?
+  website   String?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  contacts  Contact[]
+  deals     Deal[]
+  activities Activity[]
+}
+
 // Contacts & Leads
 model Contact {
-  id           String    @id @default(uuid())
-  type         String    @default("lead") // lead, contact (ADR-0001 decision 2)
-  convertedAt  DateTime? // set when a lead converts to a contact
-  name         String
-  phone        String?   @unique
-  email        String?   @unique
-  whatsapp     Boolean   @default(false)
-  company      String?
-  source       String?   @default("Meta Ads")
-  leadScore    Int       @default(0)
-  stage        String    @default("new") // new, engaged, qualified, won, lost
-  clientId     String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id            String    @id @default(uuid())
+  type          String    @default("lead") // lead, contact (ADR-0001 decision 2)
+  convertedAt   DateTime? // set when a lead converts to a contact
+  name          String
+  phone         String?   @unique
+  email         String?   @unique
+  whatsapp      Boolean   @default(false)
+  company       String?   // free-form company name
+  companyId     String?   // optional FK to Company record
+  companyRef    Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  role          String?   // job title / role at their company
+  source        String?   @default("Meta Ads")
+  leadScore     Int       @default(0)
+  stage         String    @default("new") // new, engaged, qualified, won, lost
+  intent        String?   // service interest, e.g. "SEO + Social"
+  tags          String[]
+  lastContactAt DateTime?
+  clientId      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Relationships
   assignedToId String?
-  assignedTo   User?     @relation("AssignedContacts", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedTo   User?      @relation("AssignedContacts", fields: [assignedToId], references: [id], onDelete: SetNull)
   deals        Deal[]
   tasks        Task[]
   emailLogs    EmailLog[]
+  activities   Activity[]
+}
+
+// Pipeline definitions — replaces hardcoded dealsMockData.ts pipelines
+model Pipeline {
+  id          String          @id @default(uuid())
+  name        String
+  icon        String?
+  description String?
+  isDefault   Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  stages      PipelineStage[]
+  deals       Deal[]
+}
+
+model PipelineStage {
+  id                 String   @id @default(uuid())
+  pipelineId         String
+  pipeline           Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  key                String
+  label              String
+  color              String   @default("new")
+  headerColor        String   @default("#3b82f6")
+  defaultProbability Int      @default(0)
+  isClosing          Boolean  @default(false)
+  isWon              Boolean  @default(false)
+  order              Int      @default(0)
+  createdAt          DateTime @default(now())
+
+  @@unique([pipelineId, key])
 }
 
 // Deals & Sales Pipeline
 model Deal {
-  id            String    @id @default(uuid())
-  contactId     String
-  contact       Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  title         String
-  value         Float     @default(0.0)
-  stage         String    @default("new") // new, engaged, qualified, proposal, negotiation, won, lost
-  expectedClose DateTime?
-  notes         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  contactId       String?
+  contact         Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  companyId       String?
+  company         Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  pipelineId      String?
+  pipeline        Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
+  pipelineStageKey String?   // stage key within the pipeline
+  title           String
+  client          String?   // cached client/company name for display
+  value           Float     @default(0.0)
+  stage           String    @default("new")
+  probability     Int?
+  source          String?
+  serviceType     String?
+  tags            String[]
+  expectedClose   String?   // kept as string to match UI (e.g. "Jul 15")
+  lastContactAt   String?
+  nextFollowUpAt  String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relationships
   assignedToId  String?
@@ -121,6 +190,7 @@ model Deal {
   contracts     Contract[]
   quotes        Quote[]
   tasks         Task[]
+  activities    Activity[]
 }
 
 // Revenue Hub - Contracts
@@ -222,6 +292,31 @@ model SocialPost {
   status      String    @default("scheduled") // scheduled, publishing, published, failed
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+// Activity / Event log — unified across contacts, deals, and companies
+model Activity {
+  id          String    @id @default(uuid())
+  type        String    // meeting, task, deadline, followup, note, email, call
+  title       String
+  description String?
+  status      String    @default("upcoming") // upcoming, in-progress, done
+  scheduledAt DateTime?
+  metadata    Json?     // { duration, priority, etc. }
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdById String?
+  createdBy   User?     @relation("ActivityCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  contactId   String?
+  contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  dealId      String?
+  deal        Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  companyId   String?
+  company     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
 }
 
 // Workspace - Tasks

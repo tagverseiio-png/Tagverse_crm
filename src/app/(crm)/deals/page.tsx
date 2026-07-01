@@ -1,8 +1,79 @@
 'use client';
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { notifications } from './dealsMockData';
 
-import { pipelines, pipelineStageConfig, initialDeals, notifications, type Deal } from './dealsMockData';
+/* ─── Types ─── */
+type StageConfig = {
+  label: string;
+  color: string;
+  headerColor: string;
+  defaultProbability: number;
+  isClosing?: boolean;
+  isWon?: boolean;
+};
 
+type PipelineStageConfig = Record<string, Record<string, StageConfig>>;
+
+type PipelineOption = {
+  id: string;
+  label: string;
+  icon: string;
+  deals: number;
+};
+
+type Deal = {
+  id: string;
+  name: string;
+  client: string;
+  value: number;
+  pipelineId: string;
+  stage: string; // pipelineStageKey
+  owner: string; // initials
+  ownerFull: string;
+  tags: string[];
+  probability: number;
+  daysInStage: number;
+  nextFollowUp: string;
+  source: string;
+  serviceType: string;
+  expectedClose: string;
+  lastContact: string;
+  notes: string;
+  created: string;
+};
+
+function mapApiDeal(d: Record<string, unknown>): Deal {
+  const assignedTo = d.assignedTo as { name?: string } | null;
+  const initials = assignedTo?.name
+    ? assignedTo.name.split(' ').map((p: string) => p[0]).join('').toUpperCase().slice(0, 2)
+    : '—';
+  const updatedAt = d.updatedAt as string | undefined;
+  const daysInStage = updatedAt
+    ? Math.floor((Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  const contact = d.contact as { name?: string } | null;
+  const pipeline = d.pipeline as { name?: string } | null;
+  return {
+    id: d.id as string,
+    name: (d.title as string) || '',
+    client: (d.client as string) || contact?.name || '—',
+    value: (d.value as number) ?? 0,
+    pipelineId: (d.pipelineId as string) || '',
+    stage: (d.pipelineStageKey as string) || '',
+    owner: initials,
+    ownerFull: assignedTo?.name || '—',
+    tags: (d.tags as string[]) || [],
+    probability: (d.probability as number) ?? 0,
+    daysInStage,
+    nextFollowUp: (d.nextFollowUpAt as string) || '—',
+    source: (d.source as string) || '—',
+    serviceType: pipeline?.name || '',
+    expectedClose: (d.expectedClose as string) || '—',
+    lastContact: (d.lastContactAt as string) || '—',
+    notes: (d.notes as string) || '',
+    created: (d.createdAt as string) || '',
+  };
+}
 
 function fmtVal(v: number) {
   if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
@@ -86,9 +157,7 @@ function NotificationDrawer({ open, onClose }: { open: boolean; onClose: () => v
               }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <span style={{
-                  fontSize: 16, marginTop: 1,
-                }}>
+                <span style={{ fontSize: 16, marginTop: 1 }}>
                   {n.type === 'deal' ? '🤝' : n.type === 'assign' ? '👤' : '⏰'}
                 </span>
                 <div style={{ flex: 1 }}>
@@ -292,10 +361,10 @@ function UserProfileDropdown({ open, ref: dropRef }: { open: boolean; ref: React
 
 /* ─── Deal Form Modal (Create / Edit) ─── */
 const emptyDealForm = {
-  name: '', client: '', value: '', pipelineId: 'web_dev', stage: 'new_enquiry',
+  name: '', client: '', value: '', pipelineId: '', stage: '',
   owner: 'JS', ownerFull: 'Jose L.',
   tags: '', probability: 10, source: 'Meta Ads',
-  serviceType: 'Web Dev / Website Projects', expectedClose: '', lastContact: '', notes: '',
+  serviceType: '', expectedClose: '', lastContact: '', notes: '',
   nextFollowUp: '',
 };
 type DealFormState = typeof emptyDealForm;
@@ -303,7 +372,7 @@ type DealFormState = typeof emptyDealForm;
 const sourceOptions = ['Meta Ads', 'Website Form', 'Referral', 'LinkedIn', 'LinkedIn DM', 'Cold Email', 'Other'];
 
 function DealFormModal({
-  title, form, errors, onChange, onSubmit, onClose, submitLabel,
+  title, form, errors, onChange, onSubmit, onClose, submitLabel, pipelinesList, stageConfig,
 }: {
   title: string;
   form: DealFormState;
@@ -312,6 +381,8 @@ function DealFormModal({
   onSubmit: () => void;
   onClose: () => void;
   submitLabel: string;
+  pipelinesList: PipelineOption[];
+  stageConfig: PipelineStageConfig;
 }) {
   const inputStyle = (key: string) => ({
     background: 'var(--bg-secondary)',
@@ -335,21 +406,21 @@ function DealFormModal({
 
   const handlePipelineChange = (newPipeline: string) => {
     onChange('pipelineId', newPipeline);
-    const pLabel = pipelines.find(p => p.id === newPipeline)?.label || '';
+    const pLabel = pipelinesList.find(p => p.id === newPipeline)?.label || '';
     onChange('serviceType', pLabel);
-    const firstStage = Object.keys(pipelineStageConfig[newPipeline] || {})[0] || '';
+    const firstStage = Object.keys(stageConfig[newPipeline] || {})[0] || '';
     onChange('stage', firstStage);
-    const prob = pipelineStageConfig[newPipeline]?.[firstStage]?.defaultProbability || 0;
+    const prob = stageConfig[newPipeline]?.[firstStage]?.defaultProbability || 0;
     onChange('probability', prob);
   };
 
   const handleStageChange = (newStage: string) => {
     onChange('stage', newStage);
-    const prob = pipelineStageConfig[form.pipelineId]?.[newStage]?.defaultProbability || 0;
+    const prob = stageConfig[form.pipelineId]?.[newStage]?.defaultProbability || 0;
     onChange('probability', prob);
   };
 
-  const currentStages = pipelineStageConfig[form.pipelineId] || {};
+  const currentStages = stageConfig[form.pipelineId] || {};
 
   return (
     <div onClick={onClose} style={{
@@ -402,12 +473,12 @@ function DealFormModal({
               onChange={e => onChange('value', e.target.value)} />
             {errors.value && <span style={{ fontSize: 11, color: 'var(--rose)' }}>{errors.value}</span>}
           </div>
-          
+
           {/* Pipeline */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={labelStyle}>Pipeline</label>
             <select style={selectStyle} value={form.pipelineId} onChange={e => handlePipelineChange(e.target.value)}>
-              {pipelines.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+              {pipelinesList.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
           </div>
           {/* Stage */}
@@ -468,7 +539,7 @@ function DealFormModal({
             <input style={inputStyle('nextFollowUp')} value={form.nextFollowUp} placeholder="e.g. Tomorrow"
               onChange={e => onChange('nextFollowUp', e.target.value)} />
           </div>
-          
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ flex: 1 }}></div>
           </div>
@@ -492,8 +563,8 @@ function DealFormModal({
 }
 
 /* ─── View Deal Detail Drawer ─── */
-function ViewDealDrawer({ deal, onClose, onEdit }: { deal: Deal; onClose: () => void; onEdit: () => void }) {
-  const stg = pipelineStageConfig[deal.pipelineId]?.[deal.stage] || { label: deal.stage, color: 'new' };
+function ViewDealDrawer({ deal, onClose, onEdit, stageConfig }: { deal: Deal; onClose: () => void; onEdit: () => void; stageConfig: PipelineStageConfig }) {
+  const stg = stageConfig[deal.pipelineId]?.[deal.stage] || { label: deal.stage, color: 'new' };
   const fields = [
     { icon: '🏢', label: 'Client', value: deal.client },
     { icon: '💰', label: 'Value', value: fmtVal(deal.value) },
@@ -692,8 +763,11 @@ function DeleteConfirmModal({ deal, onConfirm, onClose }: { deal: Deal; onConfir
    MAIN DEALS PAGE
    ═══════════════════════════════════════════ */
 export default function DealsPage() {
-  const [selectedPipeline, setSelectedPipeline] = useState('web_dev');
-  const [deals, setDeals] = useState<Deal[]>(initialDeals);
+  const [pipelinesList, setPipelinesList] = useState<PipelineOption[]>([]);
+  const [stageConfig, setStageConfig] = useState<PipelineStageConfig>({});
+  const [selectedPipeline, setSelectedPipeline] = useState('');
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
   const [view, setView] = useState<'list' | 'kanban'>('list');
@@ -714,26 +788,118 @@ export default function DealsPage() {
   const [dealForm, setDealForm] = useState<DealFormState>({ ...emptyDealForm });
   const [dealFormErrors, setDealFormErrors] = useState<Record<string, string>>({});
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // ─── Fetch pipelines ───
+  const fetchPipelines = useCallback(async () => {
+    try {
+      const res = await fetch('/api/pipelines');
+      const json = await res.json();
+      if (!json.success) return;
+      const raw: Record<string, unknown>[] = json.data;
+      const opts: PipelineOption[] = raw.map(p => ({
+        id: p.id as string,
+        label: p.name as string,
+        icon: (p.icon as string) || '📋',
+        deals: ((p as Record<string, unknown[]>).deals?.length) ?? 0,
+      }));
+      const config: PipelineStageConfig = {};
+      raw.forEach(p => {
+        const stages = (p.stages as Record<string, unknown>[]) || [];
+        config[p.id as string] = {};
+        stages
+          .sort((a, b) => (a.order as number) - (b.order as number))
+          .forEach(s => {
+            config[p.id as string][s.key as string] = {
+              label: s.label as string,
+              color: (s.color as string) || 'new',
+              headerColor: (s.headerColor as string) || '#3b82f6',
+              defaultProbability: (s.defaultProbability as number) || 0,
+              isClosing: (s.isClosing as boolean) || false,
+              isWon: (s.isWon as boolean) || false,
+            };
+          });
+      });
+      setPipelinesList(opts);
+      setStageConfig(config);
+      if (opts.length > 0 && !selectedPipeline) {
+        setSelectedPipeline(opts[0].id);
+      }
+    } catch {
+      // silently fail — UI will show empty state
+    }
+  }, [selectedPipeline]);
+
+  // ─── Fetch deals for selected pipeline ───
+  const fetchDeals = useCallback(async (pipelineId: string) => {
+    if (!pipelineId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/deals?pipelineId=${pipelineId}&limit=200`);
+      const json = await res.json();
+      if (json.success) {
+        setDeals((json.data as Record<string, unknown>[]).map(mapApiDeal));
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchPipelines(); }, [fetchPipelines]);
+  useEffect(() => { if (selectedPipeline) fetchDeals(selectedPipeline); }, [selectedPipeline, fetchDeals]);
 
   const openEdit = (d: Deal) => {
     setEditingDeal(d);
     setDealForm({
       name: d.name, client: d.client, value: String(d.value), pipelineId: d.pipelineId, stage: d.stage,
       owner: d.owner, ownerFull: d.ownerFull, tags: d.tags.join(', '), probability: d.probability,
-      source: d.source, nextFollowUp: d.nextFollowUp, serviceType: d.serviceType, expectedClose: d.expectedClose, lastContact: d.lastContact, notes: d.notes
+      source: d.source, nextFollowUp: d.nextFollowUp, serviceType: d.serviceType,
+      expectedClose: d.expectedClose === '—' ? '' : d.expectedClose,
+      lastContact: d.lastContact === '—' ? '' : d.lastContact,
+      notes: d.notes,
     });
     setDealFormErrors({});
     setShowDealForm(true);
   };
 
-  const handleSaveDeal = () => {
-    const v = Number(dealForm.value);
-    if (editingDeal) {
-      setDeals(prev => prev.map(d => d.id === editingDeal.id ? { ...d, ...dealForm, value: v, tags: dealForm.tags.split(',').map(t => t.trim()).filter(Boolean) } as Deal : d));
-    } else {
-      setDeals(prev => [{ ...dealForm, id: Date.now(), value: v, tags: dealForm.tags.split(',').map(t => t.trim()).filter(Boolean), daysInStage: 0, created: 'just now' } as Deal, ...prev]);
+  const handleSaveDeal = async () => {
+    const errors: Record<string, string> = {};
+    if (!dealForm.name.trim()) errors.name = 'Deal name is required';
+    if (!dealForm.client.trim()) errors.client = 'Client is required';
+    if (dealForm.value !== '' && isNaN(Number(dealForm.value))) errors.value = 'Must be a number';
+    if (Object.keys(errors).length > 0) { setDealFormErrors(errors); return; }
+
+    setSaving(true);
+    try {
+      const payload = {
+        title: dealForm.name,
+        client: dealForm.client,
+        value: Number(dealForm.value) || 0,
+        pipelineId: dealForm.pipelineId || null,
+        pipelineStageKey: dealForm.stage || null,
+        probability: Number(dealForm.probability) || 0,
+        source: dealForm.source || null,
+        tags: dealForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+        expectedClose: dealForm.expectedClose || null,
+        lastContactAt: dealForm.lastContact || null,
+        nextFollowUpAt: dealForm.nextFollowUp || null,
+        notes: dealForm.notes || null,
+      };
+
+      const url = editingDeal ? `/api/deals/${editingDeal.id}` : '/api/deals';
+      const method = editingDeal ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) {
+        setShowDealForm(false);
+        fetchDeals(selectedPipeline);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSaving(false);
     }
-    setShowDealForm(false);
   };
 
   // View detail
@@ -741,6 +907,15 @@ export default function DealsPage() {
 
   // Delete confirm
   const [deleteDeal, setDeleteDeal] = useState<Deal | null>(null);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await fetch(`/api/deals/${id}`, { method: 'DELETE' });
+      fetchDeals(selectedPipeline);
+    } catch {
+      // silently fail
+    }
+  };
 
   // Search suggestions
   const [searchFocused, setSearchFocused] = useState(false);
@@ -768,7 +943,7 @@ export default function DealsPage() {
       d.tags.some(t => t.toLowerCase().includes(q)) ||
       d.owner.toLowerCase().includes(q) ||
       d.ownerFull.toLowerCase().includes(q) ||
-      (pipelineStageConfig[d.pipelineId]?.[d.stage]?.label || d.stage).toLowerCase().includes(q);
+      (stageConfig[d.pipelineId]?.[d.stage]?.label || d.stage).toLowerCase().includes(q);
     return matchStage && matchSearch;
   });
 
@@ -782,28 +957,23 @@ export default function DealsPage() {
   // KPIs
   const pipelineDeals = deals.filter(d => d.pipelineId === selectedPipeline);
   const openDeals = pipelineDeals.filter(d => {
-    const stg = pipelineStageConfig[d.pipelineId]?.[d.stage];
+    const stg = stageConfig[d.pipelineId]?.[d.stage];
     return !stg?.isClosing;
   });
   const totalValue = openDeals.reduce((a, d) => a + d.value, 0);
-  
+
   const wonDealsThisMonth = pipelineDeals.filter(d => {
-    const stg = pipelineStageConfig[d.pipelineId]?.[d.stage];
+    const stg = stageConfig[d.pipelineId]?.[d.stage];
     return stg?.isWon;
   });
   const wonValue = wonDealsThisMonth.reduce((a, d) => a + d.value, 0);
-  
-  const closedDeals = pipelineDeals.filter(d => pipelineStageConfig[d.pipelineId]?.[d.stage]?.isClosing);
+
+  const closedDeals = pipelineDeals.filter(d => stageConfig[d.pipelineId]?.[d.stage]?.isClosing);
   const winRate = closedDeals.length > 0 ? Math.round((wonDealsThisMonth.length / closedDeals.length) * 100) : 0;
-  
+
   const followUpToday = pipelineDeals.filter(d => d.nextFollowUp.toLowerCase() === 'today' || d.nextFollowUp.toLowerCase() === 'overdue').length;
 
-  // Delete
-  const handleDelete = (id: number) => {
-    setDeals(prev => prev.filter(d => d.id !== id));
-  };
-
-  const selectedPipelineData = pipelines.find(p => p.id === selectedPipeline)!;
+  const selectedPipelineData = pipelinesList.find(p => p.id === selectedPipeline) || { id: '', label: 'Select Pipeline', icon: '📋', deals: 0 };
 
   /* Highlight matched text */
   const highlight = (text: string) => {
@@ -878,7 +1048,7 @@ export default function DealsPage() {
               <div style={{ padding: '10px 12px 6px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Select Pipeline
               </div>
-              {pipelines.map(p => (
+              {pipelinesList.map(p => (
                 <div
                   key={p.id}
                   onClick={() => { setSelectedPipeline(p.id); pipelineDrop.setOpen(false); }}
@@ -1150,7 +1320,18 @@ export default function DealsPage() {
           </div>
         </div>
 
-        <button className="btn btn-primary" onClick={() => { setDealForm({...emptyDealForm, pipelineId: selectedPipeline, serviceType: selectedPipelineData.label, stage: Object.keys(pipelineStageConfig[selectedPipeline] || {})[0] || ""}); setEditingDeal(null); setShowDealForm(true); }}>+ New Deal</button>
+        <button className="btn btn-primary" onClick={() => {
+          const firstStage = Object.keys(stageConfig[selectedPipeline] || {})[0] || '';
+          setDealForm({
+            ...emptyDealForm,
+            pipelineId: selectedPipeline,
+            serviceType: selectedPipelineData.label,
+            stage: firstStage,
+            probability: stageConfig[selectedPipeline]?.[firstStage]?.defaultProbability ?? 10,
+          });
+          setEditingDeal(null);
+          setShowDealForm(true);
+        }}>+ New Deal</button>
       </div>
 
       {/* ════════════════════════════════════════
@@ -1158,105 +1339,116 @@ export default function DealsPage() {
           ════════════════════════════════════════ */}
       {view === 'list' && (
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Deal</th>
-                  <th>Client</th>
-                  <th>Value</th>
-                  <th>Stage</th>
-                  <th>Tags</th>
-                  <th>Probability</th>
-                  <th>Days</th>
-                  <th>Follow-up</th>
-                  <th>Owner</th>
-                  <th>Source</th>
-                  <th style={{ textAlign: 'right', paddingRight: 12 }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(d => {
-                  const stg = pipelineStageConfig[d.pipelineId]?.[d.stage] || { label: d.stage, color: 'new' };
-                  return (
-                    <tr key={d.id}>
-                      <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{highlight(d.name)}</td>
-                      <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{highlight(d.client)}</td>
-                      <td style={{ fontWeight: 700, color: 'var(--emerald)', fontSize: 13 }}>{fmtVal(d.value)}</td>
-                      <td><span className={`badge ${stg.color}`}>{stg.label}</span></td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                          {d.tags.map(t => (
-                            <span key={t} style={{
-                              fontSize: 10, padding: '2px 7px', borderRadius: 6,
-                              background: 'var(--bg-card)', border: '1px solid var(--border)',
-                              color: 'var(--text-muted)',
-                            }}>{highlight(t)}</span>
-                          ))}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <div style={{ width: 40, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
-                            <div style={{
-                              width: `${d.probability}%`, height: '100%',
-                              background: d.probability >= 80 ? 'var(--emerald)' : d.probability >= 50 ? 'var(--amber)' : 'var(--rose)',
-                              borderRadius: 2,
-                            }} />
+          {loading ? (
+            <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>Loading deals...</div>
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Deal</th>
+                    <th>Client</th>
+                    <th>Value</th>
+                    <th>Stage</th>
+                    <th>Tags</th>
+                    <th>Probability</th>
+                    <th>Days</th>
+                    <th>Follow-up</th>
+                    <th>Owner</th>
+                    <th>Source</th>
+                    <th style={{ textAlign: 'right', paddingRight: 12 }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(d => {
+                    const stg = stageConfig[d.pipelineId]?.[d.stage] || { label: d.stage, color: 'new' };
+                    return (
+                      <tr key={d.id}>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{highlight(d.name)}</td>
+                        <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{highlight(d.client)}</td>
+                        <td style={{ fontWeight: 700, color: 'var(--emerald)', fontSize: 13 }}>{fmtVal(d.value)}</td>
+                        <td><span className={`badge ${stg.color}`}>{stg.label}</span></td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            {d.tags.map(t => (
+                              <span key={t} style={{
+                                fontSize: 10, padding: '2px 7px', borderRadius: 6,
+                                background: 'var(--bg-card)', border: '1px solid var(--border)',
+                                color: 'var(--text-muted)',
+                              }}>{highlight(t)}</span>
+                            ))}
                           </div>
-                          <span style={{
-                            fontSize: 12, fontWeight: 700,
-                            color: d.probability >= 80 ? 'var(--emerald)' : d.probability >= 50 ? 'var(--amber)' : 'var(--rose)',
-                          }}>{d.probability}%</span>
-                        </div>
-                      </td>
-                      <td style={{
-                        fontSize: 12, fontWeight: d.daysInStage >= 14 ? 600 : 400,
-                        color: d.daysInStage >= 14 ? 'var(--rose)' : 'var(--text-muted)',
-                      }}>
-                        {d.daysInStage >= 14 && <span style={{ marginRight: 4 }} title="Deal is rotting">⚠️</span>}
-                        {d.daysInStage}d
-                      </td>
-                      <td style={{
-                        fontSize: 12,
-                        color: d.nextFollowUp === 'Today' ? 'var(--amber)' : d.nextFollowUp === 'Tomorrow' ? 'var(--brand-accent)' : 'var(--text-muted)',
-                        fontWeight: d.nextFollowUp === 'Today' ? 600 : 400,
-                      }}>
-                        {d.nextFollowUp === 'Today' && '⚡ '}
-                        {d.nextFollowUp}
-                      </td>
-                      <td>
-                        <div style={{
-                          width: 26, height: 26, borderRadius: '50%',
-                          background: 'linear-gradient(135deg, var(--purple), var(--blue))',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 9, fontWeight: 700, color: 'white',
-                        }} title={d.ownerFull}>{d.owner}</div>
-                      </td>
-                      <td><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.source}</span></td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-                          <button className="btn btn-ghost" onClick={() => setViewDeal(d)} style={{ padding: '4px 10px', fontSize: 11 }}>View</button>
-                          <button className="btn btn-ghost" onClick={() => openEdit(d)} style={{ padding: '4px 10px', fontSize: 11 }}>Edit</button>
-                          <button
-                            onClick={() => setDeleteDeal(d)}
-                            style={{
-                              padding: '4px 10px', fontSize: 11,
-                              background: 'rgba(239,68,68,0.1)',
-                              color: 'var(--rose)',
-                              border: '1px solid var(--rose)',
-                              borderRadius: 7, cursor: 'pointer',
-                              fontFamily: 'Inter, sans-serif', fontWeight: 600,
-                            }}
-                          >Delete</button>
-                        </div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div style={{ width: 40, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+                              <div style={{
+                                width: `${d.probability}%`, height: '100%',
+                                background: d.probability >= 80 ? 'var(--emerald)' : d.probability >= 50 ? 'var(--amber)' : 'var(--rose)',
+                                borderRadius: 2,
+                              }} />
+                            </div>
+                            <span style={{
+                              fontSize: 12, fontWeight: 700,
+                              color: d.probability >= 80 ? 'var(--emerald)' : d.probability >= 50 ? 'var(--amber)' : 'var(--rose)',
+                            }}>{d.probability}%</span>
+                          </div>
+                        </td>
+                        <td style={{
+                          fontSize: 12, fontWeight: d.daysInStage >= 14 ? 600 : 400,
+                          color: d.daysInStage >= 14 ? 'var(--rose)' : 'var(--text-muted)',
+                        }}>
+                          {d.daysInStage >= 14 && <span style={{ marginRight: 4 }} title="Deal is rotting">⚠️</span>}
+                          {d.daysInStage}d
+                        </td>
+                        <td style={{
+                          fontSize: 12,
+                          color: d.nextFollowUp === 'Today' ? 'var(--amber)' : d.nextFollowUp === 'Tomorrow' ? 'var(--brand-accent)' : 'var(--text-muted)',
+                          fontWeight: d.nextFollowUp === 'Today' ? 600 : 400,
+                        }}>
+                          {d.nextFollowUp === 'Today' && '⚡ '}
+                          {d.nextFollowUp}
+                        </td>
+                        <td>
+                          <div style={{
+                            width: 26, height: 26, borderRadius: '50%',
+                            background: 'linear-gradient(135deg, var(--purple), var(--blue))',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 9, fontWeight: 700, color: 'white',
+                          }} title={d.ownerFull}>{d.owner}</div>
+                        </td>
+                        <td><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.source}</span></td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+                            <button className="btn btn-ghost" onClick={() => setViewDeal(d)} style={{ padding: '4px 10px', fontSize: 11 }}>View</button>
+                            <button className="btn btn-ghost" onClick={() => openEdit(d)} style={{ padding: '4px 10px', fontSize: 11 }}>Edit</button>
+                            <button
+                              onClick={() => setDeleteDeal(d)}
+                              style={{
+                                padding: '4px 10px', fontSize: 11,
+                                background: 'rgba(239,68,68,0.1)',
+                                color: 'var(--rose)',
+                                border: '1px solid var(--rose)',
+                                borderRadius: 7, cursor: 'pointer',
+                                fontFamily: 'Inter, sans-serif', fontWeight: 600,
+                              }}
+                            >Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {!loading && filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={11} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 14 }}>
+                        No deals found. Create your first deal with + New Deal.
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -1266,7 +1458,7 @@ export default function DealsPage() {
       {view === 'kanban' && (
         <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
           <div style={{ display: 'flex', gap: 12, minWidth: 'max-content' }}>
-            {Object.entries(pipelineStageConfig[selectedPipeline] || {}).map(([stageId, cfg]) => {
+            {Object.entries(stageConfig[selectedPipeline] || {}).map(([stageId, cfg]) => {
               const stageDeals = filtered.filter(d => d.stage === stageId);
               const stageValue = stageDeals.reduce((a, d) => a + d.value, 0);
               return (
@@ -1341,7 +1533,17 @@ export default function DealsPage() {
                         >✕</button>
                       </div>
                     ))}
-                    <button onClick={() => { setDealForm({...emptyDealForm, pipelineId: selectedPipeline, serviceType: selectedPipelineData.label, stage: stageId, probability: cfg.defaultProbability}); setEditingDeal(null); setShowDealForm(true); }} style={{
+                    <button onClick={() => {
+                      setDealForm({
+                        ...emptyDealForm,
+                        pipelineId: selectedPipeline,
+                        serviceType: selectedPipelineData.label,
+                        stage: stageId,
+                        probability: cfg.defaultProbability,
+                      });
+                      setEditingDeal(null);
+                      setShowDealForm(true);
+                    }} style={{
                       border: '1px dashed var(--border)',
                       borderRadius: 8, padding: '8px',
                       fontSize: 11, color: 'var(--text-muted)',
@@ -1365,7 +1567,9 @@ export default function DealsPage() {
           onChange={(k, v) => setDealForm(prev => ({ ...prev, [k]: v as string | number }))}
           onSubmit={handleSaveDeal}
           onClose={() => setShowDealForm(false)}
-          submitLabel={editingDeal ? "Save Changes" : "Create Deal"}
+          submitLabel={saving ? 'Saving...' : editingDeal ? "Save Changes" : "Create Deal"}
+          pipelinesList={pipelinesList}
+          stageConfig={stageConfig}
         />
       )}
 
@@ -1374,6 +1578,7 @@ export default function DealsPage() {
           deal={viewDeal}
           onClose={() => setViewDeal(null)}
           onEdit={() => { setViewDeal(null); openEdit(viewDeal); }}
+          stageConfig={stageConfig}
         />
       )}
 
@@ -1384,7 +1589,7 @@ export default function DealsPage() {
           onConfirm={() => { handleDelete(deleteDeal.id); setDeleteDeal(null); }}
         />
       )}
-      
+
       <NotificationDrawer open={showNotifications} onClose={() => setShowNotifications(false)} />
       <HelpPanel open={showHelp} onClose={() => setShowHelp(false)} />
 
