@@ -179,15 +179,20 @@ export default function PipelinePage() {
   };
 
   // ─── Stage (column) management ───
+  const [addingColumn, setAddingColumn] = useState(false);
+  const [newColumnLabel, setNewColumnLabel] = useState('');
+
   const handleAddStage = async () => {
-    const label = window.prompt('New column name:');
-    if (!label || !label.trim()) return;
+    const label = newColumnLabel.trim();
+    if (!label) { setAddingColumn(false); setNewColumnLabel(''); return; }
     const palette = STAGE_COLOR_PALETTE[stages.length % STAGE_COLOR_PALETTE.length];
     const res = await fetch(`/api/pipelines/${pipelineId}/stages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: `${slugify(label)}_${Date.now().toString(36)}`, label: label.trim(), ...palette }),
+      body: JSON.stringify({ key: `${slugify(label)}_${Date.now().toString(36)}`, label, ...palette }),
     });
+    setNewColumnLabel('');
+    setAddingColumn(false);
     if (res.ok) fetchPipelineList(pipelineId);
   };
 
@@ -464,14 +469,38 @@ export default function PipelinePage() {
 
                 {/* Add Column */}
                 <div style={{ width: 220, flexShrink: 0 }}>
-                  <button
-                    onClick={handleAddStage}
-                    style={{
-                      width: '100%', height: 52, border: '1px dashed var(--border)', borderRadius: 10,
-                      background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
-                      fontSize: 13, fontWeight: 600, fontFamily: 'Inter, sans-serif',
-                    }}
-                  >+ Add Column</button>
+                  {addingColumn ? (
+                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <input
+                        autoFocus
+                        value={newColumnLabel}
+                        onChange={e => setNewColumnLabel(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleAddStage();
+                          if (e.key === 'Escape') { setAddingColumn(false); setNewColumnLabel(''); }
+                        }}
+                        placeholder="Column name..."
+                        style={{
+                          width: '100%', boxSizing: 'border-box', padding: '8px 10px',
+                          background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8,
+                          color: 'var(--text-primary)', fontSize: 13, outline: 'none', fontFamily: 'Inter, sans-serif',
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={handleAddStage} className="btn btn-primary" style={{ padding: '6px 14px', fontSize: 12 }}>Add</button>
+                        <button onClick={() => { setAddingColumn(false); setNewColumnLabel(''); }} className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: 12 }}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setAddingColumn(true)}
+                      style={{
+                        width: '100%', height: 52, border: '1px dashed var(--border)', borderRadius: 10,
+                        background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
+                        fontSize: 13, fontWeight: 600, fontFamily: 'Inter, sans-serif',
+                      }}
+                    >+ Add Column</button>
+                  )}
                 </div>
               </div>
             </div>

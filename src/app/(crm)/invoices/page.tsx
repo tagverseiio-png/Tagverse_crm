@@ -9,7 +9,7 @@ function fmt(v: number) {
 }
 
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>(INITIAL_INVOICES);
+  const [invoices, setInvoices] = useState<Invoice[]>(INITIAL_INVOICES as Invoice[]);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   

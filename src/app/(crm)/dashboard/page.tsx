@@ -96,7 +96,7 @@ const tasks = [
 
 // ─── Components ──────────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, delta, trend, color, icon }: typeof kpis[0]) {
+function KpiCard({ label, value, delta, trend, color, icon }: typeof staticKpis[0]) {
   return (
     <div className={`kpi-card ${color}`}>
       <div className="kpi-header">

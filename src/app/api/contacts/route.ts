@@ -71,6 +71,31 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return apiError(parsed.error.message, 422);
 
     const contact = await prisma.contact.create({ data: parsed.data });
+
+    // New leads immediately get a linked Deal so they show up in
+    // Pipeline/Deals/Funnel too — no separate "convert" step needed.
+    if (contact.type === 'lead') {
+      const pipeline = await prisma.pipeline.findFirst({
+        where: { isDefault: true },
+        include: { stages: { orderBy: { order: 'asc' }, take: 1 } },
+      });
+      if (pipeline) {
+        await prisma.deal.create({
+          data: {
+            title: contact.name,
+            client: contact.company ?? contact.name,
+            contactId: contact.id,
+            companyId: contact.companyId,
+            pipelineId: pipeline.id,
+            pipelineStageKey: pipeline.stages[0]?.key ?? null,
+            probability: pipeline.stages[0]?.defaultProbability ?? 0,
+            source: contact.source,
+            assignedToId: contact.assignedToId,
+          },
+        });
+      }
+    }
+
     return apiSuccess(contact, undefined, 201);
   } catch (err) {
     console.error('POST /api/contacts failed:', err);

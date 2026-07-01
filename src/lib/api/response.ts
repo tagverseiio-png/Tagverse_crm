@@ -3,7 +3,7 @@ import { ZodError } from 'zod';
 
 interface PaginationMeta {
   total: number;
-  page: number;
+  skip: number;
   limit: number;
 }
 

@@ -11,7 +11,7 @@ const createSchema = z.object({
   description: z.string().optional(),
   status: z.string().default('upcoming'),
   scheduledAt: z.string().datetime().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   contactId: z.string().optional(),
   dealId: z.string().optional(),
   companyId: z.string().optional(),
