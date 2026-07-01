@@ -189,59 +189,101 @@ model Deal {
   assignedTo    User?      @relation("AssignedDeals", fields: [assignedToId], references: [id], onDelete: SetNull)
   contracts     Contract[]
   quotes        Quote[]
+  invoices      Invoice[]
   tasks         Task[]
   activities    Activity[]
 }
 
 // Revenue Hub - Contracts
+// Template-specific fields (jurisdiction, seats, billingCycle, etc.) live in
+// `data` — the template catalog is open-ended and not worth normalizing per type.
 model Contract {
-  id        String    @id @default(uuid())
-  dealId    String
-  deal      Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  content   String
-  status    String    @default("draft") // draft, sent, signed, cancelled
-  signedAt  DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  dealId       String?
+  deal         Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  template     String    @default("Service Agreement")
+  client       String
+  valuePerYear Float     @default(0)
+  currency     String    @default("INR")
+  start        DateTime?
+  end          DateTime?
+  progress     Int       @default(0)
+  status       String    @default("Pending Signature") // Active, Pending Signature, Expiring, Terminated
+  data         Json?     // template-specific extra fields (scope, jurisdiction, seats, etc.)
+  signedAt     DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 // Revenue Hub - Quotes
 model Quote {
-  id        String    @id @default(uuid())
-  dealId    String
-  deal      Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  lineItems Json      // Array of items with description, quantity, rate
-  tax       Float     @default(0.0)
-  discount  Float     @default(0.0)
-  total     Float
-  status    String    @default("draft") // draft, sent, accepted, rejected
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  invoices  Invoice[]
+  id           String    @id @default(uuid())
+  dealId       String?
+  deal         Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  client       String
+  contact      String?
+  email        String?
+  phone        String?
+  scope        String?
+  lineItems    Json      // Array of { id, desc, qty, price }
+  gstRate      Float     @default(18)
+  discountRate Float     @default(0)
+  currency     String    @default("₹")
+  terms        String?
+  delivery     String?
+  notes        String?
+  total        Float     @default(0)
+  status       String    @default("Draft") // Draft, Sent, Accepted, Expired, Invoiced, Rejected
+  issuedAt     DateTime  @default(now())
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  invoices     Invoice[]
 }
 
 // Revenue Hub - Invoices
 model Invoice {
-  id               String    @id @default(uuid())
-  quoteId          String
-  quote            Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  stripeInvoiceId  String?   @unique
-  status           String    @default("draft") // draft, sent, paid, overdue, void
-  dueDate          DateTime
-  paidAt           DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  payments         Payment[]
+  id              String    @id @default(uuid())
+  quoteId         String?
+  quote           Quote?    @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  dealId          String?
+  deal            Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  client          String
+  contact         String?
+  email           String?
+  phone           String?
+  scope           String?
+  lineItems       Json?
+  gstRate         Float     @default(18)
+  discountRate    Float     @default(0)
+  currency        String    @default("₹")
+  terms           String?
+  delivery        String?
+  notes           String?
+  total           Float     @default(0)
+  stripeInvoiceId String?   @unique
+  status          String    @default("Draft") // Draft, Sent, Paid, Overdue, Void
+  issuedAt        DateTime  @default(now())
+  dueDate         DateTime?
+  paidAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  payments        Payment[]
 }
 
 // Revenue Hub - Payments
 model Payment {
-  id              String   @id @default(uuid())
-  invoiceId       String
-  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  stripePaymentId String?  @unique
+  id              String    @id @default(uuid())
+  invoiceId       String?
+  invoice         Invoice?  @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  invoiceLabel    String?   // free-text invoice reference when not linked to a real Invoice row
+  client          String
+  stripePaymentId String?   @unique
   amount          Float
-  receivedAt      DateTime @default(now())
+  method          String    @default("UPI") // UPI, NEFT, Cheque, Pending
+  status          String    @default("Received") // Received, Pending, Failed
+  receivedAt      DateTime  @default(now())
+  createdAt       DateTime  @default(now())
 }
 
 // Email Marketing - Templates

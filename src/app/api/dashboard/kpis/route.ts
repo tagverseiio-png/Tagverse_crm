@@ -25,7 +25,7 @@ export async function GET() {
         },
         _sum: { value: true },
       }),
-      prisma.invoice.count({ where: { status: 'overdue' } }),
+      prisma.invoice.count({ where: { status: 'Overdue' } }),
     ]);
 
     return apiSuccess({

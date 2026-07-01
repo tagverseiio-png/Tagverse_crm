@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import ContractWizard from './ContractWizard';
 import ContractDetailsModal from './ContractDetailsModal';
 
@@ -9,13 +9,37 @@ type Contract = {
   [key: string]: any;
 };
 
-const INITIAL_CONTRACTS: Contract[] = [
-  { id: '#CTR-055', template: 'Service Agreement', client: 'Arka Systems', valuePerYear: 480000, currency: 'INR', start: 'Jan 1 2025', end: 'Dec 31 2025', progress: 48, status: 'Active' },
-  { id: '#CTR-054', template: 'NDA', client: 'Nexus Retail', valuePerYear: 0, currency: 'USD', start: 'Mar 1 2025', end: 'Feb 28 2026', progress: 30, status: 'Pending Signature', jurisdiction: 'New York', scope: 'Financial Data & Retail Strategies' },
-  { id: '#CTR-053', template: 'Employment Contract', client: 'John Connor', employeeName: 'John Connor', valuePerYear: 960000, currency: 'INR', start: 'Jul 1 2024', end: 'Jun 30 2025', progress: 91, status: 'Expiring', role: 'Senior Developer', compStructure: 'Base + Equity', probation: 'Completed' },
-  { id: '#CTR-052', template: 'Vendor Agreement', client: 'Vega Partners', valuePerYear: 180000, currency: 'USD', start: 'Feb 1 2025', end: 'Jan 31 2026', progress: 35, status: 'Active', scope: 'Cloud Servers', paymentTerms: 'Net 60' },
-  { id: '#CTR-051', template: 'Subscription Agreement', client: 'BlueStar Media', valuePerYear: 120000, currency: 'USD', start: 'Apr 1 2025', end: 'Mar 31 2026', progress: 20, status: 'Active', plan: 'Enterprise Tier', seats: '50', billingCycle: 'Annual' },
-];
+// Core relational fields — everything else the wizard collects (jurisdiction,
+// seats, billingCycle, etc.) is template-specific and stored in `data`.
+const CORE_FIELDS = ['template', 'client', 'employeeName', 'vendorName', 'valuePerYear', 'currency', 'start', 'end', 'status', 'progress'];
+
+function toIsoOrUndefined(s: unknown): string | undefined {
+  if (typeof s !== 'string' || !s) return undefined;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
+function fmtDateDisplay(s: unknown): string {
+  if (typeof s !== 'string' || !s) return '—';
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function mapApiContract(c: Record<string, unknown>): Contract {
+  const extra = (c.data as Record<string, unknown>) || {};
+  return {
+    ...extra,
+    id: c.id as string,
+    template: c.template as string,
+    client: c.client as string,
+    valuePerYear: (c.valuePerYear as number) ?? 0,
+    currency: (c.currency as string) ?? 'INR',
+    start: fmtDateDisplay(c.start),
+    end: fmtDateDisplay(c.end),
+    progress: (c.progress as number) ?? 0,
+    status: c.status as Contract['status'],
+  };
+}
 
 function fmt(v: number, currency: string = 'INR') {
   if (!v) return '-';
@@ -32,18 +56,33 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export default function ContractsPage() {
-  const [contracts, setContracts] = useState<Contract[]>(INITIAL_CONTRACTS);
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const [viewingContract, setViewingContract] = useState<Contract | null>(null);
 
-  const filtered = useMemo(() => contracts.filter(c => {
-    const counterparty = (c.client || c.employeeName || c.vendorName || '').toLowerCase();
-    const ms = counterparty.includes(search.toLowerCase()) || c.id.toLowerCase().includes(search.toLowerCase());
-    return ms && (filterStatus === 'All' || c.status === filterStatus);
-  }), [contracts, search, filterStatus]);
+  const fetchContracts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: '200' });
+      if (search) params.set('search', search);
+      if (filterStatus !== 'All') params.set('status', filterStatus);
+      const res = await fetch(`/api/contracts?${params}`);
+      const json = await res.json();
+      if (res.ok && Array.isArray(json.data)) setContracts(json.data.map(mapApiContract));
+    } catch {
+      // keep current state
+    } finally {
+      setLoading(false);
+    }
+  }, [search, filterStatus]);
+
+  useEffect(() => { fetchContracts(); }, [fetchContracts]);
+
+  const filtered = useMemo(() => contracts, [contracts]);
 
   const totalARR = contracts.filter(c => c.status === 'Active').reduce((a, c) => a + c.valuePerYear, 0);
   const expiring = contracts.filter(c => c.status === 'Expiring').length;
@@ -53,24 +92,41 @@ export default function ContractsPage() {
   const openNew = () => { setEditingContract(null); setIsWizardOpen(true); };
   const openEdit = (c: Contract) => { setEditingContract(c); setIsWizardOpen(true); };
   const openView = (c: Contract) => { setViewingContract(c); };
-  
-  const handleSaveWizard = (data: any) => {
-    const primaryName = data.client || data.employeeName || data.vendorName || 'Unknown';
+
+  const handleSaveWizard = async (data: Record<string, unknown>) => {
+    const primaryName = (data.client as string) || (data.employeeName as string) || (data.vendorName as string) || 'Unknown';
     if (!primaryName.trim()) return;
-    
-    if (editingContract) {
-      setContracts(p => p.map(c => c.id === editingContract.id ? { ...c, ...data, client: primaryName } : c));
-    } else {
-      setContracts(p => [{
-        ...data,
-        id: `#CTR-${Math.floor(56 + Math.random() * 100)}`,
-        client: primaryName,
-        progress: 0,
-      }, ...p]);
+
+    const extra: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(data)) {
+      if (!CORE_FIELDS.includes(k)) extra[k] = v;
     }
-    setIsWizardOpen(false);
+
+    const payload = {
+      template: data.template,
+      client: primaryName,
+      valuePerYear: Number(data.valuePerYear) || 0,
+      currency: data.currency,
+      start: toIsoOrUndefined(data.start),
+      end: toIsoOrUndefined(data.end),
+      status: data.status,
+      data: extra,
+    };
+
+    const url = editingContract ? `/api/contracts/${editingContract.id}` : '/api/contracts';
+    const method = editingContract ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (res.ok) {
+      setIsWizardOpen(false);
+      fetchContracts();
+    }
   };
-  const handleDelete = (id: string) => { setContracts(p => p.filter(c => c.id !== id)); setIsWizardOpen(false); };
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/contracts/${id}`, { method: 'DELETE' });
+    setIsWizardOpen(false);
+    fetchContracts();
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -118,6 +174,9 @@ export default function ContractsPage() {
 
       {/* Table */}
       <div className="card table-wrap" style={{ padding: 0, overflow: 'hidden' }}>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading contracts...</div>
+        ) : (
         <table>
           <thead>
             <tr>
@@ -127,7 +186,7 @@ export default function ContractsPage() {
           <tbody>
             {filtered.map(c => (
               <tr key={c.id} style={{ cursor: 'pointer' }} onClick={() => openView(c)}>
-                <td><span style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace' }}>{c.id}</span></td>
+                <td><span style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 11 }}>{c.id.slice(0, 8)}</span></td>
                 <td style={{ fontWeight: 500 }}>{c.client || c.employeeName || c.vendorName}</td>
                 <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{c.template}</td>
                 <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontVariantNumeric: 'tabular-nums' }}>{fmt(c.valuePerYear, c.currency)}</td>
@@ -142,13 +201,14 @@ export default function ContractsPage() {
                 <td><span className={STATUS_BADGE[c.status]}>{c.status}</span></td>
                 <td onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    {c.status === 'Expiring' && (
-                      <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <i className="ti ti-refresh"></i> Renew
-                      </button>
-                    )}
                     <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => openView(c)}>
                       <i className="ti ti-eye"></i> View
+                    </button>
+                    <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => openEdit(c)}>
+                      <i className="ti ti-edit"></i> Edit
+                    </button>
+                    <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--rose)', display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => handleDelete(c.id)}>
+                      <i className="ti ti-trash"></i>
                     </button>
                   </div>
                 </td>
@@ -159,6 +219,7 @@ export default function ContractsPage() {
             )}
           </tbody>
         </table>
+        )}
       </div>
 
       {/* Modal / Wizard */}

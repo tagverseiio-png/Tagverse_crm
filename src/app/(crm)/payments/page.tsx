@@ -1,20 +1,41 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  type Payment,
-  paymentsData as INITIAL_PAYMENTS,
   paymentsRecentActivity as RECENT_ACTIVITY,
   paymentsCollectionMethods as COLLECTION_METHODS,
   paymentsStatusBadge as STATUS_BADGE,
 } from '@/lib/mockData';
+
+type Payment = {
+  id: string;
+  client: string;
+  invoiceId: string;
+  amount: number;
+  date: string;
+  method: 'UPI' | 'NEFT' | 'Cheque' | 'Pending';
+  status: 'Received' | 'Pending' | 'Failed';
+};
 
 function fmt(v: number) {
   if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
   return `₹${v.toLocaleString('en-IN')}`;
 }
 
+function mapApiPayment(p: Record<string, unknown>): Payment {
+  return {
+    id: p.id as string,
+    client: p.client as string,
+    invoiceId: (p.invoiceLabel as string) ?? (p.invoiceId as string) ?? '—',
+    amount: (p.amount as number) ?? 0,
+    date: p.receivedAt ? new Date(p.receivedAt as string).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : '—',
+    method: p.method as Payment['method'],
+    status: p.status as Payment['status'],
+  };
+}
+
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState<Payment[]>(INITIAL_PAYMENTS);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterMethod, setFilterMethod] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
@@ -25,26 +46,49 @@ export default function PaymentsPage() {
   const [mMethod, setMMethod] = useState<Payment['method']>('UPI');
   const [mStatus, setMStatus] = useState<Payment['status']>('Received');
 
-  const filtered = useMemo(() => payments.filter(p => {
-    const ms = p.client.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase()) || p.invoiceId.toLowerCase().includes(search.toLowerCase());
-    return ms && (filterMethod === 'All' || p.method === filterMethod) && (filterStatus === 'All' || p.status === filterStatus);
-  }), [payments, search, filterMethod, filterStatus]);
+  const fetchPayments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: '200' });
+      if (search) params.set('search', search);
+      if (filterMethod !== 'All') params.set('method', filterMethod);
+      if (filterStatus !== 'All') params.set('status', filterStatus);
+      const res = await fetch(`/api/payments?${params}`);
+      const json = await res.json();
+      if (res.ok && Array.isArray(json.data)) setPayments(json.data.map(mapApiPayment));
+    } catch {
+      // keep current state
+    } finally {
+      setLoading(false);
+    }
+  }, [search, filterMethod, filterStatus]);
+
+  useEffect(() => { fetchPayments(); }, [fetchPayments]);
+
+  const filtered = payments;
 
   const collected = payments.filter(p => p.status === 'Received').reduce((a, p) => a + p.amount, 0);
   const pending = payments.filter(p => p.status === 'Pending').reduce((a, p) => a + p.amount, 0);
   const txnCount = payments.length;
   const failedCount = payments.filter(p => p.status === 'Failed').length;
 
-  const handleRecord = () => {
+  const handleRecord = async () => {
     if (!mClient.trim()) return;
-    setPayments(p => [{
-      id: `#PAY-${Math.floor(882 + Math.random() * 100)}`,
-      client: mClient, invoiceId: mInvoice,
-      amount: Number(mAmount) || 0,
-      date: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
-      method: mMethod, status: mStatus
-    }, ...p]);
-    setIsModalOpen(false);
+    const res = await fetch('/api/payments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client: mClient,
+        invoiceLabel: mInvoice || undefined,
+        amount: Number(mAmount) || 0,
+        method: mMethod,
+        status: mStatus,
+      }),
+    });
+    if (res.ok) {
+      setIsModalOpen(false);
+      fetchPayments();
+    }
   };
 
   return (
@@ -65,9 +109,9 @@ export default function PaymentsPage() {
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
         {[
-          { label: 'Collected This Month', value: fmt(collected), delta: '↑ 22% vs May', color: 'emerald' },
-          { label: 'Pending Collection', value: fmt(pending), delta: `Across ${payments.filter(p => p.status === 'Pending').length} invoices`, color: 'amber', neg: true },
-          { label: 'Transactions', value: String(txnCount), delta: 'This month', color: 'blue' },
+          { label: 'Collected', value: fmt(collected), delta: 'All time', color: 'emerald' },
+          { label: 'Pending Collection', value: fmt(pending), delta: `Across ${payments.filter(p => p.status === 'Pending').length} transactions`, color: 'amber', neg: true },
+          { label: 'Transactions', value: String(txnCount), delta: 'All time', color: 'blue' },
           { label: 'Failed / Returned', value: String(failedCount), delta: 'Needs follow-up', color: 'rose', neg: true },
         ].map(k => (
           <div key={k.label} className={`kpi-card ${k.color}`}>
@@ -123,10 +167,13 @@ export default function PaymentsPage() {
                   <tr key={p.id} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
                     <td style={{ padding: '8px 0', color: 'var(--text-secondary)' }}>{p.client}</td>
                     <td style={{ padding: '8px 0', textAlign: 'right' }}>
-                      <span className={STATUS_BADGE[p.status]}>{p.status === 'Failed' ? 'Returned' : '12 days overdue'}</span>
+                      <span className={STATUS_BADGE[p.status]}>{p.status === 'Failed' ? 'Returned' : 'Pending'}</span>
                     </td>
                   </tr>
                 ))}
+                {payments.filter(p => p.status === 'Failed' || p.status === 'Pending').length === 0 && (
+                  <tr><td style={{ padding: '8px 0', color: 'var(--text-muted)' }}>Nothing pending.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -152,29 +199,33 @@ export default function PaymentsPage() {
 
       {/* Transactions Table */}
       <div className="card table-wrap" style={{ padding: 0, overflow: 'hidden' }}>
-        <table>
-          <thead>
-            <tr>
-              <th>Txn ID</th><th>Client</th><th>Invoice</th><th>Amount</th><th>Date</th><th>Method</th><th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(p => (
-              <tr key={p.id}>
-                <td><span style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace' }}>{p.id}</span></td>
-                <td style={{ fontWeight: 500 }}>{p.client}</td>
-                <td style={{ color: 'var(--blue)', fontFamily: 'monospace', fontSize: 12 }}>{p.invoiceId}</td>
-                <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontVariantNumeric: 'tabular-nums' }}>{fmt(p.amount)}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{p.date}</td>
-                <td><span className="badge">{p.method}</span></td>
-                <td><span className={STATUS_BADGE[p.status]}>{p.status}</span></td>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading payments...</div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Txn ID</th><th>Client</th><th>Invoice</th><th>Amount</th><th>Date</th><th>Method</th><th>Status</th>
               </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No transactions match your filters.</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map(p => (
+                <tr key={p.id}>
+                  <td><span style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 11 }}>{p.id.slice(0, 8)}</span></td>
+                  <td style={{ fontWeight: 500 }}>{p.client}</td>
+                  <td style={{ color: 'var(--blue)', fontFamily: 'monospace', fontSize: 12 }}>{p.invoiceId}</td>
+                  <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontVariantNumeric: 'tabular-nums' }}>{fmt(p.amount)}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{p.date}</td>
+                  <td><span className="badge">{p.method}</span></td>
+                  <td><span className={STATUS_BADGE[p.status]}>{p.status}</span></td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No transactions match your filters.</td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Record Payment Modal */}

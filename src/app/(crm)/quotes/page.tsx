@@ -1,10 +1,6 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import QuoteBuilderModal, { Quote } from './QuoteBuilderModal';
-
-import { quotesInitial } from '@/lib/mockData';
-
-const INITIAL_QUOTES: Quote[] = quotesInitial as Quote[];
 
 function fmt(v: number) {
   if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
@@ -19,23 +15,63 @@ const STATUS_BADGE: Record<string, string> = {
   Invoiced: 'badge blue',
 };
 
+function parseDisplayDate(s: string): string {
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+}
+
+function mapApiQuote(q: Record<string, unknown>): Quote {
+  return {
+    id: q.id as string,
+    client: q.client as string,
+    amount: (q.total as number) ?? 0,
+    sentOn: q.issuedAt ? new Date(q.issuedAt as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+    expires: q.expiresAt ? new Date(q.expiresAt as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+    status: q.status as Quote['status'],
+    contact: (q.contact as string) ?? undefined,
+    email: (q.email as string) ?? undefined,
+    phone: (q.phone as string) ?? undefined,
+    scope: (q.scope as string) ?? undefined,
+    lineItems: (q.lineItems as Quote['lineItems']) ?? [],
+    gstRate: (q.gstRate as number) ?? 18,
+    discountRate: (q.discountRate as number) ?? 0,
+    notes: (q.notes as string) ?? undefined,
+    terms: (q.terms as string) ?? undefined,
+    delivery: (q.delivery as string) ?? undefined,
+    currency: (q.currency as string) ?? '₹',
+  };
+}
+
 export default function QuotesPage() {
-  const [quotes, setQuotes] = useState<Quote[]>(INITIAL_QUOTES);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
 
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
-  const [invQuoteId, setInvQuoteId] = useState<string | null>(null);
-  const [invClient, setInvClient] = useState('');
-  const [invAmount, setInvAmount] = useState('');
 
-  const filtered = useMemo(() => quotes.filter(q => {
-    const ms = q.client.toLowerCase().includes(search.toLowerCase()) || q.id.toLowerCase().includes(search.toLowerCase());
-    return ms && (filterStatus === 'All' || q.status === filterStatus);
-  }), [quotes, search, filterStatus]);
+  const fetchQuotes = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: '200' });
+      if (search) params.set('search', search);
+      if (filterStatus !== 'All') params.set('status', filterStatus);
+      const res = await fetch(`/api/quotes?${params}`);
+      const json = await res.json();
+      if (res.ok && Array.isArray(json.data)) setQuotes(json.data.map(mapApiQuote));
+    } catch {
+      // keep current state
+    } finally {
+      setLoading(false);
+    }
+  }, [search, filterStatus]);
+
+  useEffect(() => { fetchQuotes(); }, [fetchQuotes]);
+
+  const filtered = useMemo(() => quotes, [quotes]);
 
   const totalValue = quotes.filter(q => q.status === 'Accepted' || q.status === 'Sent').reduce((a, q) => a + q.amount, 0);
   const accepted = quotes.filter(q => q.status === 'Accepted').length;
@@ -45,37 +81,79 @@ export default function QuotesPage() {
     setEditingQuote(null);
     setIsModalOpen(true);
   };
-  
+
   const openEdit = (q: Quote) => {
     setEditingQuote(q);
     setIsModalOpen(true);
   };
-  
-  const handleSaveQuote = (savedQuote: Quote) => {
-    if (editingQuote) {
-      setQuotes(p => p.map(q => q.id === savedQuote.id ? savedQuote : q));
-    } else {
-      setQuotes(p => [savedQuote, ...p]);
+
+  const handleSaveQuote = async (savedQuote: Quote) => {
+    const payload = {
+      client: savedQuote.client,
+      contact: savedQuote.contact,
+      email: savedQuote.email,
+      phone: savedQuote.phone,
+      scope: savedQuote.scope,
+      lineItems: savedQuote.lineItems ?? [],
+      gstRate: savedQuote.gstRate ?? 18,
+      discountRate: savedQuote.discountRate ?? 0,
+      currency: savedQuote.currency ?? '₹',
+      terms: savedQuote.terms,
+      delivery: savedQuote.delivery,
+      notes: savedQuote.notes,
+      total: savedQuote.amount,
+      status: savedQuote.status,
+      issuedAt: parseDisplayDate(savedQuote.sentOn),
+      expiresAt: parseDisplayDate(savedQuote.expires),
+    };
+
+    const isExisting = editingQuote && quotes.some(q => q.id === editingQuote.id);
+    const url = isExisting ? `/api/quotes/${editingQuote!.id}` : '/api/quotes';
+    const method = isExisting ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (res.ok) {
+      setIsModalOpen(false);
+      fetchQuotes();
     }
-    setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => { setQuotes(p => p.filter(q => q.id !== id)); setIsModalOpen(false); };
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/quotes/${id}`, { method: 'DELETE' });
+    setIsModalOpen(false);
+    fetchQuotes();
+  };
 
   const openInvoice = (q: Quote) => {
     setEditingQuote(q);
     setIsInvoiceModalOpen(true);
   };
 
-  const handleCreateInvoice = (savedQuote: Quote) => {
-    // The savedQuote might have an #INV- prefix now instead of #Q- 
-    // We try matching by replacing prefixes if necessary
-    setQuotes(p => p.map(q => 
-      (q.id === savedQuote.id || q.id.replace('#Q', '#INV').replace('#QT', '#INV') === savedQuote.id) 
-        ? { ...savedQuote, status: 'Invoiced' } 
-        : q
-    ));
-    setIsInvoiceModalOpen(false);
+  const handleCreateInvoice = async (savedQuote: Quote) => {
+    if (!editingQuote) return;
+    const payload = {
+      quoteId: editingQuote.id,
+      client: savedQuote.client,
+      contact: savedQuote.contact,
+      email: savedQuote.email,
+      phone: savedQuote.phone,
+      scope: savedQuote.scope,
+      lineItems: savedQuote.lineItems ?? [],
+      gstRate: savedQuote.gstRate ?? 18,
+      discountRate: savedQuote.discountRate ?? 0,
+      currency: savedQuote.currency ?? '₹',
+      terms: savedQuote.terms,
+      delivery: savedQuote.delivery,
+      notes: savedQuote.notes,
+      total: savedQuote.amount,
+      status: savedQuote.status === 'Paid' || savedQuote.status === 'Overdue' ? savedQuote.status : 'Sent',
+      issuedAt: parseDisplayDate(savedQuote.sentOn),
+      dueDate: parseDisplayDate(savedQuote.expires),
+    };
+    const res = await fetch('/api/invoices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (res.ok) {
+      setIsInvoiceModalOpen(false);
+      fetchQuotes();
+    }
   };
 
   return (
@@ -96,7 +174,7 @@ export default function QuotesPage() {
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
         {[
-          { label: 'Total Sent', value: String(quotes.length), delta: '↑ 12% this month', color: 'blue' },
+          { label: 'Total Sent', value: String(quotes.length), delta: 'All quotes', color: 'blue' },
           { label: 'Pending Approval', value: String(pending), delta: 'Awaiting response', color: 'amber' },
           { label: 'Accepted', value: String(accepted), delta: `${Math.round((accepted / Math.max(1, quotes.length)) * 100)}% rate`, color: 'emerald' },
           { label: 'Total Value', value: fmt(totalValue), delta: 'Across open quotes', color: 'purple' },
@@ -124,53 +202,55 @@ export default function QuotesPage() {
 
       {/* Table */}
       <div className="card table-wrap" style={{ padding: 0, overflow: 'hidden' }}>
-        <table>
-          <thead>
-            <tr>
-              <th>Quote #</th><th>Client</th><th>Amount</th><th>Sent On</th><th>Expires</th><th>Status</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(q => (
-              <tr key={q.id} style={{ cursor: 'pointer' }} onClick={() => openEdit(q)}>
-                <td><span style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace' }}>{q.id}</span></td>
-                <td style={{ fontWeight: 500 }}>{q.client}</td>
-                <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontVariantNumeric: 'tabular-nums' }}>{q.currency || '₹'}{q.amount.toLocaleString('en-IN')}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{q.sentOn}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{q.expires}</td>
-                <td><span className={STATUS_BADGE[q.status]}>{q.status}</span></td>
-                <td>
-                  <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
-                    <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => openEdit(q)}>
-                      <i className="ti ti-edit"></i> Edit
-                    </button>
-                    {q.status === 'Accepted' && (
-                      <button className="btn btn-ghost" onClick={(e) => { e.stopPropagation(); openInvoice(q); }} style={{ padding: '4px 10px', fontSize: 12, color: 'var(--blue)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <i className="ti ti-file-invoice"></i> Invoice
-                      </button>
-                    )}
-                    {q.status === 'Expired' && (
-                      <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <i className="ti ti-refresh"></i> Resend
-                      </button>
-                    )}
-                  </div>
-                </td>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading quotes...</div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Quote #</th><th>Client</th><th>Amount</th><th>Sent On</th><th>Expires</th><th>Status</th><th>Actions</th>
               </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No quotes match your filters.</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map(q => (
+                <tr key={q.id} style={{ cursor: 'pointer' }} onClick={() => openEdit(q)}>
+                  <td><span style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 11 }}>{q.id.slice(0, 8)}</span></td>
+                  <td style={{ fontWeight: 500 }}>{q.client}</td>
+                  <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontVariantNumeric: 'tabular-nums' }}>{q.currency || '₹'}{q.amount.toLocaleString('en-IN')}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{q.sentOn}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{q.expires}</td>
+                  <td><span className={STATUS_BADGE[q.status]}>{q.status}</span></td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
+                      <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => openEdit(q)}>
+                        <i className="ti ti-edit"></i> Edit
+                      </button>
+                      {q.status === 'Accepted' && (
+                        <button className="btn btn-ghost" onClick={(e) => { e.stopPropagation(); openInvoice(q); }} style={{ padding: '4px 10px', fontSize: 12, color: 'var(--blue)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <i className="ti ti-file-invoice"></i> Invoice
+                        </button>
+                      )}
+                      <button className="btn btn-ghost" onClick={(e) => { e.stopPropagation(); handleDelete(q.id); }} style={{ padding: '4px 10px', fontSize: 12, color: 'var(--rose)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <i className="ti ti-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No quotes match your filters.</td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Advanced Quote Builder Modal */}
       {isModalOpen && (
-        <QuoteBuilderModal 
-          initialQuote={editingQuote} 
-          onClose={() => setIsModalOpen(false)} 
-          onSave={handleSaveQuote} 
+        <QuoteBuilderModal
+          initialQuote={editingQuote}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveQuote}
         />
       )}
 
