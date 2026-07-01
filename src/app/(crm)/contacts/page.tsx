@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 type Contact = {
   id: string;
+  type: 'lead' | 'contact';
   name: string;
   company: string | null;
   role: string | null;
@@ -160,7 +161,7 @@ export default function ContactsPage() {
   const fetchContacts = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ type: 'contact', limit: '200' });
+      const params = new URLSearchParams({ limit: '200' });
       if (search) params.set('search', search);
       const res = await fetch(`/api/contacts?${params}`);
       const json = await res.json();
@@ -275,7 +276,7 @@ export default function ContactsPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Name</th><th>Role</th><th>Company</th><th>Email</th>
+                  <th>Name</th><th>Type</th><th>Role</th><th>Company</th><th>Email</th>
                   <th>Phone</th><th>Tags</th><th>Added</th>
                   <th style={{ textAlign: 'right', paddingRight: 12 }}>Actions</th>
                 </tr>
@@ -284,6 +285,14 @@ export default function ContactsPage() {
                 {filtered.map(c => (
                   <tr key={c.id}>
                     <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{c.name}</td>
+                    <td>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+                        textTransform: 'uppercase', letterSpacing: '0.03em',
+                        background: c.type === 'lead' ? 'var(--amber-dim)' : 'var(--emerald-dim)',
+                        color: c.type === 'lead' ? 'var(--amber)' : 'var(--emerald)',
+                      }}>{c.type}</span>
+                    </td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{c.role}</td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{c.company}</td>
                     <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{c.email}</td>
@@ -306,7 +315,7 @@ export default function ContactsPage() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No contacts found</td></tr>
+                  <tr><td colSpan={9} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No contacts found</td></tr>
                 )}
               </tbody>
             </table>
