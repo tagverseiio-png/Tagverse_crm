@@ -49,7 +49,7 @@ export function AddWidgetModal({ onClose }: AddWidgetModalProps) {
         
         <div style={{ padding: 32, overflowY: 'auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="custom-scrollbar hover-bg-wrapper">
           {widgets.map(w => (
-            <button key={w.type} onClick={() => handleAdd(w.type)} style={buttonStyle} className="hover-lift">
+            <button key={w.type} onClick={() => handleAdd(w.type as WidgetType)} style={buttonStyle} className="hover-lift">
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div style={{ width: 44, height: 44, borderRadius: 10, background: `var(--${w.color}-dim)`, color: `var(--${w.color}-light)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {w.icon}

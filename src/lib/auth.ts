@@ -5,7 +5,10 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // @auth/prisma-adapter bundles its own @auth/core whose Adapter type
+  // drifts slightly from next-auth's — harmless since session strategy
+  // is JWT and this adapter is only consulted for linked-account lookups.
+  adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
   // Credentials provider requires JWT sessions (no DB session row for this flow).
   session: { strategy: 'jwt' },
   pages: {

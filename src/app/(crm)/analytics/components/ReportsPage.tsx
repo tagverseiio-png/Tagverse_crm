@@ -5,10 +5,10 @@ import {
   ResponsiveContainer, CartesianGrid, Cell,
 } from 'recharts';
 import {
-  FileText, TrendingUp, DollarSign, Users, GitMerge,8 fr
-Filter, Download, Calendar, Play, Trash2, Plus, Clock,
+  FileText, TrendingUp, DollarSign, Users, GitMerge,
+  Filter, Download, Calendar, Play, Trash2, Plus, Clock,
   ChevronUp, ChevronDown, ChevronsUpDown, RefreshCw,
-  CheckCircle, AlertCircle, FileSpreadsheet, FilePdf,
+  CheckCircle, AlertCircle, FileSpreadsheet, File,
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -277,7 +277,7 @@ export default function ReportsPage() {
         {/* Export options inline */}
         <div style={{ display: 'flex', gap: 6 }}>
           {[
-            { label: 'PDF', icon: FilePdf },
+            { label: 'PDF', icon: File },
             { label: 'CSV', icon: FileText },
             { label: 'Excel', icon: FileSpreadsheet },
           ].map(ex => {
