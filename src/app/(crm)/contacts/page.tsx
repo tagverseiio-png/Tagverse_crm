@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 
 type Contact = {
   id: string;
-  type: 'lead' | 'contact';
   name: string;
   company: string | null;
   role: string | null;
@@ -147,10 +146,6 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState<FormState>({ ...emptyForm });
-  const [addErrors, setAddErrors] = useState<Record<string, string>>({});
-
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [editForm, setEditForm] = useState<FormState>({ ...emptyForm });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
@@ -181,27 +176,6 @@ export default function ContactsPage() {
     if (!f.email.trim()) e.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(f.email)) e.email = 'Invalid email';
     return e;
-  };
-
-  const handleAdd = async () => {
-    const e = validate(addForm);
-    if (Object.keys(e).length > 0) { setAddErrors(e); return; }
-    const res = await fetch('/api/contacts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...addForm,
-        type: 'contact',
-        tags: addForm.tags.split(',').map(t => t.trim()).filter(Boolean),
-      }),
-    });
-    if (res.ok) {
-      setShowAdd(false);
-      fetchContacts();
-    } else {
-      const json = await res.json().catch(() => ({}));
-      setAddErrors({ form: json.error || 'Failed to create contact' });
-    }
   };
 
   const openEdit = (c: Contact) => {
@@ -265,7 +239,6 @@ export default function ContactsPage() {
             style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px 8px 36px', color: 'var(--text-primary)', fontSize: 13, outline: 'none', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box' }} />
         </div>
         <div style={{ flex: 1 }} />
-        <button className="btn btn-primary" onClick={() => { setAddForm({ ...emptyForm }); setAddErrors({}); setShowAdd(true); }} style={{ whiteSpace: 'nowrap' }}>+ New Contact</button>
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -276,7 +249,7 @@ export default function ContactsPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Name</th><th>Type</th><th>Role</th><th>Company</th><th>Email</th>
+                  <th>Name</th><th>Role</th><th>Company</th><th>Email</th>
                   <th>Phone</th><th>Tags</th><th>Added</th>
                   <th style={{ textAlign: 'right', paddingRight: 12 }}>Actions</th>
                 </tr>
@@ -285,14 +258,6 @@ export default function ContactsPage() {
                 {filtered.map(c => (
                   <tr key={c.id}>
                     <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{c.name}</td>
-                    <td>
-                      <span style={{
-                        fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
-                        textTransform: 'uppercase', letterSpacing: '0.03em',
-                        background: c.type === 'lead' ? 'var(--amber-dim)' : 'var(--emerald-dim)',
-                        color: c.type === 'lead' ? 'var(--amber)' : 'var(--emerald)',
-                      }}>{c.type}</span>
-                    </td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{c.role}</td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{c.company}</td>
                     <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{c.email}</td>
@@ -315,7 +280,7 @@ export default function ContactsPage() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={9} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No contacts found</td></tr>
+                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No contacts found</td></tr>
                 )}
               </tbody>
             </table>
@@ -323,7 +288,6 @@ export default function ContactsPage() {
         )}
       </div>
 
-      {showAdd && <ContactModal title="+ New Contact" form={addForm} errors={addErrors} onChange={(k, v) => setAddForm(p => ({ ...p, [k]: v }))} onSubmit={handleAdd} onClose={() => setShowAdd(false)} submitLabel="Add Contact" />}
       {editContact && <ContactModal title={`✏️ Edit — ${editContact.name}`} form={editForm} errors={editErrors} onChange={(k, v) => setEditForm(p => ({ ...p, [k]: v }))} onSubmit={handleEdit} onClose={() => setEditContact(null)} submitLabel="Save Changes" />}
       {deleteContact && <DeleteConfirm contact={deleteContact} onConfirm={handleDelete} onClose={() => setDeleteContact(null)} />}
       {viewContact && <ViewModal contact={viewContact} onClose={() => setViewContact(null)} />}
