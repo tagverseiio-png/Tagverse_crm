@@ -110,6 +110,7 @@
 
 - Route protection uses **`src/proxy.ts`**, not `middleware.ts` — this Next.js version (16.2.9) renamed the middleware file convention to "Proxy" (confirmed via `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`). Anyone extending route protection later should keep using `proxy.ts`.
 - Prisma 7 uses `prisma.config.ts` (`defineConfig`) instead of a `package.json#prisma` key for schema path and seed command.
+- **Prisma 7 breaking change** (only surfaced once run on a real machine, since `prisma generate` couldn't run in this sandbox — see below): `datasource.url` is no longer allowed in `schema.prisma`. The connection URL now lives in `prisma.config.ts` (`datasource.url`, used by Migrate/CLI) and the runtime `PrismaClient` must be constructed with a driver adapter (`@prisma/adapter-pg`'s `PrismaPg`) instead of reading `DATABASE_URL` implicitly. `prisma.config.ts` does not auto-load `.env` (Prisma disables that internally), so it explicitly `import`s `dotenv/config` first. Fixed in `src/lib/db.ts`, `prisma/seed.ts`, `prisma.config.ts`, `prisma/schema.prisma`. A real `.env` (copied from `.env.example`, with a valid `DATABASE_URL`) must exist before running `prisma generate`/`migrate`/`dev`.
 - Seed script (`prisma/seed.ts`) is intentionally minimal for Phase 1 — one admin user (`admin@tagverse.com` / `password123`) and one `OrganizationSettings` row. Full `mockData.ts` → DB seeding is Phase 2+ work, once the CRM-core models (Company, Pipeline, etc.) exist.
 
 ## Known environment limitation (not a code defect)
