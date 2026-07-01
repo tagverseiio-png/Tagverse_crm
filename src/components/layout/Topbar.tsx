@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
+import { signOut } from 'next-auth/react';
 import { useTheme } from '@/components/ThemeProvider';
 import { chatHistoryInitial } from '@/lib/mockData';
 
@@ -198,7 +199,11 @@ export default function Topbar({ activePage }: Props) {
               </div>
               <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
 
-              <div style={{ padding: '8px 12px', fontSize: 13, color: 'var(--rose)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 10 }} className="dropdown-item hover-bg">
+              <div
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                style={{ padding: '8px 12px', fontSize: 13, color: 'var(--rose)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 10 }}
+                className="dropdown-item hover-bg"
+              >
                 <span>🚪</span>
                 <span>Sign out</span>
               </div>
