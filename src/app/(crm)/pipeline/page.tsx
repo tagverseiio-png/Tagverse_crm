@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { MessageSquare, Send } from 'lucide-react';
 
 import { pipelineWhatsAppActivity } from '@/lib/mockData';
@@ -9,7 +9,22 @@ function fmtVal(v: number) {
   return `₹${(v / 1000).toFixed(0)}K`;
 }
 
-type StageInfo = { key: string; label: string; color: string; headerColor: string };
+const STAGE_COLOR_PALETTE = [
+  { color: 'new', headerColor: '#3b82f6' },
+  { color: 'engaged', headerColor: '#7c5cbf' },
+  { color: 'qualified', headerColor: '#f59e0b' },
+  { color: 'proposal', headerColor: '#6366f1' },
+  { color: 'negotiation', headerColor: '#f97316' },
+  { color: 'won', headerColor: '#10b981' },
+  { color: 'lost', headerColor: '#f43f5e' },
+];
+
+function slugify(label: string) {
+  return label.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'stage';
+}
+
+type StageInfo = { id: string; key: string; label: string; color: string; headerColor: string; order: number };
+type PipelineOption = { id: string; name: string; icon: string | null };
 type PipelineDeal = {
   id: string;
   name: string;
@@ -43,11 +58,19 @@ function mapApiDeal(d: Record<string, unknown>): PipelineDeal {
 
 export default function PipelinePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pipelines, setPipelines] = useState<PipelineOption[]>([]);
   const [pipelineId, setPipelineId] = useState('');
   const [stages, setStages] = useState<StageInfo[]>([]);
   const [deals, setDeals] = useState<PipelineDeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'kanban' | 'list'>('kanban');
+  const [boardMenuOpen, setBoardMenuOpen] = useState(false);
+  const boardMenuRef = useRef<HTMLDivElement>(null);
+
+  // Drag state
+  const [draggedDealId, setDraggedDealId] = useState<string | null>(null);
+  const [draggedStageId, setDraggedStageId] = useState<string | null>(null);
+  const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
 
   // Fields for new / edit deal
   const [newDealName, setNewDealName] = useState('');
@@ -58,13 +81,23 @@ export default function PipelinePage() {
   const [editingDealId, setEditingDealId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const fetchPipeline = useCallback(async () => {
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (boardMenuRef.current && !boardMenuRef.current.contains(e.target as Node)) setBoardMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const fetchPipelineList = useCallback(async (preferId?: string) => {
     try {
       const res = await fetch('/api/pipelines');
       const json = await res.json();
       if (!res.ok || !Array.isArray(json.data)) { setLoading(false); return; }
       const raw: Record<string, unknown>[] = json.data;
-      const def = raw.find(p => p.isDefault) || raw[0];
+      setPipelines(raw.map(p => ({ id: p.id as string, name: p.name as string, icon: (p.icon as string) ?? null })));
+      const preferred = preferId ? raw.find(p => p.id === preferId) : null;
+      const def = preferred || raw.find(p => p.isDefault) || raw[0];
       if (!def) { setLoading(false); return; }
       setPipelineId(def.id as string);
       const rawStages = (def.stages as Record<string, unknown>[]) || [];
@@ -72,10 +105,12 @@ export default function PipelinePage() {
         rawStages
           .sort((a, b) => (a.order as number) - (b.order as number))
           .map(s => ({
+            id: s.id as string,
             key: s.key as string,
             label: s.label as string,
             color: (s.color as string) || 'new',
             headerColor: (s.headerColor as string) || '#3b82f6',
+            order: (s.order as number) ?? 0,
           }))
       );
     } catch {
@@ -97,8 +132,121 @@ export default function PipelinePage() {
     }
   }, []);
 
-  useEffect(() => { fetchPipeline(); }, [fetchPipeline]);
+  useEffect(() => { fetchPipelineList(); }, [fetchPipelineList]);
   useEffect(() => { if (pipelineId) fetchDeals(pipelineId); }, [pipelineId, fetchDeals]);
+
+  const switchPipeline = (id: string) => {
+    setPipelineId(id);
+    fetchPipelineList(id);
+  };
+
+  // ─── Board (Pipeline) management ───
+  const handleAddBoard = async () => {
+    const name = window.prompt('New board name:');
+    if (!name || !name.trim()) return;
+    const res = await fetch('/api/pipelines', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim(), stages: [{ key: 'new', label: 'New', color: 'new', headerColor: '#3b82f6', order: 0 }] }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      fetchPipelineList(json.data.id);
+    }
+    setBoardMenuOpen(false);
+  };
+
+  const handleRenameBoard = async () => {
+    const current = pipelines.find(p => p.id === pipelineId);
+    const name = window.prompt('Rename board:', current?.name ?? '');
+    if (!name || !name.trim()) return;
+    await fetch(`/api/pipelines/${pipelineId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim() }),
+    });
+    fetchPipelineList(pipelineId);
+    setBoardMenuOpen(false);
+  };
+
+  const handleDeleteBoard = async () => {
+    if (pipelines.length <= 1) { window.alert('You need at least one board.'); return; }
+    const current = pipelines.find(p => p.id === pipelineId);
+    if (!window.confirm(`Delete board "${current?.name}"? Deals in it will be unassigned from this pipeline.`)) return;
+    await fetch(`/api/pipelines/${pipelineId}`, { method: 'DELETE' });
+    setBoardMenuOpen(false);
+    fetchPipelineList();
+  };
+
+  // ─── Stage (column) management ───
+  const handleAddStage = async () => {
+    const label = window.prompt('New column name:');
+    if (!label || !label.trim()) return;
+    const palette = STAGE_COLOR_PALETTE[stages.length % STAGE_COLOR_PALETTE.length];
+    const res = await fetch(`/api/pipelines/${pipelineId}/stages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: `${slugify(label)}_${Date.now().toString(36)}`, label: label.trim(), ...palette }),
+    });
+    if (res.ok) fetchPipelineList(pipelineId);
+  };
+
+  const handleRenameStage = async (stage: StageInfo) => {
+    const label = window.prompt('Rename column:', stage.label);
+    if (!label || !label.trim() || label.trim() === stage.label) return;
+    await fetch(`/api/pipelines/stages/${stage.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: label.trim() }),
+    });
+    fetchPipelineList(pipelineId);
+  };
+
+  const handleDeleteStage = async (stage: StageInfo) => {
+    const dealsInStage = deals.filter(d => d.stage === stage.key).length;
+    const msg = dealsInStage > 0
+      ? `Delete column "${stage.label}"? ${dealsInStage} deal(s) in it will become unassigned.`
+      : `Delete column "${stage.label}"?`;
+    if (!window.confirm(msg)) return;
+    await fetch(`/api/pipelines/stages/${stage.id}`, { method: 'DELETE' });
+    fetchPipelineList(pipelineId);
+    fetchDeals(pipelineId);
+  };
+
+  // ─── Column drag-to-reorder ───
+  const handleStageDrop = async (targetStage: StageInfo) => {
+    if (!draggedStageId || draggedStageId === targetStage.id) { setDraggedStageId(null); return; }
+    const fromIdx = stages.findIndex(s => s.id === draggedStageId);
+    const toIdx = stages.findIndex(s => s.id === targetStage.id);
+    if (fromIdx === -1 || toIdx === -1) { setDraggedStageId(null); return; }
+    const reordered = [...stages];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+    const withOrder = reordered.map((s, i) => ({ ...s, order: i }));
+    setStages(withOrder);
+    setDraggedStageId(null);
+    await fetch(`/api/pipelines/${pipelineId}/stages`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(withOrder.map(s => ({ id: s.id, order: s.order }))),
+    });
+  };
+
+  // ─── Card drag-to-move ───
+  const handleCardDrop = async (targetStage: StageInfo) => {
+    setDragOverStageId(null);
+    if (!draggedDealId) return;
+    const deal = deals.find(d => d.id === draggedDealId);
+    setDraggedDealId(null);
+    if (!deal || deal.stage === targetStage.key) return;
+    setDeals(prev => prev.map(d => d.id === deal.id ? { ...d, stage: targetStage.key } : d));
+    await fetch(`/api/deals/${deal.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pipelineStageKey: targetStage.key }),
+    });
+    fetchDeals(pipelineId);
+  };
 
   const openModalForNew = (stageId: string) => {
     setNewDealName('');
@@ -167,6 +315,45 @@ export default function PipelinePage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+      {/* Board Selector */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {pipelines.map(p => (
+            <button
+              key={p.id}
+              onClick={() => switchPipeline(p.id)}
+              style={{
+                padding: '7px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8,
+                background: pipelineId === p.id ? 'var(--purple-dim)' : 'var(--bg-card)',
+                color: pipelineId === p.id ? 'var(--brand-accent)' : 'var(--text-muted)',
+                border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+              }}
+            >
+              {p.icon ?? '📋'} {p.name}
+            </button>
+          ))}
+        </div>
+        <div ref={boardMenuRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setBoardMenuOpen(o => !o)}
+            className="btn btn-ghost"
+            style={{ padding: '7px 12px', fontSize: 12 }}
+          >⋮ Board</button>
+          {boardMenuOpen && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0, marginTop: 6, width: 180,
+              background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10,
+              boxShadow: '0 12px 40px rgba(0,0,0,0.3)', zIndex: 200, padding: 6,
+              display: 'flex', flexDirection: 'column', gap: 2,
+            }}>
+              <button onClick={handleAddBoard} style={{ textAlign: 'left', padding: '8px 10px', fontSize: 12, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', borderRadius: 6 }} className="hover-bg">+ New Board</button>
+              <button onClick={handleRenameBoard} style={{ textAlign: 'left', padding: '8px 10px', fontSize: 12, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', borderRadius: 6 }} className="hover-bg">✏️ Rename Board</button>
+              <button onClick={handleDeleteBoard} style={{ textAlign: 'left', padding: '8px 10px', fontSize: 12, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--rose)', borderRadius: 6 }} className="hover-bg">🗑️ Delete Board</button>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
         {[
@@ -204,17 +391,46 @@ export default function PipelinePage() {
               <div style={{ display: 'flex', gap: 16, minWidth: 'max-content' }}>
                 {stages.map(col => {
                   const colDeals = dealsByStage(col.key);
+                  const isDragOver = dragOverStageId === col.id;
                   return (
-                    <div key={col.key} style={{ width: 300, flexShrink: 0 }}>
+                    <div
+                      key={col.id}
+                      style={{ width: 300, flexShrink: 0, opacity: draggedStageId === col.id ? 0.4 : 1 }}
+                      onDragOver={e => { e.preventDefault(); if (draggedDealId) setDragOverStageId(col.id); }}
+                      onDragLeave={() => { if (dragOverStageId === col.id) setDragOverStageId(null); }}
+                      onDrop={() => { if (draggedStageId) handleStageDrop(col); else if (draggedDealId) handleCardDrop(col); }}
+                    >
                       {/* Column Header */}
-                      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderTop: `3px solid ${col.headerColor}`, borderRadius: '10px 10px 0 0', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div
+                        draggable
+                        onDragStart={() => setDraggedStageId(col.id)}
+                        onDragEnd={() => setDraggedStageId(null)}
+                        style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderTop: `3px solid ${col.headerColor}`, borderRadius: '10px 10px 0 0', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'grab' }}
+                      >
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{col.label}</span>
-                        <span className={`pipeline-col-count ${col.color}`} style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8 }}>{colDeals.length}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span className={`pipeline-col-count ${col.color}`} style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8 }}>{colDeals.length}</span>
+                          <button onClick={() => handleRenameStage(col)} title="Rename column" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}>✏️</button>
+                          <button onClick={() => handleDeleteStage(col)} title="Delete column" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--rose)', fontSize: 12 }}>✕</button>
+                        </div>
                       </div>
                       {/* Deals */}
-                      <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 120 }}>
+                      <div style={{
+                        background: isDragOver ? 'var(--purple-dim)' : 'var(--bg-glass)',
+                        border: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`,
+                        borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '12px',
+                        display: 'flex', flexDirection: 'column', gap: 12, minHeight: 120, transition: 'background 0.15s, border-color 0.15s',
+                      }}>
                         {colDeals.map(deal => (
-                          <div key={deal.id} className="deal-card" style={{ position: 'relative', padding: '14px' }} onClick={() => openModalForEdit(deal)}>
+                          <div
+                            key={deal.id}
+                            className="deal-card"
+                            draggable
+                            onDragStart={() => setDraggedDealId(deal.id)}
+                            onDragEnd={() => { setDraggedDealId(null); setDragOverStageId(null); }}
+                            style={{ position: 'relative', padding: '14px', cursor: 'grab', opacity: draggedDealId === deal.id ? 0.4 : 1 }}
+                            onClick={() => openModalForEdit(deal)}
+                          >
                             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>{deal.name}</div>
                             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>{deal.company}</div>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -245,6 +461,18 @@ export default function PipelinePage() {
                     </div>
                   );
                 })}
+
+                {/* Add Column */}
+                <div style={{ width: 220, flexShrink: 0 }}>
+                  <button
+                    onClick={handleAddStage}
+                    style={{
+                      width: '100%', height: 52, border: '1px dashed var(--border)', borderRadius: 10,
+                      background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
+                      fontSize: 13, fontWeight: 600, fontFamily: 'Inter, sans-serif',
+                    }}
+                  >+ Add Column</button>
+                </div>
               </div>
             </div>
           )}
