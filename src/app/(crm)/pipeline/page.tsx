@@ -62,10 +62,10 @@ export default function PipelinePage() {
     try {
       const res = await fetch('/api/pipelines');
       const json = await res.json();
-      if (!json.success) return;
+      if (!res.ok || !Array.isArray(json.data)) { setLoading(false); return; }
       const raw: Record<string, unknown>[] = json.data;
       const def = raw.find(p => p.isDefault) || raw[0];
-      if (!def) return;
+      if (!def) { setLoading(false); return; }
       setPipelineId(def.id as string);
       const rawStages = (def.stages as Record<string, unknown>[]) || [];
       setStages(
@@ -79,7 +79,7 @@ export default function PipelinePage() {
           }))
       );
     } catch {
-      // silently fail
+      setLoading(false);
     }
   }, []);
 
@@ -89,7 +89,7 @@ export default function PipelinePage() {
     try {
       const res = await fetch(`/api/deals?pipelineId=${pid}&limit=200`);
       const json = await res.json();
-      if (json.success) setDeals((json.data as Record<string, unknown>[]).map(mapApiDeal));
+      if (res.ok && Array.isArray(json.data)) setDeals((json.data as Record<string, unknown>[]).map(mapApiDeal));
     } catch {
       // silently fail
     } finally {

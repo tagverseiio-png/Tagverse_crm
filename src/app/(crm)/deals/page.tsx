@@ -795,7 +795,7 @@ export default function DealsPage() {
     try {
       const res = await fetch('/api/pipelines');
       const json = await res.json();
-      if (!json.success) return;
+      if (!res.ok || !Array.isArray(json.data)) return;
       const raw: Record<string, unknown>[] = json.data;
       const opts: PipelineOption[] = raw.map(p => ({
         id: p.id as string,
@@ -837,7 +837,7 @@ export default function DealsPage() {
     try {
       const res = await fetch(`/api/deals?pipelineId=${pipelineId}&limit=200`);
       const json = await res.json();
-      if (json.success) {
+      if (res.ok && Array.isArray(json.data)) {
         setDeals((json.data as Record<string, unknown>[]).map(mapApiDeal));
       }
     } catch {

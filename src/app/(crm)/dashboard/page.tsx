@@ -131,7 +131,7 @@ export default function DashboardPage() {
     fetch('/api/dashboard/kpis')
       .then(r => r.json())
       .then(json => {
-        if (!json.success) return;
+        if (!json.data) return;
         const d = json.data;
         setKpis([
           { label: 'Total Leads', value: String(d.totalLeads), delta: 'All time', trend: 'up', color: 'purple', icon: '👤' },
