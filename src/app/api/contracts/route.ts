@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     if (search) {
       where.OR = [
         { client: { contains: search, mode: 'insensitive' } },
-        { id: { contains: search, mode: 'insensitive' } },
+        { template: { contains: search, mode: 'insensitive' } },
       ];
     }
 
