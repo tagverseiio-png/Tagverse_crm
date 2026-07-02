@@ -72,6 +72,32 @@ export default function PaymentsPage() {
   const txnCount = payments.length;
   const failedCount = payments.filter(p => p.status === 'Failed').length;
 
+  const recentActivity = payments.slice(0, 4).map(p => {
+    const isReceived = p.status === 'Received';
+    const isFailed = p.status === 'Failed';
+    return {
+      id: p.id,
+      title: `${fmt(p.amount)} ${p.status.toLowerCase()} — ${p.client}`,
+      meta: `${p.invoiceId} · ${p.date} · ${p.method}`,
+      icon: isReceived ? (p.method === 'UPI' ? 'ti-device-mobile' : p.method === 'Cheque' ? 'ti-receipt' : 'ti-building-bank') : isFailed ? 'ti-alert-circle' : 'ti-clock',
+      iconBg: isReceived ? 'var(--emerald-dim)' : isFailed ? 'var(--rose-dim)' : 'var(--amber-dim)',
+      iconColor: isReceived ? 'var(--emerald)' : isFailed ? 'var(--rose)' : 'var(--amber)',
+    };
+  });
+
+  const methodTotals = payments.filter(p => p.status === 'Received').reduce((acc, p) => {
+    acc[p.method] = (acc[p.method] || 0) + p.amount;
+    return acc;
+  }, {} as Record<string, number>);
+  
+  const totalReceived = Object.values(methodTotals).reduce((a, b) => a + b, 0) || 1;
+
+  const collectionMethods = [
+    { label: 'UPI / Online', amount: fmt(methodTotals['UPI'] || 0), pct: ((methodTotals['UPI'] || 0) / totalReceived) * 100, color: 'var(--emerald)' },
+    { label: 'NEFT / Wire', amount: fmt(methodTotals['NEFT'] || 0), pct: ((methodTotals['NEFT'] || 0) / totalReceived) * 100, color: 'var(--blue)' },
+    { label: 'Cheque', amount: fmt(methodTotals['Cheque'] || 0), pct: ((methodTotals['Cheque'] || 0) / totalReceived) * 100, color: 'var(--amber)' },
+  ].sort((a, b) => b.pct - a.pct);
+
   const handleRecord = async () => {
     if (!mClient.trim()) return;
     const res = await fetch('/api/payments', {
@@ -128,8 +154,8 @@ export default function PaymentsPage() {
         <div className="card" style={{ padding: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>Recent Activity</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {RECENT_ACTIVITY.map((a, i) => (
-              <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '12px 0', borderBottom: i < RECENT_ACTIVITY.length - 1 ? '1px solid var(--border)' : 'none' }}>
+            {recentActivity.length > 0 ? recentActivity.map((a, i) => (
+              <div key={a.id} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '12px 0', borderBottom: i < recentActivity.length - 1 ? '1px solid var(--border)' : 'none' }}>
                 <div style={{ width: 36, height: 36, borderRadius: '50%', background: a.iconBg, color: a.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>
                   <i className={`ti ${a.icon}`}></i>
                 </div>
@@ -138,7 +164,9 @@ export default function PaymentsPage() {
                   <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{a.meta}</div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div style={{ padding: '12px 0', color: 'var(--text-muted)' }}>No recent activity.</div>
+            )}
           </div>
         </div>
 
@@ -146,7 +174,7 @@ export default function PaymentsPage() {
         <div className="card" style={{ padding: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>Collection by Method</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {COLLECTION_METHODS.map(m => (
+            {collectionMethods.map(m => (
               <div key={m.label}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
                   <span style={{ color: 'var(--text-secondary)' }}>{m.label}</span>

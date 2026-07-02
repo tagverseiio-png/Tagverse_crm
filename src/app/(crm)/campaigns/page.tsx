@@ -1,11 +1,12 @@
 'use client';
-import { useState } from 'react';
-import { campaignsKpis, campaignsInitial, campaignStats, campaignChannelBadge, campaignStatusBadge } from '@/lib/mockData';
+import { useState, useEffect } from 'react';
+import { campaignsKpis, campaignStats, campaignChannelBadge, campaignStatusBadge } from '@/lib/mockData';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Campaign = {
-  name: string; channel: string; budget: string; spent: string;
-  dates: string; status: string; badgeChannel: string; badgeStatus: string;
+  id: string; name: string; channel: string; budget: string; spent: string;
+  startDate?: string; endDate?: string; dates: string; status: string; 
+  badgeChannel: string; badgeStatus: string;
 };
 
 // ─── Modal Component ──────────────────────────────────────────────────────────
@@ -64,7 +65,8 @@ const labelStyle = {
 export default function CampaignsPage() {
   const kpis = campaignsKpis;
 
-  const [campaigns, setCampaigns] = useState(campaignsInitial);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [showNewModal, setShowNewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -79,46 +81,64 @@ export default function CampaignsPage() {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
-  const handleCreate = () => {
+  const fetchCampaigns = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/campaigns');
+      const json = await res.json();
+      setCampaigns((json.data || []).map((c: any) => ({
+        ...c,
+        dates: c.startDate && c.endDate ? `${c.startDate} – ${c.endDate}` : 'TBD',
+        badgeChannel: campaignChannelBadge[c.channel] || 'blue',
+        badgeStatus: campaignStatusBadge[c.status] || 'amber',
+      })));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
+
+  const handleCreate = async () => {
     if (!form.name.trim() || !form.budget.trim()) return;
-    const channelBadge = campaignChannelBadge;
-    const statusBadge = campaignStatusBadge;
-    setCampaigns(prev => [...prev, {
-      name: form.name, channel: form.channel, budget: form.budget, spent: '—',
-      dates: form.startDate && form.endDate ? `${form.startDate} – ${form.endDate}` : 'TBD',
-      status: form.status, badgeChannel: channelBadge[form.channel] || 'blue',
-      badgeStatus: statusBadge[form.status] || 'amber',
-    }]);
+    await fetch('/api/campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    });
     setForm({ name: '', channel: 'Email', budget: '', startDate: '', endDate: '', status: 'Draft' });
     setShowNewModal(false);
     showToast('Campaign created successfully!');
+    fetchCampaigns();
   };
 
   const handleEdit = (i: number) => {
     const c = campaigns[i];
-    const [start, end] = c.dates.includes('–') ? c.dates.split('–').map(s => s.trim()) : ['', ''];
-    setForm({ name: c.name, channel: c.channel, budget: c.budget, startDate: start, endDate: end, status: c.status });
+    setForm({ name: c.name, channel: c.channel, budget: c.budget, startDate: c.startDate || '', endDate: c.endDate || '', status: c.status });
     setEditingIdx(i);
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editingIdx === null) return;
-    const channelBadge = campaignChannelBadge;
-    const statusBadge = campaignStatusBadge;
-    setCampaigns(prev => prev.map((c, i) => i === editingIdx ? {
-      ...c, name: form.name, channel: form.channel, budget: form.budget,
-      dates: form.startDate && form.endDate ? `${form.startDate} – ${form.endDate}` : c.dates,
-      status: form.status, badgeChannel: channelBadge[form.channel] || 'blue',
-      badgeStatus: statusBadge[form.status] || 'amber',
-    } : c));
+    const c = campaigns[editingIdx];
+    await fetch(`/api/campaigns/${c.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    });
     setShowEditModal(false); setEditingIdx(null);
     showToast('Campaign updated!');
+    fetchCampaigns();
   };
 
-  const handleDelete = (i: number) => {
-    setCampaigns(prev => prev.filter((_, idx) => idx !== i));
+  const handleDelete = async (i: number) => {
+    const c = campaigns[i];
+    await fetch(`/api/campaigns/${c.id}`, { method: 'DELETE' });
     showToast('Campaign deleted.');
+    fetchCampaigns();
   };
 
   const filtered = campaigns.filter(c => {

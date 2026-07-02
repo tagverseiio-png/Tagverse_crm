@@ -438,3 +438,36 @@ model AEOEntry {
   visibilityScore Int
   checkedAt      DateTime @default(now())
 }
+
+// Marketing - Campaigns
+model Campaign {
+  id          String   @id @default(uuid())
+  name        String
+  channel     String   @default("Email")
+  budget      String   @default("0")
+  startDate   String?
+  endDate     String?
+  status      String   @default("Draft")
+  spent       String   @default("—")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  contentItems ContentItem[]
+}
+
+// Marketing - Content Hub
+model ContentItem {
+  id          String   @id @default(uuid())
+  title       String
+  type        String   @default("Blog")
+  campaignId  String?
+  campaign    Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  funnelStage String   @default("Awareness")
+  persona     String   @default("Customer")
+  author      String   @default("Unknown")
+  status      String   @default("Draft")
+  priority    String   @default("Medium")
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -140,7 +140,8 @@ const INITIAL_CONTENT_ITEMS: ContentItem[] = [
 // ── Component ────────────────────────────────────────────────────────────────
 export default function ContentHubPage() {
   const [activeTab, setActiveTab] = useState<'pipeline' | 'library' | 'approvals'>('pipeline');
-  const [contentItems, setContentItems] = useState<ContentItem[]>(INITIAL_CONTENT_ITEMS);
+  const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filters
@@ -166,6 +167,27 @@ export default function ContentHubPage() {
   const [activeDetailTab, setActiveDetailTab] = useState<'general' | 'collaboration' | 'timeline'>('general');
   const [newCommentText, setNewCommentText] = useState('');
 
+  // ── API Actions ────────────────────────────────────────────────────────────
+  const fetchContent = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/content');
+      const json = await res.json();
+      setContentItems((json.data || []).map((i: any) => ({
+        ...i,
+        comments: i.comments || [],
+        history: i.history || [],
+        dueDate: i.dueDate || i.createdAt.split('T')[0],
+      })));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useMemo(() => {
+    fetchContent();
+  }, []);
+
   // ── Derived ────────────────────────────────────────────────────────────────
   const filteredItems = useMemo(() => {
     return contentItems.filter(item => {
@@ -185,12 +207,21 @@ export default function ContentHubPage() {
   const getTypeData = (typeName: string) => CONTENT_TYPES.find(t => t.id === typeName) || CONTENT_TYPES[0];
 
   // ── Handlers ───────────────────────────────────────────────────────────────
-  const handleUpdateStatus = (itemId: string, newStatus: string) =>
-    setContentItems(prev => prev.map(item => item.id === itemId ? { ...item, status: newStatus } : item));
+  const handleUpdateStatus = async (itemId: string, newStatus: string) => {
+    const item = contentItems.find(i => i.id === itemId);
+    if (!item) return;
+    await fetch(`/api/content/${itemId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...item, status: newStatus }),
+    });
+    fetchContent();
+  };
 
-  const handleDelete = (id: string) => {
-    setContentItems(prev => prev.filter(i => i.id !== id));
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/content/${id}`, { method: 'DELETE' });
     setDrawerOpen(false);
+    fetchContent();
   };
 
   const openModalForNew = (stageId = 'Ideas') => {
@@ -211,25 +242,29 @@ export default function ContentHubPage() {
     setDrawerOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!modalTitle.trim()) return;
+    const body = {
+      title: modalTitle, type: modalType, campaignId: null, // would need mapping or just string
+      funnelStage: 'Awareness', persona: 'Customer',
+      author: 'Current User', status: modalStage, priority: modalPriority,
+      description: modalDesc,
+    };
     if (editingId) {
-      setContentItems(prev => prev.map(item =>
-        item.id === editingId ? { ...item, title: modalTitle, type: modalType, campaign: modalCampaign, priority: modalPriority, status: modalStage, description: modalDesc } : item
-      ));
+      await fetch(`/api/content/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
     } else {
-      setContentItems(prev => [...prev, {
-        id: `cnt-${Math.random().toString(36).substr(2, 9)}`,
-        title: modalTitle, type: modalType, campaign: modalCampaign,
-        funnelStage: 'Awareness', persona: 'Customer',
-        author: 'Current User', owner: 'Current User',
-        lastEdited: new Date().toISOString().split('T')[0],
-        status: modalStage, priority: modalPriority,
-        dueDate: new Date().toISOString().split('T')[0],
-        description: modalDesc, comments: [], history: []
-      }]);
+      await fetch('/api/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
     }
     setIsModalOpen(false);
+    fetchContent();
   };
 
   const handleApprove = (id: string) => {

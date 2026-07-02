@@ -16,6 +16,7 @@ export function apiError(message: string, status = 400) {
 }
 
 export function apiErrorFromUnknown(error: unknown) {
+  console.error("API ERROR:", error);
   if (error instanceof ZodError) {
     return apiError(error.issues.map((issue) => issue.message).join(', '), 422);
   }

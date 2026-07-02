@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { socialKpis, socialPlatforms, socialPendingPosts } from '@/lib/mockData';
+import { useState, useEffect } from 'react';
+import { socialKpis, socialPlatforms } from '@/lib/mockData';
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
@@ -52,13 +52,14 @@ const labelStyle = {
   textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: 6,
 };
 
-type PendingPost = { platform: string; colorText: string; text: string };
+type PendingPost = { id: string; platform: string; colorText: string; text: string };
 
 export default function SocialMediaPage() {
   const kpis = socialKpis;
   const platforms = socialPlatforms;
 
-  const [pending, setPending] = useState<PendingPost[]>(socialPendingPosts);
+  const [pending, setPending] = useState<PendingPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [showNewPost, setShowNewPost] = useState(false);
   const [toast, setToast] = useState('');
@@ -74,28 +75,69 @@ export default function SocialMediaPage() {
     LinkedIn: 'var(--blue-light)', Instagram: 'var(--rose-light)', 'Twitter / X': 'var(--emerald-light)'
   };
 
-  const handlePost = () => {
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/social?status=scheduled');
+      const json = await res.json();
+      setPending((json.data || []).map((p: any) => ({
+        id: p.id,
+        platform: p.platform,
+        colorText: platformColorMap[p.platform] || 'var(--blue-light)',
+        text: p.content,
+      })));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const handlePost = async () => {
     if (!postForm.text.trim()) return;
+    const dt = postForm.mode === 'schedule' && postForm.scheduleDate && postForm.scheduleTime 
+      ? new Date(`${postForm.scheduleDate}T${postForm.scheduleTime}`) 
+      : new Date();
+      
+    await fetch('/api/social', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        platform: postForm.platform,
+        content: postForm.text,
+        scheduledAt: dt.toISOString(),
+        status: postForm.mode === 'schedule' ? 'scheduled' : 'published',
+      })
+    });
+
     if (postForm.mode === 'schedule') {
-      setPending(prev => [...prev, { platform: postForm.platform, colorText: platformColorMap[postForm.platform] || 'var(--blue-light)', text: postForm.text }]);
       showToast(`Post scheduled for ${postForm.platform}!`);
     } else {
       showToast(`Post published to ${postForm.platform}!`);
     }
     setPostForm({ platform: 'LinkedIn', text: '', scheduleDate: '', scheduleTime: '', mode: 'now' });
     setShowNewPost(false);
+    fetchPosts();
   };
 
-  const handleApprove = (i: number) => {
+  const handleApprove = async (i: number) => {
     const p = pending[i];
-    setPending(prev => prev.filter((_, idx) => idx !== i));
+    await fetch(`/api/social/${p.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'published' })
+    });
     showToast(`Post approved & published on ${p.platform}!`);
+    fetchPosts();
   };
 
-  const handleReject = (i: number) => {
+  const handleReject = async (i: number) => {
     const p = pending[i];
-    setPending(prev => prev.filter((_, idx) => idx !== i));
+    await fetch(`/api/social/${p.id}`, { method: 'DELETE' });
     showToast(`Post rejected on ${p.platform}.`, 'var(--rose)');
+    fetchPosts();
   };
 
   return (

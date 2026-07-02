@@ -1,11 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   type ScheduledEvent,
   marketingCalendarChannelColor as CHANNEL_COLOR,
   marketingCalendarChannelBadge as CHANNEL_BADGE,
   marketingCalendarAuthors as AUTHORS,
-  marketingCalendarEvents,
 } from '@/lib/mockData';
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
@@ -63,7 +62,8 @@ export default function MarketingCalendarPage() {
   const [currentMonth] = useState('June 2026');
   const [selectedDate, setSelectedDate] = useState<number>(24);
 
-  const [events, setEvents] = useState<ScheduledEvent[]>(marketingCalendarEvents);
+  const [events, setEvents] = useState<ScheduledEvent[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -80,6 +80,32 @@ export default function MarketingCalendarPage() {
   const showToast = (msg: string, color = 'var(--emerald)') => {
     setToast(msg); setToastColor(color); setTimeout(() => setToast(''), 3000);
   };
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/calendar');
+      const json = await res.json();
+      // map the unified calendar event to this page's ScheduledEvent format if necessary
+      // For now we map basic properties
+      setEvents((json.data || []).map((e: any) => ({
+        id: e.id,
+        title: e.title,
+        date: e.date, // e.g. "2026-06-25"
+        time: e.time,
+        channel: e.type === 'social' ? 'Social' : e.type === 'meeting' ? 'Zoom' : 'Email',
+        author: AUTHORS[0],
+        type: e.type,
+        color: e.color,
+      })));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   // Calendar data
   const daysInMonth = 30;
