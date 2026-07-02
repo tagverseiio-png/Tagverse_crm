@@ -128,15 +128,15 @@ export default function LoginPage() {
             </div>
             Sign in with Google
           </button>
-          
+
           <button className={styles.ssoBtn}>
             <div className={`${styles.ssoIcon} ${styles.ssoIconSquare}`}>
-               <div className={styles.msGrid}>
-                 <div style={{ backgroundColor: '#f25022' }}></div>
-                 <div style={{ backgroundColor: '#7fba00' }}></div>
-                 <div style={{ backgroundColor: '#00a4ef' }}></div>
-                 <div style={{ backgroundColor: '#ffb900' }}></div>
-               </div>
+              <div className={styles.msGrid}>
+                <div style={{ backgroundColor: '#f25022' }}></div>
+                <div style={{ backgroundColor: '#7fba00' }}></div>
+                <div style={{ backgroundColor: '#00a4ef' }}></div>
+                <div style={{ backgroundColor: '#ffb900' }}></div>
+              </div>
             </div>
             Sign in with Microsoft
           </button>
