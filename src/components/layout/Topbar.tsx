@@ -10,7 +10,7 @@ const pageInfo: Record<string, { title: string; sub: string }> = {
   leads: { title: 'Leads', sub: 'Manage all lead scoring and sources' },
   pipeline: { title: 'Pipeline', sub: 'Deal stages from New Enquiry to Closed Win' },
   deals: { title: 'Deals', sub: 'All active and historical deals' },
-  quotes: { title: 'Quotes', sub: 'Create and send proposals with line items' },
+  quotes: { title: 'Quotation', sub: 'Create and send proposals with line items' },
   invoices: { title: 'Invoices', sub: 'Track billing, payment status and overdue' },
   contracts: { title: 'Contracts', sub: 'Manage signed contracts and e-signatures' },
   payments: { title: 'Payments', sub: 'Payment history and Stripe integration' },
@@ -265,8 +265,8 @@ export default function Topbar({ activePage }: Props) {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
                 <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>History</h2>
-                <button onClick={() => handleLoadChat([])} style={{ 
-                  background: '#5452F6', 
+                <button onClick={() => handleLoadChat([])} style={{
+                  background: '#5452F6',
                   color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px',
                   fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
                   boxShadow: '0 2px 8px rgba(84, 82, 246, 0.25)'
@@ -278,17 +278,17 @@ export default function Topbar({ activePage }: Props) {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {chatHistory.map((item) => (
-                  <div 
-                    key={item.id} 
+                  <div
+                    key={item.id}
                     onMouseLeave={() => setActiveDropdown(null)}
                     onClick={() => handleLoadChat(item.messages as any)}
-                    style={{ 
+                    style={{
                       padding: '12px 14px', background: 'var(--bg-card)', border: '1px solid var(--border)',
                       borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
                       position: 'relative', overflow: 'visible'
                     }} className="hover-bg chat-history-item">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                    
+
                     {editingHistoryId === item.id ? (
                       <input
                         type="text"
@@ -314,25 +314,25 @@ export default function Topbar({ activePage }: Props) {
                     ) : (
                       <span style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{item.title}</span>
                     )}
-                    
-                    <button 
+
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveDropdown(activeDropdown === item.id ? null : item.id);
                       }}
-                      style={{ 
+                      style={{
                         background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
                         padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }} 
-                      className="hover-opacity" 
+                      }}
+                      className="hover-opacity"
                       title="Options"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
                     </button>
 
                     {activeDropdown === item.id && (
                       <div style={{
-                        position: 'absolute', right: 8, top: 32, background: 'var(--bg-card)', 
+                        position: 'absolute', right: 8, top: 32, background: 'var(--bg-card)',
                         border: '1px solid var(--border)', borderRadius: 6, padding: 4, zIndex: 100,
                         boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', minWidth: 100
                       }}>
@@ -537,7 +537,7 @@ export default function Topbar({ activePage }: Props) {
 
               {/* Input Area */}
               <div style={{ padding: '24px', display: 'flex', justifyContent: 'center' }}>
-                <div 
+                <div
                   onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                   onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
                   onDrop={(e) => {
@@ -554,16 +554,16 @@ export default function Topbar({ activePage }: Props) {
                     background: isDragging ? 'rgba(123, 47, 255, 0.05)' : 'var(--bg-card)',
                     borderRadius: 16,
                     border: isDragging ? '2px dashed var(--purple)' : (isInputFocused ? '1px solid rgba(123, 47, 255, 0.25)' : '1px solid rgba(123, 47, 255, 0.08)'),
-                  padding: '16px 20px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  minHeight: 130,
-                  transform: isInputFocused ? 'translateY(-2px)' : 'translateY(0)',
-                  boxShadow: isInputFocused
-                    ? '0 20px 50px rgba(123, 47, 255, 0.2), 0 10px 20px rgba(0, 0, 0, 0.05)'
-                    : '0 8px 30px rgba(123, 47, 255, 0.04)',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}>
+                    padding: '16px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: 130,
+                    transform: isInputFocused ? 'translateY(-2px)' : 'translateY(0)',
+                    boxShadow: isInputFocused
+                      ? '0 20px 50px rgba(123, 47, 255, 0.2), 0 10px 20px rgba(0, 0, 0, 0.05)'
+                      : '0 8px 30px rgba(123, 47, 255, 0.04)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}>
                   {uploadedFile && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'var(--bg-main)', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 12, width: 'fit-content' }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
@@ -606,10 +606,10 @@ export default function Topbar({ activePage }: Props) {
                     }}
                   />
                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12, marginTop: 12 }}>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      style={{ display: 'none' }} 
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      style={{ display: 'none' }}
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
                           setUploadedFile(e.target.files[0]);

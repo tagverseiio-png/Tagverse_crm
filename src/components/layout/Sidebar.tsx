@@ -35,7 +35,7 @@ const navGroups = [
     label: 'Revenue Hub',
     icon: <CircleDollarSign size={18} />,
     items: [
-      { id: 'quotes', icon: <FileText size={16} />, label: 'Quotes', path: '/quotes' },
+      { id: 'quotes', icon: <FileText size={16} />, label: 'Quotation', path: '/quotes' },
       { id: 'invoices', icon: <Receipt size={16} />, label: 'Invoices', path: '/invoices' },
       { id: 'contracts', icon: <PenTool size={16} />, label: 'Contracts', path: '/contracts' },
       { id: 'payments', icon: <CreditCard size={16} />, label: 'Payments', path: '/payments' },
@@ -120,17 +120,17 @@ export default function Sidebar() {
     >
       <div className="sidebar-logo">
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img 
-            src="/logo.png" 
-            alt="Tagverse.io Logo" 
-            style={{ 
-              width: isCollapsed ? 32 : 40, 
-              height: isCollapsed ? 32 : 40, 
+          <img
+            src="/logo.png"
+            alt="Tagverse.io Logo"
+            style={{
+              width: isCollapsed ? 32 : 40,
+              height: isCollapsed ? 32 : 40,
               borderRadius: '50%',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               objectFit: 'contain',
               background: '#ffffff'
-            }} 
+            }}
           />
           <div style={{
             opacity: isCollapsed ? 0 : 1,

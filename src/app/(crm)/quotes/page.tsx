@@ -162,7 +162,7 @@ export default function QuotesPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div className="section-title" style={{ fontSize: 22, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <i className="ti ti-file-description" style={{ color: 'var(--blue)', fontSize: 24 }}></i> Quotes
+            <i className="ti ti-file-description" style={{ color: 'var(--blue)', fontSize: 24 }}></i> Quotation
           </div>
           <div className="section-sub" style={{ fontSize: 13, marginTop: 4 }}>Manage proposals sent to prospects and clients.</div>
         </div>
