@@ -410,7 +410,7 @@ export default function PipelinePage() {
                         draggable
                         onDragStart={() => setDraggedStageId(col.id)}
                         onDragEnd={() => setDraggedStageId(null)}
-                        style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderTop: `3px solid ${col.headerColor}`, borderRadius: '10px 10px 0 0', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'grab' }}
+                        style={{ background: 'var(--bg-card)', borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)', borderTop: `3px solid ${col.headerColor}`, borderRadius: '10px 10px 0 0', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'grab' }}
                       >
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{col.label}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -422,7 +422,9 @@ export default function PipelinePage() {
                       {/* Deals */}
                       <div style={{
                         background: isDragOver ? 'var(--purple-dim)' : 'var(--bg-glass)',
-                        border: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`,
+                        borderRight: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`,
+                        borderBottom: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`,
+                        borderLeft: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`,
                         borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '12px',
                         display: 'flex', flexDirection: 'column', gap: 12, minHeight: 120, transition: 'background 0.15s, border-color 0.15s',
                       }}>

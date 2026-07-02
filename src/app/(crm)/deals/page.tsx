@@ -1466,7 +1466,9 @@ export default function DealsPage() {
                   {/* Column Header */}
                   <div style={{
                     background: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
+                    borderRight: '1px solid var(--border)',
+                    borderBottom: '1px solid var(--border)',
+                    borderLeft: '1px solid var(--border)',
                     borderTop: `3px solid ${cfg.headerColor}`,
                     borderRadius: '10px 10px 0 0',
                     padding: '12px 14px',
@@ -1487,7 +1489,9 @@ export default function DealsPage() {
                   {/* Deal Cards */}
                   <div style={{
                     background: 'var(--bg-glass)',
-                    border: '1px solid var(--border)',
+                    borderRight: '1px solid var(--border)',
+                    borderBottom: '1px solid var(--border)',
+                    borderLeft: '1px solid var(--border)',
                     borderTop: 'none',
                     borderRadius: '0 0 10px 10px',
                     padding: '8px',
