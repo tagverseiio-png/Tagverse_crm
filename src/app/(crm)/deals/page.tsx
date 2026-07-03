@@ -383,7 +383,7 @@ type DealFormState = typeof emptyDealForm;
 const sourceOptions = ['Meta Ads', 'Website Form', 'Referral', 'LinkedIn', 'LinkedIn DM', 'Cold Email', 'Other'];
 
 function DealFormModal({
-  title, form, errors, onChange, onSubmit, onClose, submitLabel, pipelinesList, stageConfig,
+  title, form, errors, onChange, onSubmit, onClose, submitLabel, pipelinesList, stageConfig, onView, onDelete,
 }: {
   title: string;
   form: DealFormState;
@@ -394,6 +394,8 @@ function DealFormModal({
   submitLabel: string;
   pipelinesList: PipelineOption[];
   stageConfig: PipelineStageConfig;
+  onView?: () => void;
+  onDelete?: () => void;
 }) {
   const inputStyle = (key: string) => ({
     background: 'var(--bg-secondary)',
@@ -564,9 +566,19 @@ function DealFormModal({
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '12px 24px 20px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <button onClick={onClose} className="btn btn-ghost">Cancel</button>
-          <button onClick={onSubmit} className="btn btn-primary">{submitLabel}</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 24px 20px', borderTop: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {onView && (
+              <button onClick={onView} className="btn btn-ghost" style={{ fontSize: 12, padding: '6px 14px' }}>👁 View</button>
+            )}
+            {onDelete && (
+              <button onClick={onDelete} style={{ fontSize: 12, padding: '6px 14px', background: 'var(--rose-dim)', color: 'var(--rose)', border: '1px solid var(--rose)', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>🗑️ Delete</button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={onClose} className="btn btn-ghost">Cancel</button>
+            <button onClick={onSubmit} className="btn btn-primary">{submitLabel}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1446,22 +1458,11 @@ export default function DealsPage() {
                           }} title={d.ownerFull}>{d.owner}</div>
                         </td>
                         <td><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.source}</span></td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-                            <button className="btn btn-ghost" onClick={() => setViewDeal(d)} style={{ padding: '4px 10px', fontSize: 11 }}>View</button>
-                            <button className="btn btn-ghost" onClick={() => openEdit(d)} style={{ padding: '4px 10px', fontSize: 11 }}>Edit</button>
-                            <button
-                              onClick={() => setDeleteDeal(d)}
-                              style={{
-                                padding: '4px 10px', fontSize: 11,
-                                background: 'rgba(239,68,68,0.1)',
-                                color: 'var(--rose)',
-                                border: '1px solid var(--rose)',
-                                borderRadius: 7, cursor: 'pointer',
-                                fontFamily: 'Inter, sans-serif', fontWeight: 600,
-                              }}
-                            >Delete</button>
-                          </div>
+                        <td style={{ textAlign: 'right', paddingRight: 12 }}>
+                          <button
+                            onClick={() => openEdit(d)}
+                            style={{ padding: '4px 10px', fontSize: 12, background: 'var(--purple-dim)', color: 'var(--brand-accent)', border: '1px solid var(--border)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}
+                          >⋯</button>
                         </td>
                       </tr>
                     );
@@ -1602,6 +1603,8 @@ export default function DealsPage() {
           submitLabel={saving ? 'Saving...' : editingDeal ? "Save Changes" : "Create Deal"}
           pipelinesList={pipelinesList}
           stageConfig={stageConfig}
+          onView={editingDeal ? () => { setViewDeal(editingDeal); setShowDealForm(false); } : undefined}
+          onDelete={editingDeal ? () => { setDeleteDeal(editingDeal); setShowDealForm(false); } : undefined}
         />
       )}
 
