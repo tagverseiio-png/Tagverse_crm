@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
     const activity = await prisma.activity.create({
       data: {
         ...parsed.data,
+        metadata: parsed.data.metadata ? (parsed.data.metadata as any) : undefined,
         createdById: session!.user.id,
       },
     });

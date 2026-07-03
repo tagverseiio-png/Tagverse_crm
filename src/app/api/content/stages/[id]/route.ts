@@ -6,21 +6,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const data = await req.json();
     const { id } = await params;
-    const item = await prisma.contentItem.update({
+    const stage = await prisma.contentStage.update({
       where: { id },
       data: {
-        title: data.title,
-        type: data.type,
-        campaignId: data.campaignId,
-        funnelStage: data.funnelStage,
-        persona: data.persona,
-        author: data.author,
-        status: data.status,
-        priority: data.priority,
-        description: data.description,
+        label: data.label,
       }
     });
-    return apiSuccess(item);
+    return apiSuccess(stage);
   } catch (err) {
     return apiErrorFromUnknown(err);
   }
@@ -29,7 +21,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await prisma.contentItem.delete({ where: { id } });
+    await prisma.contentStage.delete({ where: { id } });
     return apiSuccess({ success: true });
   } catch (err) {
     return apiErrorFromUnknown(err);

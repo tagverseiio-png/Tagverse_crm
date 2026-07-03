@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 type Comment = { id: string; author: string; avatar: string; text: string; date: string };
@@ -9,6 +9,13 @@ type ContentItem = {
   funnelStage: string; persona: string; author: string; owner: string;
   lastEdited: string; status: string; priority: string; dueDate: string;
   description: string; comments: Comment[]; history: HistoryEntry[];
+};
+
+type StageInfo = {
+  id: string;
+  label: string;
+  dotColor: string;
+  order: number;
 };
 
 // ── Static Config ────────────────────────────────────────────────────────────
@@ -25,15 +32,32 @@ const CONTENT_TYPES = [
   { id: 'Knowledge Base Article', label: 'KB Article', colorClass: 'badge purple', icon: 'ti-books' }
 ];
 
-const STAGES = [
-  { id: 'Ideas', label: 'Backlog / Ideas', dotColor: 'var(--text-muted)' },
-  { id: 'Draft', label: 'Drafting', dotColor: 'var(--amber)' },
-  { id: 'In Review', label: 'In Review', dotColor: 'var(--blue)' },
-  { id: 'Approved', label: 'Approved', dotColor: 'var(--emerald)' },
-  { id: 'Scheduled', label: 'Scheduled', dotColor: 'var(--purple)' },
-  { id: 'Published', label: 'Published', dotColor: 'var(--rose)' },
-  { id: 'Archived', label: 'Archived', dotColor: 'var(--text-muted)' }
+const STAGE_DOT_PALETTE = [
+  'var(--text-muted)',
+  'var(--amber)',
+  'var(--blue)',
+  'var(--emerald)',
+  'var(--purple)',
+  'var(--rose)',
+  '#06b6d4',
+  '#8b5cf6',
+  '#f97316',
+  '#10b981',
 ];
+
+const DEFAULT_STAGES: StageInfo[] = [
+  { id: 'Ideas', label: 'Backlog / Ideas', dotColor: 'var(--text-muted)', order: 0 },
+  { id: 'Draft', label: 'Drafting', dotColor: 'var(--amber)', order: 1 },
+  { id: 'In Review', label: 'In Review', dotColor: 'var(--blue)', order: 2 },
+  { id: 'Approved', label: 'Approved', dotColor: 'var(--emerald)', order: 3 },
+  { id: 'Scheduled', label: 'Scheduled', dotColor: 'var(--purple)', order: 4 },
+  { id: 'Published', label: 'Published', dotColor: 'var(--rose)', order: 5 },
+  { id: 'Archived', label: 'Archived', dotColor: 'var(--text-muted)', order: 6 },
+];
+
+function slugify(label: string) {
+  return label.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'stage';
+}
 
 const FUNNEL_STAGES = ['Awareness', 'Consideration', 'Decision', 'Retention'];
 const PERSONAS = ['Founder', 'CEO', 'Marketing Manager', 'Sales Manager', 'Agency Owner', 'Developer', 'Customer'];
@@ -46,103 +70,27 @@ const WORKFLOW_STEPS = [
   { step: 4, label: 'Schedule & Publish', icon: 'ti-calendar' },
 ];
 
-// ── Seed Data ────────────────────────────────────────────────────────────────
-const INITIAL_CONTENT_ITEMS: ContentItem[] = [
-  {
-    id: 'cnt-1', title: '10 Game-Changing AI Workflows for Marketing Teams', type: 'Blog',
-    campaign: 'Inbound SEO Engine', funnelStage: 'Awareness', persona: 'Marketing Manager',
-    author: 'Sarah Jenkins', owner: 'Sarah Jenkins', lastEdited: '2026-06-22',
-    status: 'In Review', priority: 'High', dueDate: '2026-06-28',
-    description: 'A deep-dive blueprint explaining how small-to-medium marketing agencies can hook up LLMs to their CRM to automate content generation, pipeline monitoring, and lead scoring.',
-    comments: [
-      { id: 'c1', author: 'Markus Vance', avatar: 'MV', text: 'Excellent Sarah. Make sure the SEO section highlights our Shopify integration.', date: '2026-06-23' },
-      { id: 'c2', author: 'Sarah Jenkins', avatar: 'SJ', text: 'Good catch! Added a paragraph on sync speed and trigger webhooks.', date: '2026-06-24' }
-    ],
-    history: [
-      { date: '2026-06-20', action: 'Created draft', user: 'Sarah Jenkins' },
-      { date: '2026-06-22', action: 'Submitted for Review', user: 'Sarah Jenkins' }
-    ]
-  },
-  {
-    id: 'cnt-2', title: 'Welcome & Onboarding Sequence for Enterprise Signups', type: 'Email',
-    campaign: 'Re-engagement Campaign', funnelStage: 'Retention', persona: 'Customer',
-    author: 'Markus Vance', owner: 'Markus Vance', lastEdited: '2026-06-24',
-    status: 'Draft', priority: 'Medium', dueDate: '2026-06-30',
-    description: 'A 5-part email series guiding a user from system configuration to their first collaborative workspace, ensuring high Day-7 retention.',
-    comments: [],
-    history: [{ date: '2026-06-24', action: 'Created draft', user: 'Markus Vance' }]
-  },
-  {
-    id: 'cnt-3', title: 'How Acme Corp Boosted MQL Pipeline by 240% using CRM Automation', type: 'Case Study',
-    campaign: 'Customer Success Highlights', funnelStage: 'Decision', persona: 'CEO',
-    author: 'Emily Thorne', owner: 'Emily Thorne', lastEdited: '2026-06-15',
-    status: 'Published', priority: 'High', dueDate: '2026-06-18',
-    description: 'Exposing granular metrics detailing Acme Corps deployment of multi-touch automated drip programs coupled with customized webhooks.',
-    comments: [
-      { id: 'c3', author: 'Alex Chen', avatar: 'AC', text: 'This piece converts like crazy. Lets reuse this on the next Webinar!', date: '2026-06-19' }
-    ],
-    history: [
-      { date: '2026-06-12', action: 'Created draft', user: 'Emily Thorne' },
-      { date: '2026-06-14', action: 'Approved', user: 'Markus Vance' },
-      { date: '2026-06-18', action: 'Published to Web & Assets', user: 'Emily Thorne' }
-    ]
-  },
-  {
-    id: 'cnt-4', title: 'The Ultimate Guide to CRM Marketing Automation in 2026', type: 'Newsletter',
-    campaign: 'SaaS Growth Playbook', funnelStage: 'Consideration', persona: 'Founder',
-    author: 'Sarah Jenkins', owner: 'Sarah Jenkins', lastEdited: '2026-06-23',
-    status: 'Scheduled', priority: 'High', dueDate: '2026-06-26',
-    description: 'Comprehensive e-book style newsletter targeting startup founders, listing modern tools, costs, strategies, and templates.',
-    comments: [],
-    history: [
-      { date: '2026-06-18', action: 'Created draft', user: 'Sarah Jenkins' },
-      { date: '2026-06-22', action: 'Approved & Scheduled', user: 'Alex Chen' }
-    ]
-  },
-  {
-    id: 'cnt-5', title: 'Launch Webinar: Automating Lead Scoring & Assignment Rules', type: 'Video Script',
-    campaign: 'Summer Product Launch 2026', funnelStage: 'Consideration', persona: 'Sales Manager',
-    author: 'Alex Chen', owner: 'Alex Chen', lastEdited: '2026-06-20',
-    status: 'Approved', priority: 'High', dueDate: '2026-06-25',
-    description: 'Live interactive presentation mapping custom pipelines. Handouts will include dynamic CSV upload templates.',
-    comments: [],
-    history: [
-      { date: '2026-06-15', action: 'Draft ready', user: 'Alex Chen' },
-      { date: '2026-06-20', action: 'Approved by Marketing Manager', user: 'Markus Vance' }
-    ]
-  },
-  {
-    id: 'cnt-6', title: 'Developer SDK Quickstart: Custom Webhook Subscriptions', type: 'Knowledge Base Article',
-    campaign: 'Summer Product Launch 2026', funnelStage: 'Consideration', persona: 'Developer',
-    author: 'Devon Knight', owner: 'Devon Knight', lastEdited: '2026-06-22',
-    status: 'Published', priority: 'Medium', dueDate: '2026-06-24',
-    description: 'Clear structural code blocks showing how programmers can spin up serverless functions to trigger off lead stages.',
-    comments: [], history: []
-  },
-  {
-    id: 'cnt-7', title: 'Are you wasting 15+ hours/week on manual data entries?', type: 'Ad Copy',
-    campaign: 'Lead Gen Q2', funnelStage: 'Awareness', persona: 'Agency Owner',
-    author: 'Sarah Jenkins', owner: 'Sarah Jenkins', lastEdited: '2026-06-21',
-    status: 'Ideas', priority: 'Low', dueDate: '2026-07-05',
-    description: 'Punchy social ad designs positioning the marketing hub as the key to saving human coordination capital.',
-    comments: [], history: []
-  },
-  {
-    id: 'cnt-8', title: 'Product Launch WhatsApp Flash: 20% discount on Early Access', type: 'WhatsApp Template',
-    campaign: 'Summer Product Launch 2026', funnelStage: 'Decision', persona: 'Founder',
-    author: 'Alex Chen', owner: 'Alex Chen', lastEdited: '2026-06-24',
-    status: 'In Review', priority: 'High', dueDate: '2026-06-29',
-    description: 'Flash broadcast campaign promoting early-bird pricing, targeting warm leads via WhatsApp business automation.',
-    comments: [], history: [{ date: '2026-06-24', action: 'Submitted for Review', user: 'Alex Chen' }]
-  }
-];
-
 // ── Component ────────────────────────────────────────────────────────────────
 export default function ContentHubPage() {
   const [activeTab, setActiveTab] = useState<'pipeline' | 'library' | 'approvals'>('pipeline');
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Dynamic stages state
+  const [stages, setStages] = useState<StageInfo[]>(DEFAULT_STAGES);
+
+  // Drag state — cards
+  const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
+  const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
+
+  // Drag state — columns
+  const [draggedStageId, setDraggedStageId] = useState<string | null>(null);
+
+  // Inline Add Column state
+  const [addingColumn, setAddingColumn] = useState(false);
+  const [newColumnLabel, setNewColumnLabel] = useState('');
+  const addColumnInputRef = useRef<HTMLInputElement>(null);
 
   // Filters
   const [filterType, setFilterType] = useState('All');
@@ -168,21 +116,30 @@ export default function ContentHubPage() {
   const [newCommentText, setNewCommentText] = useState('');
 
   // ── API Actions ────────────────────────────────────────────────────────────
-  const fetchContent = async () => {
+  const fetchContent = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/content');
-      const json = await res.json();
-      setContentItems((json.data || []).map((i: any) => ({
+      const [resContent, resStages] = await Promise.all([
+        fetch('/api/content'),
+        fetch('/api/content/stages')
+      ]);
+      const jsonContent = await resContent.json();
+      const jsonStages = await resStages.json();
+      
+      setContentItems((jsonContent.data || []).map((i: any) => ({
         ...i,
         comments: i.comments || [],
         history: i.history || [],
         dueDate: i.dueDate || i.createdAt.split('T')[0],
       })));
+      
+      if (jsonStages.data && jsonStages.data.length > 0) {
+        setStages(jsonStages.data.map((s: any) => ({ ...s, id: s.id || s.key }))); // Handle if id maps to key for safety
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useMemo(() => {
     fetchContent();
@@ -206,17 +163,19 @@ export default function ContentHubPage() {
 
   const getTypeData = (typeName: string) => CONTENT_TYPES.find(t => t.id === typeName) || CONTENT_TYPES[0];
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
-  const handleUpdateStatus = async (itemId: string, newStatus: string) => {
+  // ── Content Handlers ───────────────────────────────────────────────────────
+  const handleUpdateStatus = useCallback(async (itemId: string, newStatus: string) => {
     const item = contentItems.find(i => i.id === itemId);
     if (!item) return;
+    // Optimistic update
+    setContentItems(prev => prev.map(i => i.id === itemId ? { ...i, status: newStatus } : i));
     await fetch(`/api/content/${itemId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...item, status: newStatus }),
     });
     fetchContent();
-  };
+  }, [contentItems, fetchContent]);
 
   const handleDelete = async (id: string) => {
     await fetch(`/api/content/${id}`, { method: 'DELETE' });
@@ -245,7 +204,7 @@ export default function ContentHubPage() {
   const handleSave = async () => {
     if (!modalTitle.trim()) return;
     const body = {
-      title: modalTitle, type: modalType, campaignId: null, // would need mapping or just string
+      title: modalTitle, type: modalType, campaignId: null,
       funnelStage: 'Awareness', persona: 'Customer',
       author: 'Current User', status: modalStage, priority: modalPriority,
       description: modalDesc,
@@ -295,48 +254,111 @@ export default function ContentHubPage() {
     setNewCommentText('');
   };
 
-  // ── Shared sub-components ──────────────────────────────────────────────────
-  const KanbanCard = ({ item, stage }: { item: ContentItem; stage: typeof STAGES[0] }) => {
-    const typeData = getTypeData(item.type);
-    return (
-      <div className="card kanban-card" style={{ padding: 16, cursor: 'pointer', position: 'relative' }} onClick={() => openDrawer(item)}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-          <span className={typeData.colorClass} style={{ fontSize: 11, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <i className={`ti ${typeData.icon}`}></i> {item.type}
-          </span>
-          {item.priority === 'High' && <i className="ti ti-flame" style={{ color: 'var(--rose)', fontSize: 16 }}></i>}
-        </div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 14, lineHeight: 1.4 }}>{item.title}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
-          <i className="ti ti-rocket" style={{ color: 'var(--purple)' }}></i>
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.campaign}</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--purple-dim)', color: 'var(--purple-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>
-              {item.author.split(' ').map(n => n[0]).join('')}
-            </div>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.dueDate}</span>
-          </div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {stage.id !== 'Ideas' && (
-              <button className="kanban-action-btn" onClick={e => { e.stopPropagation(); const idx = STAGES.findIndex(s => s.id === stage.id); handleUpdateStatus(item.id, STAGES[idx - 1].id); }}>
-                <i className="ti ti-chevron-left"></i>
-              </button>
-            )}
-            {stage.id !== 'Archived' && (
-              <button className="kanban-action-btn" onClick={e => { e.stopPropagation(); const idx = STAGES.findIndex(s => s.id === stage.id); handleUpdateStatus(item.id, STAGES[idx + 1].id); }}>
-                <i className="ti ti-chevron-right"></i>
-              </button>
-            )}
-          </div>
-        </div>
-        <button onClick={e => { e.stopPropagation(); handleDelete(item.id); }}
-          style={{ position: 'absolute', top: 12, right: 12, background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 16 }}
-          className="kanban-delete-btn">✕</button>
-      </div>
-    );
+  // ── Stage (Column) Management ──────────────────────────────────────────────
+  const handleAddStage = async () => {
+    const label = newColumnLabel.trim();
+    if (!label) { setAddingColumn(false); setNewColumnLabel(''); return; }
+    const newId = `${slugify(label)}_${Date.now().toString(36)}`;
+    const dotColor = STAGE_DOT_PALETTE[stages.length % STAGE_DOT_PALETTE.length];
+    
+    // Optimistic UI
+    const newStage: StageInfo = { id: newId, label, dotColor, order: stages.length };
+    setStages(prev => [...prev, newStage]);
+    setNewColumnLabel('');
+    setAddingColumn(false);
+    
+    // Backend sync
+    await fetch('/api/content/stages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: newId, label, dotColor }),
+    });
+    fetchContent();
   };
+
+  const handleRenameStage = async (stage: StageInfo) => {
+    const label = window.prompt('Rename column:', stage.label);
+    if (!label || !label.trim() || label.trim() === stage.label) return;
+    setStages(prev => prev.map(s => s.id === stage.id ? { ...s, label: label.trim() } : s));
+    
+    await fetch(`/api/content/stages/${stage.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: label.trim() }),
+    });
+    fetchContent();
+  };
+
+  const handleDeleteStage = async (stage: StageInfo) => {
+    if (stages.length <= 1) { window.alert('You need at least one column.'); return; }
+    const itemsInStage = contentItems.filter(i => i.status === stage.id).length;
+    const fallbackStage = stages.find(s => s.id !== stage.id);
+    const msg = itemsInStage > 0
+      ? `Delete column "${stage.label}"? ${itemsInStage} item(s) will be moved to "${fallbackStage?.label}".`
+      : `Delete column "${stage.label}"?`;
+    if (!window.confirm(msg)) return;
+    
+    // Move orphaned content to first remaining stage
+    if (itemsInStage > 0 && fallbackStage) {
+      setContentItems(prev => prev.map(i => i.status === stage.id ? { ...i, status: fallbackStage.id } : i));
+    }
+    setStages(prev => prev.filter(s => s.id !== stage.id).map((s, i) => ({ ...s, order: i })));
+    
+    await fetch(`/api/content/stages/${stage.id}`, { method: 'DELETE' });
+    fetchContent();
+  };
+
+  // ── Column Drag-to-Reorder ─────────────────────────────────────────────────
+  const handleStageDragStart = (stageId: string) => {
+    setDraggedStageId(stageId);
+  };
+
+  const handleStageDragEnd = () => {
+    setDraggedStageId(null);
+  };
+
+  const handleStageDrop = async (targetStage: StageInfo) => {
+    if (!draggedStageId || draggedStageId === targetStage.id) {
+      setDraggedStageId(null);
+      return;
+    }
+    const fromIdx = stages.findIndex(s => s.id === draggedStageId);
+    const toIdx = stages.findIndex(s => s.id === targetStage.id);
+    if (fromIdx === -1 || toIdx === -1) { setDraggedStageId(null); return; }
+    const reordered = [...stages];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+    
+    const withOrder = reordered.map((s, i) => ({ ...s, order: i }));
+    setStages(withOrder);
+    setDraggedStageId(null);
+    
+    await fetch('/api/content/stages', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(withOrder.map(s => ({ id: s.id, order: s.order }))),
+    });
+  };
+
+  // ── Card Drag-to-Move ──────────────────────────────────────────────────────
+  const handleCardDragStart = (cardId: string) => {
+    setDraggedCardId(cardId);
+  };
+
+  const handleCardDragEnd = () => {
+    setDraggedCardId(null);
+    setDragOverStageId(null);
+  };
+
+  const handleCardDrop = (targetStage: StageInfo) => {
+    setDragOverStageId(null);
+    if (!draggedCardId) return;
+    const card = contentItems.find(i => i.id === draggedCardId);
+    setDraggedCardId(null);
+    if (!card || card.status === targetStage.id) return;
+    handleUpdateStatus(card.id, targetStage.id);
+  };
+
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -383,6 +405,7 @@ export default function ContentHubPage() {
         {/* PIPELINE */}
         {activeTab === 'pipeline' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
+            {/* Filters row */}
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <div style={{ position: 'relative', width: 240 }}>
                 <i className="ti ti-search" style={{ position: 'absolute', left: 12, top: 10, color: 'var(--text-muted)' }}></i>
@@ -394,31 +417,251 @@ export default function ContentHubPage() {
                 <option value="All">All Campaigns</option>
                 {CAMPAIGNS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
+              <div style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <i className="ti ti-drag-drop" style={{ fontSize: 14 }}></i>
+                Drag cards or columns to rearrange
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16, flex: 1 }} className="scrollbar-thin">
-              {STAGES.map(stage => {
+
+            {/* Kanban Board */}
+            <div
+              style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16, flex: 1 }}
+              className="scrollbar-thin"
+            >
+              {stages.map(stage => {
                 const stageItems = filteredItems.filter(i => i.status === stage.id);
+                const isDragOver = dragOverStageId === stage.id;
+                const isBeingDragged = draggedStageId === stage.id;
+
                 return (
-                  <div key={stage.id} style={{ width: 300, flexShrink: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', borderRadius: 12, padding: '16px 12px', border: '1px solid var(--border)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, padding: '0 6px' }}>
+                  <div
+                    key={stage.id}
+                    style={{
+                      width: 300,
+                      flexShrink: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      opacity: isBeingDragged ? 0.35 : 1,
+                      transition: 'opacity 0.15s',
+                    }}
+                    onDragOver={e => {
+                      e.preventDefault();
+                      if (draggedCardId) setDragOverStageId(stage.id);
+                      // stage drag-over handled by drop
+                    }}
+                    onDragLeave={() => {
+                      if (dragOverStageId === stage.id) setDragOverStageId(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (draggedStageId) handleStageDrop(stage);
+                      else if (draggedCardId) handleCardDrop(stage);
+                    }}
+                  >
+                    {/* Column Header — draggable for reorder */}
+                    <div
+                      className="stage-header"
+                      draggable
+                      onDragStart={(e) => {
+                        handleStageDragStart(stage.id);
+                        e.dataTransfer.setData('text/plain', stage.id);
+                      }}
+                      onDragEnd={handleStageDragEnd}
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: `1px solid var(--border)`,
+                        borderTop: `3px solid ${stage.dotColor}`,
+                        borderRadius: '10px 10px 0 0',
+                        padding: '12px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'grab',
+                        userSelect: 'none',
+                      }}
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: stage.dotColor, boxShadow: `0 0 8px ${stage.dotColor}80` }} />
+                        <div style={{
+                          width: 10, height: 10, borderRadius: '50%',
+                          background: stage.dotColor,
+                          boxShadow: `0 0 8px ${stage.dotColor}80`,
+                          flexShrink: 0,
+                        }} />
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{stage.label}</span>
                       </div>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', background: 'var(--bg-card)', padding: '2px 8px', borderRadius: 12, border: '1px solid var(--border)' }}>{stageItems.length}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{
+                          fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)',
+                          background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: 12,
+                          border: '1px solid var(--border)',
+                        }}>{stageItems.length}</span>
+                        <div className="stage-actions">
+                          <button
+                            className="stage-action-btn"
+                            title="Rename column"
+                            onClick={e => { e.stopPropagation(); handleRenameStage(stage); }}
+                          >✏️</button>
+                          <button
+                            className="stage-action-btn stage-delete-btn"
+                            title="Delete column"
+                            onClick={e => { e.stopPropagation(); handleDeleteStage(stage); }}
+                          >✕</button>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', flex: 1 }} className="scrollbar-thin">
+
+                    {/* Cards container — drop zone */}
+                    <div style={{
+                      background: isDragOver ? 'var(--purple-dim)' : 'var(--bg-secondary)',
+                      borderLeft: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`,
+                      borderRight: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`,
+                      borderBottom: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`,
+                      borderRadius: '0 0 10px 10px',
+                      padding: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 12,
+                      overflowY: 'auto',
+                      flex: 1,
+                      minHeight: 120,
+                      transition: 'background 0.15s, border-color 0.15s',
+                    }} className="scrollbar-thin">
                       {stageItems.length === 0
-                        ? <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, border: '1px dashed var(--border)', borderRadius: 8, margin: '4px' }}>No content</div>
-                        : stageItems.map(item => <KanbanCard key={item.id} item={item} stage={stage} />)
+                        ? <div style={{
+                            padding: 24, textAlign: 'center', color: 'var(--text-muted)',
+                            fontSize: 13, border: '1px dashed var(--border)', borderRadius: 8, margin: '4px',
+                            transition: 'border-color 0.15s',
+                          }}>
+                            {isDragOver ? '📥 Drop here' : 'No content'}
+                          </div>
+                        : stageItems.map(item => {
+                            const typeData = getTypeData(item.type);
+                            const isDragging = draggedCardId === item.id;
+                            return (
+                              <div
+                                key={item.id}
+                                className="card kanban-card"
+                                draggable
+                                onDragStart={(e) => {
+                                  handleCardDragStart(item.id);
+                                  e.dataTransfer.setData('text/plain', item.id);
+                                }}
+                                onDragEnd={handleCardDragEnd}
+                                style={{
+                                  padding: 16, cursor: 'grab', position: 'relative',
+                                  opacity: isDragging ? 0.4 : 1,
+                                  transition: 'opacity 0.15s, transform 0.2s, box-shadow 0.2s, border-color 0.2s',
+                                }}
+                                onClick={() => openDrawer(item)}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                                  <span className={typeData.colorClass} style={{ fontSize: 11, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <i className={`ti ${typeData.icon}`}></i> {item.type}
+                                  </span>
+                                  {item.priority === 'High' && <i className="ti ti-flame" style={{ color: 'var(--rose)', fontSize: 16 }}></i>}
+                                </div>
+                                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 14, lineHeight: 1.4 }}>{item.title}</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                                  <i className="ti ti-rocket" style={{ color: 'var(--purple)' }}></i>
+                                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.campaign}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 4 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--purple-dim)', color: 'var(--purple-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>
+                                      {item.author.split(' ').map(n => n[0]).join('')}
+                                    </div>
+                                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.dueDate}</span>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: 4 }}>
+                                    {stages.findIndex(s => s.id === stage.id) > 0 && (
+                                      <button className="kanban-action-btn" onClick={e => {
+                                        e.stopPropagation();
+                                        const idx = stages.findIndex(s => s.id === stage.id);
+                                        handleUpdateStatus(item.id, stages[idx - 1].id);
+                                      }}>
+                                        <i className="ti ti-chevron-left"></i>
+                                      </button>
+                                    )}
+                                    {stages.findIndex(s => s.id === stage.id) < stages.length - 1 && (
+                                      <button className="kanban-action-btn" onClick={e => {
+                                        e.stopPropagation();
+                                        const idx = stages.findIndex(s => s.id === stage.id);
+                                        handleUpdateStatus(item.id, stages[idx + 1].id);
+                                      }}>
+                                        <i className="ti ti-chevron-right"></i>
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={e => { e.stopPropagation(); handleDelete(item.id); }}
+                                  style={{ position: 'absolute', top: 12, right: 12, background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 16 }}
+                                  className="kanban-delete-btn"
+                                >✕</button>
+                              </div>
+                            );
+                          })
                       }
-                      <button className="kanban-add-btn"
-                        style={{ border: '1px dashed var(--border)', borderRadius: 8, padding: '10px', fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', background: 'transparent', cursor: 'pointer', transition: 'all 0.2s', marginTop: 4 }}
-                        onClick={() => openModalForNew(stage.id)}>+ Add Content</button>
+                      <button
+                        className="kanban-add-btn"
+                        style={{
+                          border: '1px dashed var(--border)', borderRadius: 8,
+                          padding: '10px', fontSize: 12, fontWeight: 500,
+                          color: 'var(--text-muted)', background: 'transparent',
+                          cursor: 'pointer', transition: 'all 0.2s', marginTop: 4,
+                        }}
+                        onClick={() => openModalForNew(stage.id)}
+                      >+ Add Content</button>
                     </div>
                   </div>
                 );
               })}
+
+              {/* ── Add Column ── */}
+              <div style={{ width: 240, flexShrink: 0 }}>
+                {addingColumn ? (
+                  <div style={{
+                    background: 'var(--bg-card)', border: '1px solid var(--border)',
+                    borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 8,
+                  }}>
+                    <input
+                      ref={addColumnInputRef}
+                      autoFocus
+                      value={newColumnLabel}
+                      onChange={e => setNewColumnLabel(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleAddStage();
+                        if (e.key === 'Escape') { setAddingColumn(false); setNewColumnLabel(''); }
+                      }}
+                      placeholder="Column name..."
+                      style={{
+                        width: '100%', boxSizing: 'border-box', padding: '8px 10px',
+                        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                        borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+                        outline: 'none', fontFamily: 'Inter, sans-serif',
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={handleAddStage} className="btn btn-primary" style={{ padding: '6px 14px', fontSize: 12, flex: 1 }}>Add</button>
+                      <button onClick={() => { setAddingColumn(false); setNewColumnLabel(''); }} className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: 12 }}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setAddingColumn(true)}
+                    className="add-column-btn"
+                    style={{
+                      width: '100%', height: 52, border: '1px dashed var(--border)',
+                      borderRadius: 10, background: 'transparent', color: 'var(--text-muted)',
+                      cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                      fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    }}
+                  >
+                    <i className="ti ti-plus"></i> Add Column
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -435,7 +678,7 @@ export default function ContentHubPage() {
               <div style={{ width: 1, height: 24, background: 'var(--border)' }}></div>
               {[
                 { val: filterType, set: setFilterType, opts: ['All Types', ...CONTENT_TYPES.map(t => t.id)] },
-                { val: filterStatus, set: setFilterStatus, opts: ['All Stages', ...STAGES.map(s => s.id)] },
+                { val: filterStatus, set: setFilterStatus, opts: ['All Stages', ...stages.map(s => s.id)] },
                 { val: filterFunnel, set: setFilterFunnel, opts: ['All Funnels', ...FUNNEL_STAGES] },
                 { val: filterPersona, set: setFilterPersona, opts: ['All Personas', ...PERSONAS] },
               ].map((f, i) => (
@@ -462,6 +705,7 @@ export default function ContentHubPage() {
                 <tbody>
                   {filteredItems.map(item => {
                     const td = getTypeData(item.type);
+                    const stageInfo = stages.find(s => s.id === item.status);
                     return (
                       <tr key={item.id} className="library-row" onClick={() => openDrawer(item)} style={{ cursor: 'pointer' }}>
                         <td style={{ padding: '16px 20px' }}>
@@ -479,8 +723,8 @@ export default function ContentHubPage() {
                         </td>
                         <td style={{ padding: '16px 20px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: STAGES.find(s => s.id === item.status)?.dotColor || 'var(--text-muted)' }} />
-                            <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{item.status}</span>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: stageInfo?.dotColor || 'var(--text-muted)' }} />
+                            <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{stageInfo?.label || item.status}</span>
                           </div>
                         </td>
                         <td style={{ padding: '16px 20px' }}>
@@ -624,7 +868,6 @@ export default function ContentHubPage() {
                   style={{
                     padding: '12px 4px', marginRight: 20, fontSize: 13, fontWeight: 600,
                     color: activeDetailTab === t.id ? 'var(--purple-light)' : 'var(--text-secondary)',
-                    borderBottom: `2px solid ${activeDetailTab === t.id ? 'var(--purple)' : 'transparent'}`,
                     background: 'transparent', border: 'none',
                     borderBottomWidth: 2,
                     borderBottomStyle: 'solid',
@@ -636,7 +879,7 @@ export default function ContentHubPage() {
 
             {/* Drawer Body */}
             <div style={{ flex: 1, overflowY: 'auto', padding: 24 }} className="scrollbar-thin">
-              
+
               {/* Metadata Tab */}
               {activeDetailTab === 'general' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -651,7 +894,7 @@ export default function ContentHubPage() {
                       { label: 'Campaign', value: selectedItem.campaign },
                       { label: 'Funnel Stage', value: selectedItem.funnelStage },
                       { label: 'Target Persona', value: selectedItem.persona },
-                      { label: 'Workflow Status', value: selectedItem.status },
+                      { label: 'Workflow Status', value: stages.find(s => s.id === selectedItem.status)?.label || selectedItem.status },
                       { label: 'Assigned Owner', value: selectedItem.author },
                       { label: 'Due Date', value: selectedItem.dueDate },
                     ].map(f => (
@@ -778,7 +1021,7 @@ export default function ContentHubPage() {
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block', textTransform: 'uppercase' }}>Stage</label>
                   <select value={modalStage} onChange={e => setModalStage(e.target.value)} style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }}>
-                    {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                    {stages.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
                   </select>
                 </div>
               </div>
@@ -803,18 +1046,40 @@ export default function ContentHubPage() {
 
       {/* ── Scoped Styles ── */}
       <style dangerouslySetInnerHTML={{ __html: `
+        /* Scrollbar */
         .scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
         .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
         .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-        
+
+        /* Kanban cards */
         .kanban-card { transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s !important; }
-        .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: var(--purple-dim) !important; }
+        .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: var(--purple-dim) !important; }
         .kanban-delete-btn { opacity: 0; transition: opacity 0.2s; }
         .kanban-card:hover .kanban-delete-btn { opacity: 1; }
         .kanban-delete-btn:hover { color: var(--rose-light) !important; }
         .kanban-add-btn:hover { background: var(--bg-card) !important; border-color: var(--purple-dim) !important; color: var(--purple-light) !important; }
 
+        /* Stage column header */
+        .stage-header { transition: background 0.15s; }
+        .stage-header:hover { background: var(--bg-secondary) !important; }
+
+        /* Stage action buttons (rename / delete) */
+        .stage-actions { display: flex; align-items: center; gap: 2px; opacity: 0; transition: opacity 0.2s; }
+        .stage-header:hover .stage-actions { opacity: 1; }
+        .stage-action-btn {
+          background: transparent; border: none; cursor: pointer;
+          padding: 2px 4px; font-size: 12px; border-radius: 4px;
+          color: var(--text-muted); transition: background 0.15s, color 0.15s;
+          line-height: 1;
+        }
+        .stage-action-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+        .stage-delete-btn:hover { color: var(--rose) !important; }
+
+        /* Add column button */
+        .add-column-btn:hover { background: var(--bg-card) !important; border-color: var(--purple-dim) !important; color: var(--purple-light) !important; }
+
+        /* Kanban action buttons (left/right chevrons) */
         .kanban-action-btn {
           width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
           border-radius: 6px; background: transparent; color: var(--text-secondary);
@@ -822,12 +1087,15 @@ export default function ContentHubPage() {
         }
         .kanban-action-btn:hover { background: var(--bg-secondary); color: var(--text-primary); border-color: var(--border); }
 
+        /* Library filters */
         .library-filter { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; outline: none; transition: border-color 0.2s; }
         .library-filter:focus, .library-filter:hover { border-color: var(--purple-dim); }
 
+        /* Library rows */
         .library-row { border-bottom: 1px solid var(--border); transition: background 0.2s; }
         .library-row:hover { background: var(--bg-secondary); }
 
+        /* Detail drawer */
         .detail-drawer { animation: slideInRight 0.25s ease; }
         @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
       ` }} />

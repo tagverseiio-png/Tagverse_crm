@@ -2,11 +2,12 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
 import { apiSuccess, apiErrorFromUnknown } from '@/lib/api/response';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const data = await req.json();
+    const { id } = await params;
     const post = await prisma.socialPost.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         platform: data.platform,
         content: data.content,
@@ -21,9 +22,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await prisma.socialPost.delete({ where: { id: params.id } });
+    const { id } = await params;
+    await prisma.socialPost.delete({ where: { id } });
     return apiSuccess({ success: true });
   } catch (err) {
     return apiErrorFromUnknown(err);

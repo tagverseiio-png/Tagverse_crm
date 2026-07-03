@@ -455,7 +455,6 @@ model Campaign {
   contentItems ContentItem[]
 }
 
-// Marketing - Content Hub
 model ContentItem {
   id          String   @id @default(uuid())
   title       String
@@ -471,3 +470,13 @@ model ContentItem {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model ContentStage {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  label     String
+  dotColor  String   @default("var(--text-muted)")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+

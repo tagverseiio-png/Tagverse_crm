@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) return apiError(parsed.error.message, 422);
 
-    const contract = await prisma.contract.create({ data: parsed.data });
+    const contract = await prisma.contract.create({ data: parsed.data as any });
     return apiSuccess(contract, undefined, 201);
   } catch (err) {
     return apiErrorFromUnknown(err);
