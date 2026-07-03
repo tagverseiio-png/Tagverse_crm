@@ -203,6 +203,11 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  
+  const [filterCompany, setFilterCompany] = useState('');
+  const [filterSource, setFilterSource] = useState('all');
+  const [filterTags, setFilterTags] = useState('');
+  const [filterWA, setFilterWA] = useState('all');
 
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState<FormState>({ ...emptyForm });
@@ -291,7 +296,11 @@ export default function LeadsPage() {
   const filtered = leads.filter(l =>
     (filter === 'all' || l.stage === filter) &&
     (l.name.toLowerCase().includes(search.toLowerCase()) ||
-      (l.company ?? '').toLowerCase().includes(search.toLowerCase()))
+      (l.company ?? '').toLowerCase().includes(search.toLowerCase())) &&
+    (filterCompany === '' || (l.company ?? '').toLowerCase().includes(filterCompany.toLowerCase())) &&
+    (filterSource === 'all' || l.source === filterSource) &&
+    (filterTags === '' || (l.intent ?? '').toLowerCase().includes(filterTags.toLowerCase())) &&
+    (filterWA === 'all' || (filterWA === 'yes' ? l.whatsapp : !l.whatsapp))
   );
 
   return (
@@ -326,6 +335,24 @@ export default function LeadsPage() {
         <button className="btn btn-primary" onClick={() => { setAddForm({ ...emptyForm }); setAddErrors({}); setShowAdd(true); }} style={{ whiteSpace: 'nowrap' }}>
           + New Lead
         </button>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, marginTop: -4 }}>
+        <input value={filterCompany} onChange={e => setFilterCompany(e.target.value)} placeholder="Filter Company..." style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--text-primary)', outline: 'none' }} />
+        <select value={filterSource} onChange={e => setFilterSource(e.target.value)} style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}>
+          <option value="all">All Sources</option>
+          {sources.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select value={filter} onChange={e => setFilter(e.target.value)} style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--text-primary)', outline: 'none', textTransform: 'capitalize', cursor: 'pointer' }}>
+          {stageFilters.map(s => <option key={s} value={s}>{s === 'all' ? 'All Stages' : s}</option>)}
+        </select>
+        <input value={filterTags} onChange={e => setFilterTags(e.target.value)} placeholder="Filter Tags..." style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--text-primary)', outline: 'none' }} />
+        <select value={filterWA} onChange={e => setFilterWA(e.target.value)} style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}>
+          <option value="all">WA: All</option>
+          <option value="yes">WA: Active</option>
+          <option value="no">WA: Inactive</option>
+        </select>
+        <button onClick={() => { setFilterCompany(''); setFilterSource('all'); setFilterTags(''); setFilterWA('all'); setFilter('all'); setSearch(''); }} style={{ padding: '8px 14px', fontSize: 12, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-muted)', fontWeight: 600 }}>Clear</button>
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
