@@ -52,9 +52,48 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) return apiError(parsed.error.message, 422);
 
+    // Always sync intent → tags so Contacts page stays up to date
+    const updateData: Record<string, unknown> = { ...parsed.data };
+
+    // Fetch current record to get type + existing tags
+    const existing = await prisma.contact.findUnique({
+      where: { id },
+      select: { type: true, intent: true, tags: true },
+    });
+
+    if (existing?.type === 'lead') {
+      // Determine the new intent value (may be explicitly set or fall back to existing)
+      const newIntent =
+        typeof updateData.intent === 'string'
+          ? updateData.intent
+          : (existing.intent ?? '');
+
+      // Tags derived from the OLD intent (to remove them)
+      const oldIntentTags = (existing.intent ?? '')
+        .split(',')
+        .map((t: string) => t.trim())
+        .filter(Boolean);
+
+      // Tags derived from the NEW intent (to add them)
+      const newIntentTags = newIntent
+        .split(',')
+        .map((t: string) => t.trim())
+        .filter(Boolean);
+
+      // Keep any manually-added tags that weren't from the old intent
+      const manualTags = (existing.tags ?? []).filter(
+        (t: string) => !oldIntentTags.includes(t)
+      );
+
+      // Final tags = manual tags + new intent tags (deduped)
+      updateData.tags = Array.from(
+        new Set([...manualTags, ...newIntentTags])
+      );
+    }
+
     const contact = await prisma.contact.update({
       where: { id },
-      data: parsed.data,
+      data: updateData as Parameters<typeof prisma.contact.update>[0]['data'],
     });
     return apiSuccess(contact);
   } catch (err) {

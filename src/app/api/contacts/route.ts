@@ -70,15 +70,32 @@ export async function POST(req: NextRequest) {
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) return apiError(parsed.error.message, 422);
 
-    const contact = await prisma.contact.create({ data: parsed.data });
+    // Always sync intent into tags so leads appear correctly in Contacts page
+    const data = { ...parsed.data };
+    if (data.intent) {
+      const intentTags = data.intent
+        .split(',')
+        .map((t: string) => t.trim())
+        .filter(Boolean);
+      // Merge intent-derived tags into the tags array (deduped)
+      data.tags = Array.from(new Set([...(data.tags ?? []), ...intentTags]));
+    }
+    const contact = await prisma.contact.create({ data });
 
     // New leads immediately get a linked Deal so they show up in
     // Pipeline/Deals/Funnel too — no separate "convert" step needed.
     if (contact.type === 'lead') {
-      const pipeline = await prisma.pipeline.findFirst({
-        where: { isDefault: true },
+      let pipeline = await prisma.pipeline.findFirst({
+        where: { name: { equals: 'Null', mode: 'insensitive' } },
         include: { stages: { orderBy: { order: 'asc' }, take: 1 } },
       });
+      
+      if (!pipeline) {
+        pipeline = await prisma.pipeline.findFirst({
+          where: { isDefault: true },
+          include: { stages: { orderBy: { order: 'asc' }, take: 1 } },
+        });
+      }
       if (pipeline) {
         await prisma.deal.create({
           data: {

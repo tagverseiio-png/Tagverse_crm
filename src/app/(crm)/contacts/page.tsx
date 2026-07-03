@@ -10,6 +10,7 @@ type Contact = {
   email: string | null;
   assignedTo?: { id: string; name: string } | null;
   tags: string[];
+  intent: string | null;  // leads use this as tags source
   lastContactAt: string | null;
   createdAt: string;
 };
@@ -74,10 +75,7 @@ function ContactModal({
             <label style={labelStyle}>Company</label>
             <input style={inputStyle('company')} value={form.company} placeholder="e.g. TechNova" onChange={e => onChange('company', e.target.value)} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={labelStyle}>Role / Job Title</label>
-            <input style={inputStyle('role')} value={form.role} placeholder="e.g. CEO" onChange={e => onChange('role', e.target.value)} />
-          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={labelStyle}>Tags (comma separated)</label>
             <input style={inputStyle('tags')} value={form.tags} placeholder="e.g. VIP, Client" onChange={e => onChange('tags', e.target.value)} />
@@ -123,7 +121,9 @@ function ViewModal({ contact, onClose }: { contact: Contact; onClose: () => void
             ['📞 Phone', contact.phone ?? '—'],
             ['✉️ Email', contact.email ?? '—'],
             ['👤 Owner', contact.assignedTo?.name ?? '—'],
-            ['🏷️ Tags', contact.tags.join(', ') || '—'],
+            ['🏷️ Tags', contact.tags.length > 0
+              ? contact.tags.join(', ')
+              : (contact.intent ?? '').split(',').map(t => t.trim()).filter(Boolean).join(', ') || '—'],
             ['🕐 Added', new Date(contact.createdAt).toLocaleDateString()],
             ['📅 Last Contact', contact.lastContactAt ? new Date(contact.lastContactAt).toLocaleDateString() : '—'],
           ].map(([label, value]) => (
@@ -249,7 +249,7 @@ export default function ContactsPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Name</th><th>Role</th><th>Company</th><th>Email</th>
+                  <th>Name</th><th>Company</th><th>Email</th>
                   <th>Phone</th><th>Tags</th><th>Added</th>
                   <th style={{ textAlign: 'right', paddingRight: 12 }}>Actions</th>
                 </tr>
@@ -258,13 +258,16 @@ export default function ContactsPage() {
                 {filtered.map(c => (
                   <tr key={c.id}>
                     <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{c.name}</td>
-                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{c.role}</td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{c.company}</td>
                     <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{c.email}</td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{c.phone}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {c.tags.map(tag => (
+                        {/* Show tags array; fall back to intent field for leads */}
+                        {(c.tags.length > 0
+                          ? c.tags
+                          : (c.intent ?? '').split(',').map(t => t.trim()).filter(Boolean)
+                        ).map(tag => (
                           <span key={tag} style={{ fontSize: 10, color: 'var(--brand-accent)', background: 'var(--purple-dim)', padding: '2px 6px', borderRadius: 4 }}>{tag}</span>
                         ))}
                       </div>
