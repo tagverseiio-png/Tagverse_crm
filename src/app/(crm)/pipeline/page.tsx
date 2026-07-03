@@ -87,6 +87,7 @@ export default function PipelinePage() {
 
   // Fields for new / edit deal
   const [newDealName, setNewDealName] = useState('');
+  const [newDealClientName, setNewDealClientName] = useState('');
   const [newDealCompany, setNewDealCompany] = useState('');
   const [newDealValue, setNewDealValue] = useState('');
   const [newDealStage, setNewDealStage] = useState('new');
@@ -268,6 +269,7 @@ export default function PipelinePage() {
 
   const openModalForNew = (stageId: string) => {
     setNewDealName('');
+    setNewDealClientName('');
     setNewDealCompany('');
     setNewDealValue('');
     setNewDealStage(stageId);
@@ -277,7 +279,9 @@ export default function PipelinePage() {
 
   const openModalForEdit = (deal: PipelineDeal) => {
     setNewDealName(deal.name);
-    setNewDealCompany(deal.company);
+    const parts = deal.company.split(' • ');
+    setNewDealClientName(parts[0] || '');
+    setNewDealCompany(parts[1] || '');
     setNewDealValue(String(deal.value));
     setNewDealStage(deal.stage);
     setEditingDealId(deal.id);
@@ -299,7 +303,7 @@ export default function PipelinePage() {
     try {
       const payload = {
         title: newDealName,
-        client: newDealCompany || 'Unknown',
+        client: [newDealClientName, newDealCompany].map(s => s.trim()).filter(Boolean).join(' • ') || 'Unknown',
         value: Number(newDealValue) || 0,
         pipelineId,
         pipelineStageKey: newDealStage,
@@ -311,6 +315,7 @@ export default function PipelinePage() {
       if (res.ok) {
         setIsModalOpen(false);
         setNewDealName('');
+        setNewDealClientName('');
         setNewDealCompany('');
         setNewDealValue('');
         setNewDealStage('new');
@@ -617,8 +622,12 @@ export default function PipelinePage() {
                     <input type="text" value={newDealName} onChange={e => setNewDealName(e.target.value)} placeholder="e.g. 10x 5L Floor Cleaner" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Company / Client</label>
-                    <input type="text" value={newDealCompany} onChange={e => setNewDealCompany(e.target.value)} placeholder="Search companies..." style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }} />
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Client Name</label>
+                    <input type="text" value={newDealClientName} onChange={e => setNewDealClientName(e.target.value)} placeholder="e.g. Rahul Verma" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>Company</label>
+                    <input type="text" value={newDealCompany} onChange={e => setNewDealCompany(e.target.value)} placeholder="e.g. TechNova" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }} />
                   </div>
                   <div style={{ display: 'flex', gap: 12 }}>
                     <div style={{ flex: 1 }}>
