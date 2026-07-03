@@ -99,8 +99,8 @@ export async function POST(req: NextRequest) {
       if (pipeline) {
         await prisma.deal.create({
           data: {
-            title: contact.name,
-            client: contact.company ?? contact.name,
+            title: '', // Leave deal name free as requested
+            client: contact.company ? `${contact.name} • ${contact.company}` : contact.name,
             contactId: contact.id,
             companyId: contact.companyId,
             pipelineId: pipeline.id,
