@@ -157,6 +157,9 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  
+  const [filterCompany, setFilterCompany] = useState('');
+  const [filterTags, setFilterTags] = useState('');
 
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [editForm, setEditForm] = useState<FormState>({ ...emptyForm });
@@ -222,11 +225,16 @@ export default function ContactsPage() {
     fetchContacts();
   };
 
-  const filtered = contacts.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    (c.company ?? '').toLowerCase().includes(search.toLowerCase()) ||
-    (c.email ?? '').toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = contacts.filter(c => {
+    const searchMatch = c.name.toLowerCase().includes(search.toLowerCase()) ||
+                        (c.company ?? '').toLowerCase().includes(search.toLowerCase()) ||
+                        (c.email ?? '').toLowerCase().includes(search.toLowerCase());
+    const companyMatch = filterCompany === '' || (c.company ?? '').toLowerCase().includes(filterCompany.toLowerCase());
+    const tagsArr = c.tags.length > 0 ? c.tags : (c.intent ?? '').split(',').map(t => t.trim()).filter(Boolean);
+    const tagsMatch = filterTags === '' || tagsArr.join(' ').toLowerCase().includes(filterTags.toLowerCase());
+    
+    return searchMatch && companyMatch && tagsMatch;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -250,6 +258,14 @@ export default function ContactsPage() {
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search contacts..."
             style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px 8px 36px', color: 'var(--text-primary)', fontSize: 13, outline: 'none', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box' }} />
         </div>
+        
+        <input value={filterCompany} onChange={e => setFilterCompany(e.target.value)} placeholder="Filter Company..." style={{ width: 180, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--text-primary)', outline: 'none' }} />
+        <input value={filterTags} onChange={e => setFilterTags(e.target.value)} placeholder="Filter Tags..." style={{ width: 180, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--text-primary)', outline: 'none' }} />
+        
+        {(search || filterCompany || filterTags) && (
+          <button onClick={() => { setSearch(''); setFilterCompany(''); setFilterTags(''); }} style={{ padding: '8px 14px', fontSize: 12, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-muted)', fontWeight: 600 }}>Clear</button>
+        )}
+        
         <div style={{ flex: 1 }} />
       </div>
 
