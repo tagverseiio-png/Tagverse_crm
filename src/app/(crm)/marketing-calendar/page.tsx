@@ -133,7 +133,7 @@ export default function MarketingCalendarPage() {
     return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`;
   };
 
-  const handleSchedule = () => {
+  const handleSchedule = async () => {
     if (!form.title.trim()) return;
     const newEvt: ScheduledEvent = {
       id: Date.now(), date: form.date, title: form.title,
@@ -143,11 +143,20 @@ export default function MarketingCalendarPage() {
       badgeStatus: 'amber', status: 'Scheduled',
       color: form.color,
     };
+    // Optimistic UI update
     setEvents(prev => [...prev, newEvt]);
     setSelectedDate(typeof form.date === 'string' && form.date.startsWith('2026-06-') ? Number(form.date.split('-')[2]) : selectedDate);
     setShowScheduleModal(false);
     showToast('Post scheduled successfully!');
     setForm({ ...blankForm, date: form.date });
+
+    // Sync with backend
+    await fetch('/api/calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEvt),
+    });
+    fetchEvents();
   };
 
   const openEdit = (evt: ScheduledEvent) => {
@@ -163,22 +172,37 @@ export default function MarketingCalendarPage() {
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingEvent || !form.title.trim()) return;
-    setEvents(prev => prev.map(e => e.id === editingEvent.id ? {
-      ...e, title: form.title, channel: form.channel, date: form.date,
+    
+    const updatedEvt = {
+      ...editingEvent, title: form.title, channel: form.channel, date: form.date,
       time: to12h(form.time), type: form.type || form.channel, author: form.author,
       company: form.company, client: form.client,
       badgeChannel: CHANNEL_BADGE[form.channel] || 'blue',
       color: form.color,
-    } : e));
+    };
+
+    setEvents(prev => prev.map(e => e.id === editingEvent.id ? updatedEvt : e));
     setShowEditModal(false);
     showToast('Post updated!');
+
+    await fetch(`/api/calendar/${editingEvent.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedEvt),
+    });
+    fetchEvents();
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: string | number) => {
     setEvents(prev => prev.filter(e => e.id !== id));
     showToast('Post removed.', 'var(--rose)');
+    
+    // Only delete from backend if it's a real DB ID (string), not a temp timestamp ID
+    if (typeof id === 'string') {
+      await fetch(`/api/calendar/${id}`, { method: 'DELETE' });
+    }
   };
 
   const EventForm = ({ forDate = true }: { forDate?: boolean }) => (

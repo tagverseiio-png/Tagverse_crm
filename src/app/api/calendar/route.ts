@@ -72,3 +72,62 @@ export async function GET(req: NextRequest) {
     return apiErrorFromUnknown(err);
   }
 }
+
+export async function POST(req: NextRequest) {
+  const { session, error } = await requireSession();
+  if (error) return error;
+
+  try {
+    const data = await req.json();
+    
+    // Convert local date/time string to ISO datetime for scheduledAt
+    // Date format expected: YYYY-MM-DD
+    // Time format expected: HH:MM (12h or 24h, handled by frontend converting to 24h before API call ideally, 
+    // but the frontend sends it as 'HH:MM AM/PM' to local state. We need to parse it if so, 
+    // or tell the frontend to send a standard ISO string or 24h time).
+    // Wait, the frontend stores `time` as 12h format ("H:MM AM/PM"). 
+    // Let's parse it securely here.
+    
+    let scheduledAt = new Date();
+    if (data.date) {
+       const datePart = data.date; 
+       let timePart = data.time || '00:00';
+       
+       // Handle 12h to 24h
+       if (timePart.includes('AM') || timePart.includes('PM')) {
+         const [time, modifier] = timePart.split(' ');
+         let [hours, minutes] = time.split(':');
+         if (hours === '12') hours = '00';
+         if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
+         timePart = `${String(hours).padStart(2, '0')}:${minutes}:00`;
+       } else if (timePart.split(':').length === 2) {
+         timePart += ':00';
+       }
+       
+       scheduledAt = new Date(`${datePart}T${timePart}Z`);
+    }
+
+    const activity = await prisma.activity.create({
+      data: {
+        type: 'marketing',
+        title: data.title,
+        status: data.status || 'upcoming',
+        scheduledAt,
+        metadata: {
+          channel: data.channel,
+          author: data.author,
+          type: data.type,
+          company: data.company,
+          client: data.client,
+          color: data.color,
+        } as any,
+        createdById: session!.user.id,
+      }
+    });
+    
+    return apiSuccess(activity, undefined, 201);
+  } catch (err) {
+    return apiErrorFromUnknown(err);
+  }
+}
+
