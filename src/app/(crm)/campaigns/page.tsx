@@ -148,42 +148,7 @@ export default function CampaignsPage() {
 
   const statsCampaign = editingIdx !== null ? campaigns[editingIdx] : null;
 
-  const CampaignForm = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div>
-        <label style={labelStyle}>Campaign Name</label>
-        <input style={inputStyle} placeholder="e.g. Summer Sale 2025" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <div>
-          <label style={labelStyle}>Channel</label>
-          <select style={inputStyle} value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value }))}>
-            <option>Email</option><option>Social</option><option>Paid</option><option>Content</option>
-          </select>
-        </div>
-        <div>
-          <label style={labelStyle}>Status</label>
-          <select style={inputStyle} value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
-            <option>Draft</option><option>Active</option><option>Paused</option><option>Done</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <label style={labelStyle}>Budget</label>
-        <input style={inputStyle} placeholder="e.g. ₹50K" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} />
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <div>
-          <label style={labelStyle}>Start Date</label>
-          <input type="date" style={inputStyle} value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
-        </div>
-        <div>
-          <label style={labelStyle}>End Date</label>
-          <input type="date" style={inputStyle} value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
-        </div>
-      </div>
-    </div>
-  );
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -291,7 +256,40 @@ export default function CampaignsPage() {
       {/* New Campaign Modal */}
       {showNewModal && (
         <Modal title="Create New Campaign" onClose={() => setShowNewModal(false)}>
-          <CampaignForm />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label style={labelStyle}>Campaign Name</label>
+              <input style={inputStyle} placeholder="e.g. Summer Sale 2025" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Channel</label>
+                <select style={inputStyle} value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value }))}>
+                  <option>Email</option><option>Social</option><option>Paid</option><option>Content</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Status</label>
+                <select style={inputStyle} value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
+                  <option>Draft</option><option>Active</option><option>Paused</option><option>Done</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Budget</label>
+              <input style={inputStyle} placeholder="e.g. ₹50K" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Start Date</label>
+                <input type="date" style={inputStyle} value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
+              </div>
+              <div>
+                <label style={labelStyle}>End Date</label>
+                <input type="date" style={inputStyle} value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
+              </div>
+            </div>
+          </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 24 }}>
             <button className="btn btn-ghost" onClick={() => setShowNewModal(false)}>Cancel</button>
             <button className="btn btn-primary" onClick={handleCreate}>Create Campaign</button>
@@ -302,7 +300,40 @@ export default function CampaignsPage() {
       {/* Edit Campaign Modal */}
       {showEditModal && (
         <Modal title="Edit Campaign" onClose={() => setShowEditModal(false)}>
-          <CampaignForm />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label style={labelStyle}>Campaign Name</label>
+              <input style={inputStyle} placeholder="e.g. Summer Sale 2025" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Channel</label>
+                <select style={inputStyle} value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value }))}>
+                  <option>Email</option><option>Social</option><option>Paid</option><option>Content</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Status</label>
+                <select style={inputStyle} value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
+                  <option>Draft</option><option>Active</option><option>Paused</option><option>Done</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Budget</label>
+              <input style={inputStyle} placeholder="e.g. ₹50K" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Start Date</label>
+                <input type="date" style={inputStyle} value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
+              </div>
+              <div>
+                <label style={labelStyle}>End Date</label>
+                <input type="date" style={inputStyle} value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
+              </div>
+            </div>
+          </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 24 }}>
             <button className="btn btn-ghost" onClick={() => setShowEditModal(false)}>Cancel</button>
             <button className="btn btn-primary" onClick={handleSaveEdit}>Save Changes</button>
