@@ -1,5 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
+import {
+  dashboardKpis,
+  dashboardPipelineStages,
+  dashboardFunnel,
+  dashboardActivityItems,
+  dashboardRecentLeads,
+  dashboardTasks,
+  dashboardWorkflows,
+} from '@/lib/mockData';
 
 function fmtINR(v: number) {
   if (v >= 10000000) return `₹${(v / 10000000).toFixed(1)}Cr`;
@@ -8,95 +17,35 @@ function fmtINR(v: number) {
   return `₹${v}`;
 }
 
-// ─── Mock Data ───────────────────────────────────────────────────────────────
-const staticKpis = [
-  { label: 'Total Leads', value: '—', delta: 'Loading...', trend: 'up' as const, color: 'purple', icon: '👤' },
-  { label: 'Active Deals', value: '—', delta: 'Loading...', trend: 'up' as const, color: 'blue', icon: '🤝' },
-  { label: 'Monthly Revenue', value: '—', delta: 'Loading...', trend: 'up' as const, color: 'emerald', icon: '💰' },
-  { label: 'Invoices Overdue', value: '—', delta: 'Loading...', trend: 'down' as const, color: 'amber', icon: '🧾' },
-  { label: 'Bounce-Rate', value: '34.2%', delta: '+3.1% this campaign', trend: 'up' as const, color: 'rose', icon: '✉' },
-];
-
-const pipelineStages = [
-  {
-    id: 'new', label: 'New Enquiry', color: 'new', deals: [
-      { name: 'Riya Sharma', company: 'BloomAds', value: '₹45K', owner: 'JS' },
-      { name: 'Karthik R.', company: 'TechVibe', value: '₹80K', owner: 'AM' },
-      { name: 'Meera N.', company: 'FreshBrand', value: '₹30K', owner: 'JS' },
-    ]
-  },
-  {
-    id: 'engaged', label: 'Engaged', color: 'engaged', deals: [
-      { name: 'Arjun Mehta', company: 'GrowthLab', value: '₹1.2L', owner: 'SA' },
-      { name: 'Priya K.', company: 'NexaDigital', value: '₹60K', owner: 'JS' },
-    ]
-  },
-  {
-    id: 'qualified', label: 'Qualified', color: 'qualified', deals: [
-      { name: 'Sameer P.', company: 'MediaCo', value: '₹95K', owner: 'AM' },
-      { name: 'Divya T.', company: 'BrandNest', value: '₹2.1L', owner: 'SA' },
-    ]
-  },
-  {
-    id: 'proposal', label: 'Proposal Sent', color: 'proposal', deals: [
-      { name: 'Raj Verma', company: 'ScaleUp', value: '₹1.8L', owner: 'JS' },
-    ]
-  },
-  {
-    id: 'negotiation', label: 'Negotiation', color: 'negotiation', deals: [
-      { name: 'Ananya S.', company: 'ClickFarm', value: '₹3.5L', owner: 'AM' },
-      { name: 'Vikram L.', company: 'AdSphere', value: '₹2.8L', owner: 'JS' },
-    ]
-  },
-  {
-    id: 'won', label: 'Closed Win', color: 'won', deals: [
-      { name: 'Nisha D.', company: 'BoldMark', value: '₹4.2L', owner: 'SA' },
-    ]
-  },
-  {
-    id: 'lost', label: 'Closed Lose', color: 'lost', deals: [
-      { name: 'Mohit B.', company: 'SprintCo', value: '₹70K', owner: 'AM' },
-    ]
-  },
-];
-
-const funnel = [
-  { stage: 'New Enquiry', count: 186, pct: 100, color: 'var(--blue)' },
-  { stage: 'Engaged', count: 124, pct: 67, color: 'var(--purple)' },
-  { stage: 'Qualified', count: 82, pct: 44, color: 'var(--amber)' },
-  { stage: 'Proposal', count: 45, pct: 24, color: 'var(--purple)' },
-  { stage: 'Negotiation', count: 28, pct: 15, color: 'var(--amber)' },
-  { stage: 'Closed Win', count: 19, pct: 10, color: 'var(--emerald)' },
-];
-
-const activities = [
-  { dot: 'purple', text: <><strong>Riya Sharma</strong> moved to <strong>Engaged</strong> stage</>, time: '2m ago' },
-  { dot: 'emerald', text: <><strong>Invoice #1047</strong> marked as <strong>Paid</strong> — ₹1.8L received</>, time: '14m ago' },
-  { dot: 'blue', text: <><strong>n8n</strong>: New lead from Meta Ads routed to <strong>Arjun Mehta</strong></>, time: '28m ago' },
-  { dot: 'amber', text: <><strong>Quote #Q-2041</strong> sent to <strong>ScaleUp</strong> for ₹1.8L</>, time: '1h ago' },
-  { dot: 'rose', text: <><strong>Drip sequence</strong> triggered for 12 new leads from campaign</>, time: '2h ago' },
-  { dot: 'purple', text: <><strong>Task</strong> "Follow up — NexaDigital" due in 2 hours, assigned to <strong>JS</strong></>, time: '3h ago' },
-  { dot: 'blue', text: <><strong>Instagram post</strong> published for campaign <em>SummerSocial</em></>, time: '4h ago' },
-];
-
-const recentLeads = [
-  { name: 'Riya Sharma', company: 'BloomAds', source: 'Meta Ads', stage: 'new', score: 82, owner: 'JS', time: '2m ago' },
-  { name: 'Arjun Mehta', company: 'GrowthLab', source: 'Website Form', stage: 'engaged', score: 71, owner: 'SA', time: '28m ago' },
-  { name: 'Priya K.', company: 'NexaDigital', source: 'Referral', stage: 'engaged', score: 67, owner: 'JS', time: '1h ago' },
-  { name: 'Raj Verma', company: 'ScaleUp', source: 'LinkedIn DM', stage: 'proposal', score: 91, owner: 'JS', time: '3h ago' },
-  { name: 'Divya T.', company: 'BrandNest', source: 'Meta Ads', stage: 'qualified', score: 88, owner: 'SA', time: '5h ago' },
-];
-
-const tasks = [
-  { title: 'Follow up — NexaDigital proposal', due: 'Today 4pm', priority: 'high', owner: 'JS' },
-  { title: 'Book discovery call — GrowthLab', due: 'Today 6pm', priority: 'high', owner: 'SA' },
-  { title: 'Send revised quote — ScaleUp', due: 'Tomorrow', priority: 'medium', owner: 'JS' },
-  { title: 'Review SEO report — BoldMark', due: 'Thu', priority: 'low', owner: 'AM' },
-];
+// ─── Derive JSX activity text from structured mock data ───────────────────────
+function renderActivityText(a: typeof dashboardActivityItems[0]) {
+  if ('leadName' in a && a.leadName) {
+    return <><strong>{a.leadName}</strong> moved to <strong>{a.stage}</strong> stage</>;
+  }
+  if ('invoice' in a && a.invoice) {
+    return <><strong>Invoice {a.invoice}</strong> {a.action} — {a.amount} received</>;
+  }
+  if ('source' in a && a.source) {
+    return <><strong>n8n</strong>: New lead from {a.source} routed to <strong>{a.assignee}</strong></>;
+  }
+  if ('quote' in a && a.quote) {
+    return <><strong>Quote {a.quote}</strong> sent to <strong>{a.client}</strong> for {a.amount}</>;
+  }
+  if ('leadCount' in a && a.leadCount) {
+    return <><strong>Drip sequence</strong> triggered for {a.leadCount} new leads from campaign</>;
+  }
+  if ('task' in a && a.task) {
+    return <><strong>Task</strong> &quot;{a.task}&quot; due in 2 hours, assigned to <strong>{a.owner}</strong></>;
+  }
+  if ('post' in a && a.post) {
+    return <><strong>{a.post}</strong> published for campaign <em>{a.campaign}</em></>;
+  }
+  return null;
+}
 
 // ─── Components ──────────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, delta, trend, color, icon }: typeof staticKpis[0]) {
+function KpiCard({ label, value, delta, trend, color, icon }: typeof dashboardKpis[0]) {
   return (
     <div className={`kpi-card ${color}`}>
       <div className="kpi-header">
@@ -125,7 +74,7 @@ function DealCard({ name, company, value, owner }: { name: string; company: stri
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [kpis, setKpis] = useState(staticKpis);
+  const [kpis, setKpis] = useState(dashboardKpis);
 
   useEffect(() => {
     fetch('/api/dashboard/kpis')
@@ -164,7 +113,7 @@ export default function DashboardPage() {
             <button className="btn btn-ghost" style={{ fontSize: 12 }}>View All →</button>
           </div>
           <div className="pipeline-board">
-            {pipelineStages.map((col) => (
+            {dashboardPipelineStages.map((col) => (
               <div key={col.id} className={`pipeline-col ${col.color}`}>
                 <div className="pipeline-col-header">
                   <span className="pipeline-col-title">{col.label}</span>
@@ -187,7 +136,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="funnel-bar" style={{ gap: 10 }}>
-            {funnel.map((f) => (
+            {dashboardFunnel.map((f) => (
               <div key={f.stage} className="funnel-stage">
                 <span className="funnel-label">{f.stage}</span>
                 <div className="funnel-track">
@@ -215,7 +164,7 @@ export default function DashboardPage() {
           <div className="section-header">
             <div>
               <div className="section-title">Recent Leads</div>
-              <div className="section-sub">Latest from Meta Ads, forms & webhooks</div>
+              <div className="section-sub">Latest from Meta Ads, forms &amp; webhooks</div>
             </div>
             <button className="btn btn-ghost" style={{ fontSize: 12 }}>All Leads →</button>
           </div>
@@ -233,7 +182,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {recentLeads.map((l) => (
+                {dashboardRecentLeads.map((l) => (
                   <tr key={l.name} style={{ cursor: 'pointer' }}>
                     <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{l.name}</td>
                     <td>{l.company}</td>
@@ -267,10 +216,10 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="activity-list">
-            {activities.map((a, i) => (
+            {dashboardActivityItems.map((a, i) => (
               <div key={i} className="activity-item">
                 <div className={`activity-dot ${a.dot}`} />
-                <div className="activity-text">{a.text}</div>
+                <div className="activity-text">{renderActivityText(a)}</div>
                 <div className="activity-time">{a.time}</div>
               </div>
             ))}
@@ -286,7 +235,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {tasks.map((t, i) => (
+            {dashboardTasks.map((t, i) => (
               <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>{t.title}</div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -324,12 +273,7 @@ export default function DashboardPage() {
           </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-          {[
-            { name: 'Lead Ingestion Pipeline', runs: '1,204', lastRun: '2m ago', status: 'active' },
-            { name: 'Stage Change Automation', runs: '384', lastRun: '14m ago', status: 'active' },
-            { name: 'Billing Cron (Daily 9am)', runs: '62', lastRun: '5h ago', status: 'active' },
-            { name: 'Weekly Report Generator', runs: '12', lastRun: '2d ago', status: 'active' },
-          ].map((wf) => (
+          {dashboardWorkflows.map((wf) => (
             <div key={wf.name} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--emerald)', display: 'inline-block' }} />
