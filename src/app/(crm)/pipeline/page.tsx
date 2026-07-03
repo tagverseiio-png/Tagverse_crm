@@ -298,7 +298,6 @@ export default function PipelinePage() {
   };
 
   const handleSaveDeal = async () => {
-    if (!newDealName.trim()) return;
     setSaving(true);
     try {
       const payload = {

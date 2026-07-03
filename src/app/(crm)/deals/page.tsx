@@ -896,7 +896,6 @@ export default function DealsPage() {
 
   const handleSaveDeal = async () => {
     const errors: Record<string, string> = {};
-    if (!dealForm.name.trim()) errors.name = 'Deal name is required';
     if (!dealForm.client.trim()) errors.client = 'Client is required';
     if (dealForm.value !== '' && isNaN(Number(dealForm.value))) errors.value = 'Must be a number';
     if (Object.keys(errors).length > 0) { setDealFormErrors(errors); return; }

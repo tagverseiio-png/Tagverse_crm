@@ -6,23 +6,23 @@ import { apiSuccess, apiError, apiErrorFromUnknown } from '@/lib/api/response';
 import { parsePagination } from '@/lib/api/pagination';
 
 const createSchema = z.object({
-  title: z.string().min(1),
-  client: z.string().optional(),
+  title: z.string().nullish(),
+  client: z.string().nullish(),
   value: z.number().default(0),
   stage: z.string().default('new'),
-  pipelineId: z.string().optional(),
-  pipelineStageKey: z.string().optional(),
-  probability: z.number().int().min(0).max(100).optional(),
-  source: z.string().optional(),
-  serviceType: z.string().optional(),
+  pipelineId: z.string().nullish(),
+  pipelineStageKey: z.string().nullish(),
+  probability: z.number().int().min(0).max(100).nullish(),
+  source: z.string().nullish(),
+  serviceType: z.string().nullish(),
   tags: z.array(z.string()).default([]),
-  expectedClose: z.string().optional(),
-  lastContactAt: z.string().optional(),
-  nextFollowUpAt: z.string().optional(),
-  notes: z.string().optional(),
-  contactId: z.string().optional(),
-  companyId: z.string().optional(),
-  assignedToId: z.string().optional(),
+  expectedClose: z.string().nullish(),
+  lastContactAt: z.string().nullish(),
+  nextFollowUpAt: z.string().nullish(),
+  notes: z.string().nullish(),
+  contactId: z.string().nullish(),
+  companyId: z.string().nullish(),
+  assignedToId: z.string().nullish(),
 });
 
 export async function GET(req: NextRequest) {
