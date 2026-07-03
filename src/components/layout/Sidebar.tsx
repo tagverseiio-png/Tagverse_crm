@@ -62,7 +62,7 @@ const navGroups = [
       { id: 'tasks', icon: <CheckSquare size={16} />, label: 'Task Manager', path: '/tasks' },
       { id: 'workspace-calendar', icon: <Calendar size={16} />, label: 'Calendar', path: '/calendar' },
       { id: 'team', icon: <UsersRound size={16} />, label: 'Team', path: '/team' },
-      { id: 'deliveries', icon: <Truck size={16} />, label: 'Deliveries', path: '/deliveries' },
+      // { id: 'deliveries', icon: <Truck size={16} />, label: 'Deliveries', path: '/deliveries' }, // hidden — frontend WIP
     ],
   },
   {
