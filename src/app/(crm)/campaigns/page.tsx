@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { campaignsKpis, campaignStats, campaignChannelBadge, campaignStatusBadge } from '@/lib/mockData';
+import { campaignStats, campaignChannelBadge, campaignStatusBadge } from '@/lib/mockData';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Campaign = {
@@ -63,8 +63,6 @@ const labelStyle = {
 
 // ─── Page Component ───────────────────────────────────────────────────────────
 export default function CampaignsPage() {
-  const kpis = campaignsKpis;
-
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -200,16 +198,39 @@ export default function CampaignsPage() {
         </button>
       </div>
 
-      {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-        {kpis.map((k) => (
-          <div key={k.label} className={`kpi-card ${k.color}`}>
-            <div className="kpi-header"><span className="kpi-label">{k.label}</span></div>
-            <div className="kpi-value">{k.value}</div>
-            <div className={`kpi-delta ${k.trend}`}>{k.trend === 'up' ? '↑' : '↓'} {k.delta}</div>
+      {/* KPIs — computed from real DB data */}
+      {(() => {
+        const activeCount = campaigns.filter(c => c.status === 'Active').length;
+        const draftCount = campaigns.filter(c => c.status === 'Draft').length;
+        const totalCount = campaigns.length;
+        const parseAmount = (s: string) => {
+          if (!s || s === '—') return 0;
+          const n = s.replace(/[₹,\s]/g, '');
+          if (n.endsWith('L')) return parseFloat(n) * 100000;
+          if (n.endsWith('K')) return parseFloat(n) * 1000;
+          return parseFloat(n) || 0;
+        };
+        const totalBudget = campaigns.reduce((sum, c) => sum + parseAmount(c.budget), 0);
+        const totalSpent  = campaigns.reduce((sum, c) => sum + parseAmount(c.spent),  0);
+        const fmtINR = (v: number) => v >= 100000 ? `₹${(v/100000).toFixed(1)}L` : v >= 1000 ? `₹${(v/1000).toFixed(0)}K` : `₹${v}`;
+        const liveKpis = [
+          { label: 'Active Campaigns', value: String(activeCount),          delta: `${totalCount} total`,              trend: 'up',    color: 'purple'  },
+          { label: 'Total Budget',     value: fmtINR(totalBudget),          delta: `${fmtINR(totalSpent)} spent`,      trend: 'up',    color: 'blue'    },
+          { label: 'Total Spent',      value: fmtINR(totalSpent),           delta: totalBudget > 0 ? `${Math.round((totalSpent/totalBudget)*100)}% of budget` : '—', trend: totalSpent > totalBudget ? 'down' : 'up', color: 'emerald' },
+          { label: 'Draft Campaigns',  value: String(draftCount),           delta: `${campaigns.filter(c => c.status === 'Done').length} completed`,  trend: 'up',    color: 'amber'   },
+        ];
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+            {liveKpis.map((k) => (
+              <div key={k.label} className={`kpi-card ${k.color}`}>
+                <div className="kpi-header"><span className="kpi-label">{k.label}</span></div>
+                <div className="kpi-value">{k.value}</div>
+                <div className={`kpi-delta ${k.trend}`}>{k.trend === 'up' ? '↑' : '↓'} {k.delta}</div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        );
+      })()}
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>

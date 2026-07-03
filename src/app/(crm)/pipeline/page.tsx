@@ -34,6 +34,7 @@ type PipelineDeal = {
   owner: string;
   days: number;
   source: string;
+  tags: string[];
 };
 
 function mapApiDeal(d: Record<string, unknown>): PipelineDeal {
@@ -43,7 +44,18 @@ function mapApiDeal(d: Record<string, unknown>): PipelineDeal {
     : '—';
   const updatedAt = d.updatedAt as string | undefined;
   const days = updatedAt ? Math.floor((Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24)) : 0;
-  const contact = d.contact as { name?: string } | null;
+  const contact = d.contact as { name?: string; tags?: string[]; intent?: string | null } | null;
+  
+  // Tags resolution: 1. Deal tags, 2. Contact tags, 3. Contact intent
+  let resolvedTags = (d.tags as string[]) || [];
+  if (resolvedTags.length === 0 && contact) {
+    if (contact.tags && contact.tags.length > 0) {
+      resolvedTags = contact.tags;
+    } else if (contact.intent) {
+      resolvedTags = contact.intent.split(',').map(t => t.trim()).filter(Boolean);
+    }
+  }
+
   return {
     id: d.id as string,
     name: (d.title as string) || '',
@@ -53,6 +65,7 @@ function mapApiDeal(d: Record<string, unknown>): PipelineDeal {
     owner: initials,
     days,
     source: (d.source as string) || 'Manual Entry',
+    tags: resolvedTags,
   };
 }
 
@@ -439,7 +452,21 @@ export default function PipelinePage() {
                             onClick={() => openModalForEdit(deal)}
                           >
                             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>{deal.name}</div>
-                            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>{deal.company}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>{deal.company}</div>
+                            
+                            {/* Tags display on card */}
+                            {deal.tags && deal.tags.length > 0 && (
+                              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
+                                {deal.tags.map(t => (
+                                  <span key={t} style={{
+                                    fontSize: 9, padding: '1px 6px', borderRadius: 4,
+                                    background: 'var(--bg-card)', border: '1px solid var(--border)',
+                                    color: 'var(--text-muted)'
+                                  }}>{t}</span>
+                                ))}
+                              </div>
+                            )}
+
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                               <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--emerald)' }}>{fmtVal(deal.value)}</span>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -514,29 +541,39 @@ export default function PipelinePage() {
               <table>
                 <thead>
                   <tr>
-                    <th>Deal</th>
-                    <th>Company</th>
+                    <th>Deal Name</th>
+                    <th>Client / Company</th>
+                    <th>Tags</th>
                     <th>Value</th>
                     <th>Stage</th>
-                    <th>Source</th>
-                    <th>Age</th>
+                    <th>Days</th>
                     <th>Owner</th>
-                    <th></th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {deals.map(deal => {
-                    const col = stages.find(s => s.key === deal.stage) || { label: deal.stage, color: 'new' };
+                    const stg = stages.find(s => s.key === deal.stage);
                     return (
-                      <tr key={deal.id} style={{ cursor: 'pointer', position: 'relative' }} onClick={() => openModalForEdit(deal)}>
-                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{deal.name}</td>
-                        <td>{deal.company}</td>
-                        <td style={{ fontWeight: 700, color: 'var(--emerald)' }}>{fmtVal(deal.value)}</td>
-                        <td><span className={`badge ${col.color}`}>{col.label}</span></td>
-                        <td style={{ fontSize: 11, color: 'var(--text-muted)' }}>{deal.source}</td>
-                        <td style={{ color: deal.days > 10 ? 'var(--rose)' : 'var(--text-muted)', fontSize: 12 }}>{deal.days}d</td>
-                        <td><div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg, var(--purple), var(--blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'white' }}>{deal.owner}</div></td>
+                      <tr key={deal.id} style={{ cursor: 'pointer' }} onClick={() => openModalForEdit(deal)}>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{deal.name}</td>
+                        <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{deal.company}</td>
                         <td>
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            {deal.tags?.map(t => (
+                              <span key={t} style={{
+                                fontSize: 10, padding: '2px 7px', borderRadius: 6,
+                                background: 'var(--bg-card)', border: '1px solid var(--border)',
+                                color: 'var(--text-muted)'
+                              }}>{t}</span>
+                            ))}
+                          </div>
+                        </td>
+                        <td style={{ fontWeight: 700, color: 'var(--emerald)' }}>{fmtVal(deal.value)}</td>
+                        <td><span className={`badge ${stg?.color}`}>{stg?.label}</span></td>
+                        <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{deal.days}d</td>
+                        <td><div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg, var(--purple), var(--blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'white' }}>{deal.owner}</div></td>
+                        <td style={{ textAlign: 'right' }}>
                           <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 11 }} onClick={e => { e.stopPropagation(); handleDeleteDeal(deal.id); }}>Delete</button>
                         </td>
                       </tr>

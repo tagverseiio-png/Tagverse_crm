@@ -51,8 +51,19 @@ function mapApiDeal(d: Record<string, unknown>): Deal {
   const daysInStage = updatedAt
     ? Math.floor((Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24))
     : 0;
-  const contact = d.contact as { name?: string } | null;
+  const contact = d.contact as { name?: string; tags?: string[]; intent?: string | null } | null;
   const pipeline = d.pipeline as { name?: string } | null;
+
+  // Tags resolution: 1. Deal tags, 2. Contact tags, 3. Contact intent
+  let resolvedTags = (d.tags as string[]) || [];
+  if (resolvedTags.length === 0 && contact) {
+    if (contact.tags && contact.tags.length > 0) {
+      resolvedTags = contact.tags;
+    } else if (contact.intent) {
+      resolvedTags = contact.intent.split(',').map(t => t.trim()).filter(Boolean);
+    }
+  }
+
   return {
     id: d.id as string,
     name: (d.title as string) || '',
@@ -62,7 +73,7 @@ function mapApiDeal(d: Record<string, unknown>): Deal {
     stage: (d.pipelineStageKey as string) || '',
     owner: initials,
     ownerFull: assignedTo?.name || '—',
-    tags: (d.tags as string[]) || [],
+    tags: resolvedTags,
     probability: (d.probability as number) ?? 0,
     daysInStage,
     nextFollowUp: (d.nextFollowUpAt as string) || '—',
@@ -478,7 +489,7 @@ function DealFormModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={labelStyle}>Pipeline</label>
             <select style={selectStyle} value={form.pipelineId} onChange={e => handlePipelineChange(e.target.value)}>
-              {pipelinesList.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+              {pipelinesList.filter(p => p.id !== 'all').map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
           </div>
           {/* Stage */}
@@ -820,10 +831,16 @@ export default function DealsPage() {
             };
           });
       });
-      setPipelinesList(opts);
+      const allOption: PipelineOption = { 
+        id: 'all', 
+        label: 'All Deals', 
+        icon: '📂', 
+        deals: opts.reduce((sum, p) => sum + p.deals, 0) 
+      };
+      setPipelinesList([allOption, ...opts]);
       setStageConfig(config);
-      if (opts.length > 0 && !selectedPipeline) {
-        setSelectedPipeline(opts[0].id);
+      if (!selectedPipeline) {
+        setSelectedPipeline('all');
       }
     } catch {
       // silently fail — UI will show empty state
@@ -835,7 +852,8 @@ export default function DealsPage() {
     if (!pipelineId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/deals?pipelineId=${pipelineId}&limit=200`);
+      const url = pipelineId === 'all' ? '/api/deals?limit=500' : `/api/deals?pipelineId=${pipelineId}&limit=200`;
+      const res = await fetch(url);
       const json = await res.json();
       if (res.ok && Array.isArray(json.data)) {
         setDeals((json.data as Record<string, unknown>[]).map(mapApiDeal));
@@ -934,7 +952,7 @@ export default function DealsPage() {
 
   // Filtering
   const filtered = deals.filter(d => {
-    if (d.pipelineId !== selectedPipeline) return false;
+    if (selectedPipeline !== 'all' && d.pipelineId !== selectedPipeline) return false;
     const matchStage = stageFilter === 'all' || d.stage === stageFilter;
     const q = search.toLowerCase();
     const matchSearch = !q ||
@@ -955,7 +973,7 @@ export default function DealsPage() {
   ] : [];
 
   // KPIs
-  const pipelineDeals = deals.filter(d => d.pipelineId === selectedPipeline);
+  const pipelineDeals = selectedPipeline === 'all' ? deals : deals.filter(d => d.pipelineId === selectedPipeline);
   const openDeals = pipelineDeals.filter(d => {
     const stg = stageConfig[d.pipelineId]?.[d.stage];
     return !stg?.isClosing;
@@ -973,7 +991,7 @@ export default function DealsPage() {
 
   const followUpToday = pipelineDeals.filter(d => d.nextFollowUp.toLowerCase() === 'today' || d.nextFollowUp.toLowerCase() === 'overdue').length;
 
-  const selectedPipelineData = pipelinesList.find(p => p.id === selectedPipeline) || { id: '', label: 'Select Pipeline', icon: '📋', deals: 0 };
+  const selectedPipelineData = pipelinesList.find(p => p.id === selectedPipeline) || { id: 'all', label: 'All Deals', icon: '📂', deals: 0 };
 
   /* Highlight matched text */
   const highlight = (text: string) => {
@@ -1051,7 +1069,11 @@ export default function DealsPage() {
               {pipelinesList.map(p => (
                 <div
                   key={p.id}
-                  onClick={() => { setSelectedPipeline(p.id); pipelineDrop.setOpen(false); }}
+                  onClick={() => { 
+                    setSelectedPipeline(p.id); 
+                    if (p.id === 'all') setView('list');
+                    pipelineDrop.setOpen(false); 
+                  }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '10px 14px', margin: '2px 6px',
@@ -1288,20 +1310,22 @@ export default function DealsPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {/* View toggle */}
-          <div style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
-            {(['list', 'kanban'] as const).map(v => (
-              <button key={v} onClick={() => setView(v)} style={{
-                padding: '7px 16px', fontSize: 12, fontWeight: 600,
-                background: view === v ? 'var(--purple-dim)' : 'transparent',
-                color: view === v ? '#000' : 'var(--text-muted)',
-                border: 'none', cursor: 'pointer',
-                borderRight: '1px solid var(--border)',
-                fontFamily: 'Inter, sans-serif', textTransform: 'capitalize',
-              }}>
-                {v === 'list' ? '≡ List' : '⬡ Kanban'}
-              </button>
-            ))}
-          </div>
+          {selectedPipeline !== 'all' && (
+            <div style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+              {(['list', 'kanban'] as const).map(v => (
+                <button key={v} onClick={() => setView(v)} style={{
+                  padding: '7px 16px', fontSize: 12, fontWeight: 600,
+                  background: view === v ? 'var(--purple-dim)' : 'transparent',
+                  color: view === v ? '#000' : 'var(--text-muted)',
+                  border: 'none', cursor: 'pointer',
+                  borderRight: '1px solid var(--border)',
+                  fontFamily: 'Inter, sans-serif', textTransform: 'capitalize',
+                }}>
+                  {v === 'list' ? '≡ List' : '⬡ Kanban'}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Stage filter pills */}
           <div style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
@@ -1321,13 +1345,17 @@ export default function DealsPage() {
         </div>
 
         <button className="btn btn-primary" onClick={() => {
-          const firstStage = Object.keys(stageConfig[selectedPipeline] || {})[0] || '';
+          const defaultPipeline = selectedPipeline === 'all' 
+            ? (pipelinesList[1]?.id || '') 
+            : selectedPipeline;
+          const defaultPipelineLabel = pipelinesList.find(p => p.id === defaultPipeline)?.label || '';
+          const firstStage = Object.keys(stageConfig[defaultPipeline] || {})[0] || '';
           setDealForm({
             ...emptyDealForm,
-            pipelineId: selectedPipeline,
-            serviceType: selectedPipelineData.label,
+            pipelineId: defaultPipeline,
+            serviceType: defaultPipelineLabel,
             stage: firstStage,
-            probability: stageConfig[selectedPipeline]?.[firstStage]?.defaultProbability ?? 10,
+            probability: stageConfig[defaultPipeline]?.[firstStage]?.defaultProbability ?? 10,
           });
           setEditingDeal(null);
           setShowDealForm(true);

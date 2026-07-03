@@ -104,8 +104,8 @@ function LeadModal({
             </select>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={labelStyle}>Intent / Service</label>
-            <input style={inputStyle('intent')} value={form.intent} placeholder="e.g. SEO + Social" onChange={e => onChange('intent', e.target.value)} />
+            <label style={labelStyle}>Tags</label>
+            <input style={inputStyle('intent')} value={form.intent} placeholder="e.g. SEO, Social" onChange={e => onChange('intent', e.target.value)} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={labelStyle}>Lead Score (0–100)</label>
@@ -164,7 +164,7 @@ function ViewModal({ lead, onClose }: { lead: Lead; onClose: () => void }) {
             ['📞 Phone', lead.phone],
             ['✉️ Email', lead.email],
             ['🏷️ Source', lead.source],
-            ['🎯 Intent', lead.intent],
+            ['🏷️ Tags', lead.intent],
             ['📊 Stage', lead.stage.charAt(0).toUpperCase() + lead.stage.slice(1)],
             ['⭐ Score', String(lead.leadScore)],
             ['💬 WhatsApp', lead.whatsapp ? '🟢 Active' : '⚫ Inactive'],
@@ -325,7 +325,7 @@ export default function LeadsPage() {
               <thead>
                 <tr>
                   <th>Name</th><th>Company</th><th>Email</th><th>Phone</th>
-                  <th>Source</th><th>Intent</th><th>Stage</th><th>Score</th>
+                  <th>Source</th><th>Tags</th><th>Stage</th><th>Score</th>
                   <th>WA</th><th>Added</th>
                   <th style={{ textAlign: 'right', paddingRight: 12 }}>Actions</th>
                 </tr>
@@ -338,7 +338,13 @@ export default function LeadsPage() {
                     <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{l.email}</td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{l.phone}</td>
                     <td><span style={{ fontSize: 11, color: 'var(--text-muted)', background: 'var(--border)', padding: '2px 8px', borderRadius: 6 }}>{l.source}</span></td>
-                    <td style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{l.intent}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {l.intent ? l.intent.split(',').map(t => t.trim()).filter(Boolean).map(tag => (
+                          <span key={tag} style={{ fontSize: 10, color: 'var(--brand-accent)', background: 'var(--purple-dim)', padding: '2px 6px', borderRadius: 4 }}>{tag}</span>
+                        )) : null}
+                      </div>
+                    </td>
                     <td><span className={`badge ${l.stage}`}>{l.stage === 'won' ? '✓ Won' : l.stage === 'lost' ? '✗ Lost' : l.stage}</span></td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

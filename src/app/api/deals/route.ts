@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
         include: {
           assignedTo: { select: { id: true, name: true } },
           pipeline: { include: { stages: { orderBy: { order: 'asc' } } } },
-          contact: { select: { id: true, name: true, email: true } },
+          contact: { select: { id: true, name: true, email: true, tags: true, intent: true } },
         },
       }),
       prisma.deal.count({ where }),

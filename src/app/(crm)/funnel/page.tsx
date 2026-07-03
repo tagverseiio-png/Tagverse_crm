@@ -1,10 +1,30 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 type ApiDeal = {
   pipelineStageKey: string | null;
   value: number;
 };
+
+type PipelineOption = {
+  id: string;
+  label: string;
+  icon: string;
+  deals: number;
+};
+
+function useDropdown() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+  return { open, setOpen, ref };
+}
 
 const STAGE_DEFS = [
   { key: 'new', label: 'NEW', color: 'var(--blue)' },
@@ -26,10 +46,37 @@ export default function FunnelPage() {
   const [deals, setDeals] = useState<ApiDeal[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchDeals = useCallback(async () => {
+  const [pipelinesList, setPipelinesList] = useState<PipelineOption[]>([]);
+  const [selectedPipeline, setSelectedPipeline] = useState('all');
+  const pipelineDrop = useDropdown();
+
+  const fetchPipelines = useCallback(async () => {
+    try {
+      const res = await fetch('/api/pipelines');
+      const json = await res.json();
+      if (!res.ok || !Array.isArray(json.data)) return;
+      const raw: Record<string, unknown>[] = json.data;
+      const opts: PipelineOption[] = raw.map(p => ({
+        id: p.id as string,
+        label: p.name as string,
+        icon: (p.icon as string) || '📋',
+        deals: ((p as Record<string, unknown[]>).deals?.length) ?? 0,
+      }));
+      const allOption: PipelineOption = { 
+        id: 'all', 
+        label: 'All Deals', 
+        icon: '📂', 
+        deals: opts.reduce((sum, p) => sum + p.deals, 0) 
+      };
+      setPipelinesList([allOption, ...opts]);
+    } catch {}
+  }, []);
+
+  const fetchDeals = useCallback(async (pipelineId: string) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/deals?limit=1000');
+      const url = pipelineId === 'all' ? '/api/deals?limit=1000' : `/api/deals?pipelineId=${pipelineId}&limit=1000`;
+      const res = await fetch(url);
       const json = await res.json();
       if (res.ok && Array.isArray(json.data)) {
         setDeals(json.data.map((d: Record<string, unknown>) => ({
@@ -44,12 +91,18 @@ export default function FunnelPage() {
     }
   }, []);
 
-  useEffect(() => { fetchDeals(); }, [fetchDeals]);
+  useEffect(() => { fetchPipelines(); }, [fetchPipelines]);
+  useEffect(() => { if (pipelinesList.length > 0) fetchDeals(selectedPipeline); }, [selectedPipeline, pipelinesList, fetchDeals]);
 
   const countFor = (key: string) => deals.filter(d => d.pipelineStageKey === key).length;
   const valueFor = (key: string) => deals.filter(d => d.pipelineStageKey === key).reduce((a, d) => a + d.value, 0);
 
-  const funnelStages = STAGE_DEFS.map(s => ({ ...s, count: countFor(s.key), value: valueFor(s.key) }));
+  const baseStages = STAGE_DEFS.map(s => ({ ...s, count: countFor(s.key), value: valueFor(s.key) }));
+  const funnelStages = [...baseStages];
+  for (let i = funnelStages.length - 2; i >= 0; i--) {
+    funnelStages[i].count += funnelStages[i + 1].count;
+    funnelStages[i].value += funnelStages[i + 1].value;
+  }
   const maxCount = Math.max(1, ...funnelStages.map(s => s.count));
 
   const totalDeals = deals.length;
@@ -71,6 +124,8 @@ export default function FunnelPage() {
   const wonPct = totalDeals > 0 ? Math.round((wonCount / totalDeals) * 100) : 0;
   const lostPct = totalDeals > 0 ? Math.round((lostCount / totalDeals) * 100) : 0;
   const inProgressPct = Math.max(0, 100 - wonPct - lostPct);
+
+  const selectedPipelineData = pipelinesList.find(p => p.id === selectedPipeline) || { id: 'all', label: 'All Deals', icon: '📂', deals: 0 };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%', paddingBottom: 24 }}>
@@ -100,8 +155,88 @@ export default function FunnelPage() {
                 <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Funnel Visualization</h3>
                 <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>How many deals currently sit in each stage</p>
               </div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '4px 10px', borderRadius: 20 }}>
-                {totalDeals} Total Deals
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {/* Pipeline Selector Dropdown */}
+                <div ref={pipelineDrop.ref} style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => pipelineDrop.setOpen(!pipelineDrop.open)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '6px 12px',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 10,
+                      cursor: 'pointer',
+                      color: 'var(--text-primary)',
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: 12, fontWeight: 600,
+                      transition: 'all 0.2s',
+                      minWidth: 160,
+                    }}
+                  >
+                    <span style={{ fontSize: 14 }}>{selectedPipelineData.icon}</span>
+                    <span style={{ flex: 1, textAlign: 'left' }}>{selectedPipelineData.label}</span>
+                    <span style={{
+                      fontSize: 10, color: 'var(--text-muted)',
+                      transform: pipelineDrop.open ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                    }}>▼</span>
+                  </button>
+
+                  {pipelineDrop.open && (
+                    <div style={{
+                      position: 'absolute', top: '100%', right: 0, marginTop: 6,
+                      width: 240,
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 12,
+                      boxShadow: '0 12px 40px rgba(0,0,0,0.3)',
+                      overflow: 'hidden',
+                      zIndex: 100,
+                      animation: 'fadeIn 0.2s ease',
+                    }}>
+                      <div style={{ padding: '10px 12px 6px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Select Pipeline
+                      </div>
+                      {pipelinesList.map(p => (
+                        <div
+                          key={p.id}
+                          onClick={() => { 
+                            setSelectedPipeline(p.id); 
+                            pipelineDrop.setOpen(false); 
+                          }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            padding: '10px 14px', margin: '2px 6px',
+                            borderRadius: 8, cursor: 'pointer',
+                            background: selectedPipeline === p.id ? 'var(--purple-dim)' : 'transparent',
+                            color: selectedPipeline === p.id ? 'var(--brand-accent)' : 'var(--text-secondary)',
+                            transition: 'all 0.15s',
+                            fontSize: 13, fontWeight: selectedPipeline === p.id ? 600 : 400,
+                          }}
+                          onMouseEnter={e => {
+                            if (selectedPipeline !== p.id) (e.currentTarget as HTMLElement).style.background = 'var(--bg-card-hover)';
+                          }}
+                          onMouseLeave={e => {
+                            if (selectedPipeline !== p.id) (e.currentTarget as HTMLElement).style.background = 'transparent';
+                          }}
+                        >
+                          <span style={{ fontSize: 16 }}>{p.icon}</span>
+                          <span style={{ flex: 1 }}>{p.label}</span>
+                          <span style={{
+                            fontSize: 10, fontWeight: 600,
+                            padding: '2px 8px', borderRadius: 6,
+                            background: 'var(--bg-card)', color: 'var(--text-muted)',
+                          }}>{p.deals}</span>
+                          {selectedPipeline === p.id && <span style={{ color: 'var(--brand-accent)', fontSize: 12 }}>✓</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '4px 10px', borderRadius: 20 }}>
+                  {totalDeals} Total Deals
+                </div>
               </div>
             </div>
 
