@@ -108,6 +108,7 @@ export async function POST(req: NextRequest) {
             probability: pipeline.stages[0]?.defaultProbability ?? 0,
             source: contact.source,
             assignedToId: contact.assignedToId,
+            tags: data.tags ?? [],
           },
         });
       }

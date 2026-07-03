@@ -95,6 +95,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id },
       data: updateData as Parameters<typeof prisma.contact.update>[0]['data'],
     });
+
+    // If it's a lead and tags were computed/updated, sync them to the associated deals
+    if (existing?.type === 'lead' && Array.isArray(updateData.tags)) {
+      await prisma.deal.updateMany({
+        where: { contactId: id },
+        data: { tags: updateData.tags },
+      });
+    }
+
     return apiSuccess(contact);
   } catch (err) {
     return apiErrorFromUnknown(err);
