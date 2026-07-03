@@ -26,7 +26,7 @@ type FormState = typeof emptyForm;
 
 /* ─────────── Shared Modal Form ─────────── */
 function LeadModal({
-  title, form, errors, onChange, onSubmit, onClose, submitLabel,
+  title, form, errors, onChange, onSubmit, onClose, submitLabel, onView, onDelete,
 }: {
   title: string;
   form: FormState;
@@ -35,6 +35,8 @@ function LeadModal({
   onSubmit: () => void;
   onClose: () => void;
   submitLabel: string;
+  onView?: () => void;
+  onDelete?: () => void;
 }) {
   const inputStyle = (key: string) => ({
     background: 'var(--bg-secondary)',
@@ -122,9 +124,19 @@ function LeadModal({
             </label>
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 4, borderTop: '1px solid var(--border)' }}>
-          <button onClick={onClose} className="btn btn-ghost">Cancel</button>
-          <button onClick={onSubmit} className="btn btn-primary">{submitLabel}</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4, borderTop: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {onView && (
+              <button onClick={onView} className="btn btn-ghost" style={{ fontSize: 12, padding: '6px 14px' }}>👁 View</button>
+            )}
+            {onDelete && (
+              <button onClick={onDelete} style={{ fontSize: 12, padding: '6px 14px', background: 'var(--rose-dim)', color: 'var(--rose)', border: '1px solid var(--rose)', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>🗑️ Delete</button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={onClose} className="btn btn-ghost">Cancel</button>
+            <button onClick={onSubmit} className="btn btn-primary">{submitLabel}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -356,12 +368,11 @@ export default function LeadsPage() {
                     </td>
                     <td style={{ fontSize: 16 }}>{l.whatsapp ? '🟢' : '⚫'}</td>
                     <td style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(l.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-                        <button onClick={() => setViewLead(l)} className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 11 }}>View</button>
-                        <button onClick={() => openEdit(l)} style={{ padding: '4px 10px', fontSize: 11, background: 'var(--blue-dim)', color: 'var(--brand-accent)', border: '1px solid var(--brand-accent)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>✏️ Edit</button>
-                        <button onClick={() => setDeleteLead(l)} style={{ padding: '4px 10px', fontSize: 11, background: 'var(--rose-dim)', color: 'var(--rose)', border: '1px solid var(--rose)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>🗑️</button>
-                      </div>
+                    <td style={{ textAlign: 'right', paddingRight: 12 }}>
+                      <button
+                        onClick={() => openEdit(l)}
+                        style={{ padding: '4px 10px', fontSize: 12, background: 'var(--purple-dim)', color: 'var(--brand-accent)', border: '1px solid var(--border)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}
+                      >⋯</button>
                     </td>
                   </tr>
                 ))}
@@ -375,7 +386,7 @@ export default function LeadsPage() {
       </div>
 
       {showAdd && <LeadModal title="+ New Lead" form={addForm} errors={addErrors} onChange={(k, v) => setAddForm(p => ({ ...p, [k]: v }))} onSubmit={handleAdd} onClose={() => setShowAdd(false)} submitLabel="Add Lead" />}
-      {editLead && <LeadModal title={`✏️ Edit — ${editLead.name}`} form={editForm} errors={editErrors} onChange={(k, v) => setEditForm(p => ({ ...p, [k]: v }))} onSubmit={handleEdit} onClose={() => setEditLead(null)} submitLabel="Save Changes" />}
+      {editLead && <LeadModal title={`✏️ Edit — ${editLead.name}`} form={editForm} errors={editErrors} onChange={(k, v) => setEditForm(p => ({ ...p, [k]: v }))} onSubmit={handleEdit} onClose={() => setEditLead(null)} submitLabel="Save Changes" onView={() => { setViewLead(editLead); setEditLead(null); }} onDelete={() => { setDeleteLead(editLead); setEditLead(null); }} />}
       {deleteLead && <DeleteConfirm lead={deleteLead} onConfirm={handleDelete} onClose={() => setDeleteLead(null)} />}
       {viewLead && <ViewModal lead={viewLead} onClose={() => setViewLead(null)} />}
     </div>
