@@ -138,10 +138,10 @@ export default function DashboardPage() {
           { label: 'Active Deals', value: String(d.activeDeals), delta: 'In pipeline', trend: 'up', color: 'blue', icon: '🤝' },
           { label: 'Monthly Revenue', value: fmtINR(d.monthlyRevenue), delta: 'Won this month', trend: 'up', color: 'emerald', icon: '💰' },
           { label: 'Invoices Overdue', value: String(d.overdueInvoices), delta: 'Needs attention', trend: 'down', color: 'amber', icon: '🧾' },
-          { label: 'Bounce-Rate', value: '34.2%', delta: '+3.1% this campaign', trend: 'up', color: 'rose', icon: '✉' },
+          { label: 'Email clicked', value: '34.2%', delta: '+3.1% this campaign', trend: 'up', color: 'rose', icon: '✉' },
         ]);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   return (
