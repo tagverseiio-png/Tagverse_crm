@@ -21,7 +21,7 @@ const emptyForm = {
 type FormState = typeof emptyForm;
 
 function ContactModal({
-  title, form, errors, onChange, onSubmit, onClose, submitLabel,
+  title, form, errors, onChange, onSubmit, onClose, submitLabel, onView, onDelete,
 }: {
   title: string;
   form: FormState;
@@ -30,6 +30,8 @@ function ContactModal({
   onSubmit: () => void;
   onClose: () => void;
   submitLabel: string;
+  onView?: () => void;
+  onDelete?: () => void;
 }) {
   const inputStyle = (key: string) => ({
     background: 'var(--bg-secondary)',
@@ -81,9 +83,19 @@ function ContactModal({
             <input style={inputStyle('tags')} value={form.tags} placeholder="e.g. VIP, Client" onChange={e => onChange('tags', e.target.value)} />
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 4, borderTop: '1px solid var(--border)' }}>
-          <button onClick={onClose} className="btn btn-ghost">Cancel</button>
-          <button onClick={onSubmit} className="btn btn-primary">{submitLabel}</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4, borderTop: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {onView && (
+              <button onClick={onView} className="btn btn-ghost" style={{ fontSize: 12, padding: '6px 14px' }}>👁 View</button>
+            )}
+            {onDelete && (
+              <button onClick={onDelete} style={{ fontSize: 12, padding: '6px 14px', background: 'var(--rose-dim)', color: 'var(--rose)', border: '1px solid var(--rose)', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>🗑️ Delete</button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={onClose} className="btn btn-ghost">Cancel</button>
+            <button onClick={onSubmit} className="btn btn-primary">{submitLabel}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -273,12 +285,11 @@ export default function ContactsPage() {
                       </div>
                     </td>
                     <td style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(c.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-                        <button onClick={() => setViewContact(c)} className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 11 }}>View</button>
-                        <button onClick={() => openEdit(c)} style={{ padding: '4px 10px', fontSize: 11, background: 'var(--blue-dim)', color: 'var(--brand-accent)', border: '1px solid var(--brand-accent)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>✏️ Edit</button>
-                        <button onClick={() => setDeleteContact(c)} style={{ padding: '4px 10px', fontSize: 11, background: 'var(--rose-dim)', color: 'var(--rose)', border: '1px solid var(--rose)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>🗑️</button>
-                      </div>
+                    <td style={{ textAlign: 'right', paddingRight: 12 }}>
+                      <button
+                        onClick={() => openEdit(c)}
+                        style={{ padding: '4px 10px', fontSize: 12, background: 'var(--purple-dim)', color: 'var(--brand-accent)', border: '1px solid var(--border)', borderRadius: 7, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}
+                      >⋯</button>
                     </td>
                   </tr>
                 ))}
@@ -291,7 +302,7 @@ export default function ContactsPage() {
         )}
       </div>
 
-      {editContact && <ContactModal title={`✏️ Edit — ${editContact.name}`} form={editForm} errors={editErrors} onChange={(k, v) => setEditForm(p => ({ ...p, [k]: v }))} onSubmit={handleEdit} onClose={() => setEditContact(null)} submitLabel="Save Changes" />}
+      {editContact && <ContactModal title={`✏️ Edit — ${editContact.name}`} form={editForm} errors={editErrors} onChange={(k, v) => setEditForm(p => ({ ...p, [k]: v }))} onSubmit={handleEdit} onClose={() => setEditContact(null)} submitLabel="Save Changes" onView={() => { setViewContact(editContact); setEditContact(null); }} onDelete={() => { setDeleteContact(editContact); setEditContact(null); }} />}
       {deleteContact && <DeleteConfirm contact={deleteContact} onConfirm={handleDelete} onClose={() => setDeleteContact(null)} />}
       {viewContact && <ViewModal contact={viewContact} onClose={() => setViewContact(null)} />}
     </div>
