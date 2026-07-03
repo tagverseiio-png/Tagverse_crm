@@ -49,7 +49,12 @@ export default function FunnelPage() {
   const countFor = (key: string) => deals.filter(d => d.pipelineStageKey === key).length;
   const valueFor = (key: string) => deals.filter(d => d.pipelineStageKey === key).reduce((a, d) => a + d.value, 0);
 
-  const funnelStages = STAGE_DEFS.map(s => ({ ...s, count: countFor(s.key), value: valueFor(s.key) }));
+  const baseStages = STAGE_DEFS.map(s => ({ ...s, count: countFor(s.key), value: valueFor(s.key) }));
+  const funnelStages = [...baseStages];
+  for (let i = funnelStages.length - 2; i >= 0; i--) {
+    funnelStages[i].count += funnelStages[i + 1].count;
+    funnelStages[i].value += funnelStages[i + 1].value;
+  }
   const maxCount = Math.max(1, ...funnelStages.map(s => s.count));
 
   const totalDeals = deals.length;
