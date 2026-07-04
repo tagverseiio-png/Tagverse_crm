@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import QuoteBuilderModal, { Quote } from './QuoteBuilderModal';
+import TemplateSelectorModal from './TemplateSelectorModal';
 
 function fmt(v: number) {
   if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
@@ -13,11 +14,22 @@ const STATUS_BADGE: Record<string, string> = {
   Accepted: 'badge emerald',
   Expired: 'badge rose',
   Invoiced: 'badge blue',
+  Rejected: 'badge rose',
+  Paid: 'badge emerald',
+  Overdue: 'badge rose',
 };
 
-function parseDisplayDate(s: string): string {
+// Converts any date string (ISO or 'Jan 4, 2025' etc.) to ISO string
+function toISO(s: string): string {
+  if (!s) return new Date().toISOString();
   const d = new Date(s);
   return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+}
+
+// Formats ISO date for display in the table
+function fmtDisplayDate(iso: string): string {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function mapApiQuote(q: Record<string, unknown>): Quote {
@@ -25,13 +37,15 @@ function mapApiQuote(q: Record<string, unknown>): Quote {
     id: q.id as string,
     client: q.client as string,
     amount: (q.total as number) ?? 0,
-    sentOn: q.issuedAt ? new Date(q.issuedAt as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
-    expires: q.expiresAt ? new Date(q.expiresAt as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+    // Store as ISO strings so QuoteBuilderModal can parse them back correctly
+    sentOn: q.issuedAt ? (q.issuedAt as string) : new Date().toISOString(),
+    expires: q.expiresAt ? (q.expiresAt as string) : '',
     status: q.status as Quote['status'],
     contact: (q.contact as string) ?? undefined,
     email: (q.email as string) ?? undefined,
     phone: (q.phone as string) ?? undefined,
     scope: (q.scope as string) ?? undefined,
+    templateId: (q.templateId as string) ?? 'modern',
     lineItems: (q.lineItems as Quote['lineItems']) ?? [],
     gstRate: (q.gstRate as number) ?? 18,
     discountRate: (q.discountRate as number) ?? 0,
@@ -50,6 +64,8 @@ export default function QuotesPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | undefined>();
+  const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = useState(false);
 
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
@@ -79,6 +95,12 @@ export default function QuotesPage() {
 
   const openNew = () => {
     setEditingQuote(null);
+    setIsTemplateSelectorOpen(true);
+  };
+
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    setIsTemplateSelectorOpen(false);
     setIsModalOpen(true);
   };
 
@@ -90,21 +112,22 @@ export default function QuotesPage() {
   const handleSaveQuote = async (savedQuote: Quote) => {
     const payload = {
       client: savedQuote.client,
-      contact: savedQuote.contact,
-      email: savedQuote.email,
-      phone: savedQuote.phone,
-      scope: savedQuote.scope,
+      contact: savedQuote.contact || undefined,
+      email: savedQuote.email || undefined,
+      phone: savedQuote.phone || undefined,
+      scope: savedQuote.scope || undefined,
       lineItems: savedQuote.lineItems ?? [],
       gstRate: savedQuote.gstRate ?? 18,
       discountRate: savedQuote.discountRate ?? 0,
       currency: savedQuote.currency ?? '₹',
-      terms: savedQuote.terms,
-      delivery: savedQuote.delivery,
-      notes: savedQuote.notes,
+      terms: savedQuote.terms || undefined,
+      delivery: savedQuote.delivery || undefined,
+      notes: savedQuote.notes || undefined,
       total: savedQuote.amount,
       status: savedQuote.status,
-      issuedAt: parseDisplayDate(savedQuote.sentOn),
-      expiresAt: parseDisplayDate(savedQuote.expires),
+      templateId: savedQuote.templateId,
+      issuedAt: toISO(savedQuote.sentOn),
+      expiresAt: savedQuote.expires ? toISO(savedQuote.expires) : undefined,
     };
 
     const isExisting = editingQuote && quotes.some(q => q.id === editingQuote.id);
@@ -114,6 +137,9 @@ export default function QuotesPage() {
     if (res.ok) {
       setIsModalOpen(false);
       fetchQuotes();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(`Save failed: ${err?.error || res.statusText}`);
     }
   };
 
@@ -130,29 +156,36 @@ export default function QuotesPage() {
 
   const handleCreateInvoice = async (savedQuote: Quote) => {
     if (!editingQuote) return;
+    // Only valid invoice statuses: Draft, Sent, Paid, Overdue, Void
+    const invoiceStatus = (['Draft','Sent','Paid','Overdue','Void'] as const).includes(savedQuote.status as 'Draft'|'Sent'|'Paid'|'Overdue'|'Void')
+      ? savedQuote.status as 'Draft'|'Sent'|'Paid'|'Overdue'|'Void'
+      : 'Sent';
     const payload = {
       quoteId: editingQuote.id,
       client: savedQuote.client,
-      contact: savedQuote.contact,
-      email: savedQuote.email,
-      phone: savedQuote.phone,
-      scope: savedQuote.scope,
+      contact: savedQuote.contact || undefined,
+      email: savedQuote.email || undefined,
+      phone: savedQuote.phone || undefined,
+      scope: savedQuote.scope || undefined,
       lineItems: savedQuote.lineItems ?? [],
       gstRate: savedQuote.gstRate ?? 18,
       discountRate: savedQuote.discountRate ?? 0,
       currency: savedQuote.currency ?? '₹',
-      terms: savedQuote.terms,
-      delivery: savedQuote.delivery,
-      notes: savedQuote.notes,
+      terms: savedQuote.terms || undefined,
+      delivery: savedQuote.delivery || undefined,
+      notes: savedQuote.notes || undefined,
       total: savedQuote.amount,
-      status: savedQuote.status === 'Paid' || savedQuote.status === 'Overdue' ? savedQuote.status : 'Sent',
-      issuedAt: parseDisplayDate(savedQuote.sentOn),
-      dueDate: parseDisplayDate(savedQuote.expires),
+      status: invoiceStatus,
+      issuedAt: toISO(savedQuote.sentOn),
+      dueDate: savedQuote.expires ? toISO(savedQuote.expires) : undefined,
     };
     const res = await fetch('/api/invoices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     if (res.ok) {
       setIsInvoiceModalOpen(false);
       fetchQuotes();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(`Failed to create invoice: ${err?.error || res.statusText}`);
     }
   };
 
@@ -217,8 +250,8 @@ export default function QuotesPage() {
                   <td><span style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 11 }}>{q.id.slice(0, 8)}</span></td>
                   <td style={{ fontWeight: 500 }}>{q.client}</td>
                   <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontVariantNumeric: 'tabular-nums' }}>{q.currency || '₹'}{q.amount.toLocaleString('en-IN')}</td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{q.sentOn}</td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{q.expires}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{fmtDisplayDate(q.sentOn)}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{fmtDisplayDate(q.expires)}</td>
                   <td><span className={STATUS_BADGE[q.status]}>{q.status}</span></td>
                   <td>
                     <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
@@ -249,8 +282,17 @@ export default function QuotesPage() {
       {isModalOpen && (
         <QuoteBuilderModal
           initialQuote={editingQuote}
+          initialTemplate={selectedTemplate}
           onClose={() => setIsModalOpen(false)}
           onSave={handleSaveQuote}
+        />
+      )}
+
+      {/* Template Selector Modal */}
+      {isTemplateSelectorOpen && (
+        <TemplateSelectorModal
+          onSelect={handleTemplateSelect}
+          onClose={() => setIsTemplateSelectorOpen(false)}
         />
       )}
 

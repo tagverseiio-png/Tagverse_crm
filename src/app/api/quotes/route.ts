@@ -14,6 +14,7 @@ const lineItemSchema = z.object({
 
 const createSchema = z.object({
   dealId: z.string().optional(),
+  templateId: z.string().optional(),
   client: z.string().min(1),
   contact: z.string().optional(),
   email: z.string().optional(),

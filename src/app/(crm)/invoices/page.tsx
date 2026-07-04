@@ -15,9 +15,15 @@ function fmt(v: number) {
   return `₹${v.toLocaleString('en-IN')}`;
 }
 
-function parseDisplayDate(s: string): string {
+function toISO(s: string): string {
+  if (!s) return new Date().toISOString();
   const d = new Date(s);
   return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+}
+
+function fmtDisplayDate(iso: string): string {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function mapApiInvoice(inv: Record<string, unknown>): Invoice {
@@ -25,8 +31,9 @@ function mapApiInvoice(inv: Record<string, unknown>): Invoice {
     id: inv.id as string,
     client: inv.client as string,
     amount: (inv.total as number) ?? 0,
-    sentOn: inv.issuedAt ? new Date(inv.issuedAt as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
-    expires: inv.dueDate ? new Date(inv.dueDate as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+    // Store as ISO strings for correct roundtrip editing
+    sentOn: inv.issuedAt ? (inv.issuedAt as string) : new Date().toISOString(),
+    expires: inv.dueDate ? (inv.dueDate as string) : '',
     status: inv.status as Invoice['status'],
     contact: (inv.contact as string) ?? undefined,
     email: (inv.email as string) ?? undefined,
@@ -97,21 +104,24 @@ export default function InvoicesPage() {
   const handleSaveInvoice = async (savedInvoice: Invoice) => {
     const payload = {
       client: savedInvoice.client,
-      contact: savedInvoice.contact,
-      email: savedInvoice.email,
-      phone: savedInvoice.phone,
-      scope: savedInvoice.scope,
+      contact: savedInvoice.contact || undefined,
+      email: savedInvoice.email || undefined,
+      phone: savedInvoice.phone || undefined,
+      scope: savedInvoice.scope || undefined,
       lineItems: savedInvoice.lineItems ?? [],
       gstRate: savedInvoice.gstRate ?? 18,
       discountRate: savedInvoice.discountRate ?? 0,
       currency: savedInvoice.currency ?? '₹',
-      terms: savedInvoice.terms,
-      delivery: savedInvoice.delivery,
-      notes: savedInvoice.notes,
+      terms: savedInvoice.terms || undefined,
+      delivery: savedInvoice.delivery || undefined,
+      notes: savedInvoice.notes || undefined,
       total: savedInvoice.amount,
-      status: savedInvoice.status,
-      issuedAt: parseDisplayDate(savedInvoice.sentOn),
-      dueDate: parseDisplayDate(savedInvoice.expires),
+      // Only valid invoice statuses: Draft, Sent, Paid, Overdue, Void
+      status: (['Draft','Sent','Paid','Overdue','Void'] as const).includes(savedInvoice.status as 'Draft'|'Sent'|'Paid'|'Overdue'|'Void')
+        ? savedInvoice.status
+        : 'Draft',
+      issuedAt: toISO(savedInvoice.sentOn),
+      dueDate: savedInvoice.expires ? toISO(savedInvoice.expires) : undefined,
     };
 
     const url = isNewInvoice ? '/api/invoices' : `/api/invoices/${editingInvoice!.id}`;
@@ -120,6 +130,9 @@ export default function InvoicesPage() {
     if (res.ok) {
       setIsModalOpen(false);
       fetchInvoices();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(`Save failed: ${err?.error || res.statusText}`);
     }
   };
 
@@ -193,8 +206,8 @@ export default function InvoicesPage() {
                   <td><span style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 11 }}>{inv.id.slice(0, 8)}</span></td>
                   <td style={{ fontWeight: 500 }}>{inv.client}</td>
                   <td style={{ fontWeight: 700, color: 'var(--emerald-light)', fontVariantNumeric: 'tabular-nums' }}>{inv.currency || '₹'}{inv.amount.toLocaleString('en-IN')}</td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{inv.sentOn}</td>
-                  <td style={{ color: inv.status === 'Overdue' ? 'var(--rose-light)' : 'var(--text-secondary)', fontWeight: inv.status === 'Overdue' ? 600 : 400 }}>{inv.expires}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{fmtDisplayDate(inv.sentOn)}</td>
+                  <td style={{ color: inv.status === 'Overdue' ? 'var(--rose-light)' : 'var(--text-secondary)', fontWeight: inv.status === 'Overdue' ? 600 : 400 }}>{fmtDisplayDate(inv.expires)}</td>
                   <td><span className={STATUS_BADGE[inv.status]}>{inv.status}</span></td>
                   <td>
                     <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>

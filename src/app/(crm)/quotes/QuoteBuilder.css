@@ -291,81 +291,323 @@
 .quote-builder-wrapper .df-right { font-size: 11.5px; color: var(--ink4); text-align: right; }
 .quote-builder-wrapper .df-brand { font-weight: 700; color: var(--brand); font-size: 13px; }
 
-/* NEW QUOTE PREVIEW */
-.quote-builder-wrapper .new-quote-sheet {
-  --nq-ink: #1a1a2e;
-  --nq-muted: #74738a;
-  --nq-line: #e2e1ea;
-  --nq-bg: #eceaf2;
-  --nq-card: #ffffff;
-  --nq-violet: #433d8b;
-  --nq-violet-soft: #f4f3fa;
-
+/* NEW QUOTE PREVIEW - MODERN V2 (Purple Geometric) */
+.quote-builder-wrapper .tpl-modern {
+  --mod-purple: #8B11D4;
+  --mod-purple-dark: #6C0CA6;
+  --mod-purple-light: #9B2DE0;
+  --mod-grey-bg: #F3F4F6;
+  --mod-text: #4B5563;
+  --mod-text-dark: #1F2937;
+  
   width: 100%;
-  max-width: 640px;
-  background: var(--nq-card);
-  border-radius: 4px;
+  max-width: 794px; /* A4 width proportion */
+  min-height: 1123px; /* A4 height proportion */
+  background: #fff;
+  position: relative;
   overflow: hidden;
-  flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(26,26,46,0.06), 0 16px 40px rgba(26,26,46,0.08);
-  border: 1px solid var(--nq-line);
-  font-family: 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif;
-  color: var(--nq-ink);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.08);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--mod-text);
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
-.quote-builder-wrapper .new-quote-sheet .topbar { height: 4px; background: var(--nq-violet); }
-.quote-builder-wrapper .new-quote-sheet .header { display: flex; justify-content: space-between; align-items: flex-start; padding: 36px 36px 24px; }
-.quote-builder-wrapper .new-quote-sheet .brand { display: flex; align-items: center; gap: 10px; }
-.quote-builder-wrapper .new-quote-sheet .brand .mark { width: 28px; height: 28px; border-radius: 5px; background: var(--nq-violet); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; }
-.quote-builder-wrapper .new-quote-sheet .brand .name { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
-.quote-builder-wrapper .new-quote-sheet .brand .name span { color: var(--nq-violet); }
-.quote-builder-wrapper .new-quote-sheet .tagline { font-size: 11.5px; color: var(--nq-muted); margin: 5px 0 0 38px; letter-spacing: 0.01em; }
-.quote-builder-wrapper .new-quote-sheet .doc-title { text-align: right; }
-.quote-builder-wrapper .new-quote-sheet .doc-title h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: 400; margin: 0; letter-spacing: 0.02em; color: var(--nq-ink); }
-.quote-builder-wrapper .new-quote-sheet .doc-title .id { font-size: 11.5px; color: var(--nq-muted); margin-top: 6px; letter-spacing: 0.02em; }
+/* Left Sidebar */
+.quote-builder-wrapper .tpl-modern .sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px !important;
+  max-width: 40px !important;
+  min-width: 40px !important;
+  bottom: 100px;
+  background: var(--mod-purple);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
 
-.quote-builder-wrapper .new-quote-sheet .meta { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--nq-line); border-bottom: 1px solid var(--nq-line); }
-.quote-builder-wrapper .new-quote-sheet .meta > div { padding: 14px 36px; }
-.quote-builder-wrapper .new-quote-sheet .meta > div + div { border-left: 1px solid var(--nq-line); }
-.quote-builder-wrapper .new-quote-sheet .meta label { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--nq-muted); text-transform: uppercase; margin-bottom: 5px; }
-.quote-builder-wrapper .new-quote-sheet .meta .value { font-size: 13.5px; font-weight: 600; display: flex; align-items: center; }
+.quote-builder-wrapper .tpl-modern .sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-bottom: 24px solid #fff;
+}
 
-.quote-builder-wrapper .new-quote-sheet .parties { display: grid; grid-template-columns: 1fr 1fr; padding: 28px 36px; gap: 28px; }
-.quote-builder-wrapper .new-quote-sheet .parties label { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--nq-muted); text-transform: uppercase; margin-bottom: 9px; }
-.quote-builder-wrapper .new-quote-sheet .parties h3 { margin: 0 0 7px; font-size: 14px; font-weight: 600; }
-.quote-builder-wrapper .new-quote-sheet .parties p { margin: 0; font-size: 12.5px; line-height: 1.7; color: #54526a; }
-.quote-builder-wrapper .new-quote-sheet .parties .prepared h3 { color: var(--nq-violet); }
+.quote-builder-wrapper .tpl-modern .sidebar-text {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  margin-top: 50px;
+}
 
-.quote-builder-wrapper .new-quote-sheet .scope { margin: 0 36px 20px; padding: 10px 16px; background: var(--nq-violet-soft); border-left: 2px solid var(--nq-violet); font-size: 12.5px; display: flex; align-items: center; gap: 9px; }
-.quote-builder-wrapper .new-quote-sheet .scope .tag { color: var(--nq-violet); font-weight: 700; font-size: 10.5px; letter-spacing: 0.06em; }
+/* Main Content Area */
+.quote-builder-wrapper .tpl-modern .main-content {
+  margin-left: 60px;
+  padding: 40px 40px 100px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 
-.quote-builder-wrapper .new-quote-sheet table { width: calc(100% - 72px); margin: 0 36px; border-collapse: collapse; }
-.quote-builder-wrapper .new-quote-sheet thead th { text-align: left; font-size: 10px; letter-spacing: 0.08em; color: var(--nq-muted); text-transform: uppercase; padding: 0 0 9px; border-bottom: 1px solid var(--nq-ink); font-weight: 600; }
-.quote-builder-wrapper .new-quote-sheet thead th.num { text-align: right; }
-.quote-builder-wrapper .new-quote-sheet tbody td { padding: 14px 0; border-bottom: 1px solid var(--nq-line); font-size: 13px; vertical-align: top; }
-.quote-builder-wrapper .new-quote-sheet tbody td.num { text-align: right; color: #54526a; }
-.quote-builder-wrapper .new-quote-sheet tbody td.item { font-weight: 600; }
-.quote-builder-wrapper .new-quote-sheet tbody td.amount { text-align: right; font-weight: 600; }
-.quote-builder-wrapper .new-quote-sheet tbody td.empty-td { text-align: center; color: var(--nq-muted); font-style: italic; font-size: 13px; font-weight: 400; padding: 28px; }
+/* Header Section */
+.quote-builder-wrapper .tpl-modern .header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  position: relative;
+}
 
-.quote-builder-wrapper .new-quote-sheet .totals { margin: 18px 36px 0; display: flex; justify-content: flex-end; }
-.quote-builder-wrapper .new-quote-sheet .totals table { width: 240px; margin: 0; }
-.quote-builder-wrapper .new-quote-sheet .totals td { padding: 6px 0; border: none; font-size: 12.5px; }
-.quote-builder-wrapper .new-quote-sheet .totals td.label { color: var(--nq-muted); }
-.quote-builder-wrapper .new-quote-sheet .totals td.value { text-align: right; }
-.quote-builder-wrapper .new-quote-sheet .totals tr.grand td { padding-top: 12px; border-top: 1px solid var(--nq-ink); font-size: 15px; font-weight: 700; }
+.quote-builder-wrapper .tpl-modern .invoice-details {
+  padding-top: 10px;
+}
 
-.quote-builder-wrapper .new-quote-sheet .notes { margin: 30px 36px 0; padding-top: 20px; border-top: 1px solid var(--nq-line); }
-.quote-builder-wrapper .new-quote-sheet .notes label { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--nq-muted); text-transform: uppercase; margin-bottom: 9px; }
-.quote-builder-wrapper .new-quote-sheet .notes p { margin: 0 0 10px; font-size: 12.5px; line-height: 1.7; color: #54526a; }
-.quote-builder-wrapper .new-quote-sheet .notes .terms span { font-weight: 700; color: var(--nq-ink); }
+.quote-builder-wrapper .tpl-modern .invoice-details div {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
 
-.quote-builder-wrapper .new-quote-sheet .doc-sig { margin-top: 30px; padding: 18px 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; border-top: 1px solid var(--nq-line); background: var(--nq-bg); }
-.quote-builder-wrapper .new-quote-sheet .sig-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--nq-muted); margin-bottom: 12px; }
-.quote-builder-wrapper .new-quote-sheet .sig-line { border-bottom: 1px solid var(--nq-muted); height: 30px; margin-bottom: 5px; }
-.quote-builder-wrapper .new-quote-sheet .sig-sub { font-size: 10.5px; color: var(--nq-muted); }
+.quote-builder-wrapper .tpl-modern .invoice-details span {
+  display: inline-block;
+  width: 60px;
+  color: var(--mod-text);
+}
 
-.quote-builder-wrapper .new-quote-sheet .footer { padding: 18px 36px; background: var(--nq-violet-soft); border-top: 1px solid var(--nq-line); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #a6a4b8; }
-.quote-builder-wrapper .new-quote-sheet .footer .brand-foot { color: var(--nq-violet); font-weight: 600; }
-.quote-builder-wrapper .new-quote-sheet .footer .right { text-align: right; color: var(--nq-muted); }
+.quote-builder-wrapper .tpl-modern .invoice-details strong {
+  color: var(--mod-text-dark);
+  font-weight: 600;
+}
+
+.quote-builder-wrapper .tpl-modern .company-header {
+  background: var(--mod-purple);
+  color: #fff;
+  padding: 16px 30px 16px 50px;
+  position: absolute;
+  right: 0;
+  top: -10px;
+  width: 280px;
+}
+
+.quote-builder-wrapper .tpl-modern .company-header::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 35px solid transparent;
+  border-bottom: 35px solid transparent;
+  border-right: 24px solid var(--mod-purple);
+}
+
+.quote-builder-wrapper .tpl-modern .company-header::after {
+  content: '';
+  position: absolute;
+  left: -40px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 35px solid transparent;
+  border-bottom: 35px solid transparent;
+  border-right: 12px solid var(--mod-purple);
+}
+
+.quote-builder-wrapper .tpl-modern .company-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.quote-builder-wrapper .tpl-modern .company-tagline {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* Parties Section */
+.quote-builder-wrapper .tpl-modern .parties-section {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+
+.quote-builder-wrapper .tpl-modern .bill-to {
+  max-width: 250px;
+}
+
+.quote-builder-wrapper .tpl-modern .bill-to h3 {
+  color: var(--mod-purple);
+  font-size: 16px;
+  margin: 0 0 5px;
+}
+
+.quote-builder-wrapper .tpl-modern .bill-to .client-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--mod-text-dark);
+  margin-bottom: 8px;
+}
+
+.quote-builder-wrapper .tpl-modern .bill-to p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #9CA3AF;
+}
+
+.quote-builder-wrapper .tpl-modern .payment-info {
+  max-width: 220px;
+}
+
+.quote-builder-wrapper .tpl-modern .payment-info h3 {
+  color: var(--mod-purple);
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+
+.quote-builder-wrapper .tpl-modern .payment-info .info-row {
+  display: flex;
+  font-size: 11px;
+  margin-bottom: 6px;
+  color: #9CA3AF;
+}
+
+.quote-builder-wrapper .tpl-modern .payment-info .info-row span:first-child {
+  width: 80px;
+}
+
+/* Table Section */
+.quote-builder-wrapper .tpl-modern .table-container {
+  margin-bottom: 40px;
+}
+
+.quote-builder-wrapper .tpl-modern .item-row {
+  display: flex;
+  align-items: center;
+  border-radius: 20px;
+  margin-bottom: 8px;
+  padding: 10px 20px;
+  font-size: 12px;
+}
+
+.quote-builder-wrapper .tpl-modern .item-row.header {
+  background: var(--mod-purple);
+  color: #fff;
+  font-weight: 600;
+}
+
+.quote-builder-wrapper .tpl-modern .item-row.body {
+  background: var(--mod-grey-bg);
+  color: var(--mod-text-dark);
+}
+
+.quote-builder-wrapper .tpl-modern .item-row.body:nth-child(even) {
+  background: #F9FAFB;
+}
+
+.quote-builder-wrapper .tpl-modern .col-sl { width: 40px; }
+.quote-builder-wrapper .tpl-modern .col-desc { flex: 1; }
+.quote-builder-wrapper .tpl-modern .col-price { width: 80px; text-align: center; }
+.quote-builder-wrapper .tpl-modern .col-qty { width: 60px; text-align: center; }
+.quote-builder-wrapper .tpl-modern .col-total { width: 90px; text-align: right; }
+
+/* Totals Section */
+.quote-builder-wrapper .tpl-modern .bottom-section {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.quote-builder-wrapper .tpl-modern .terms {
+  max-width: 280px;
+}
+
+.quote-builder-wrapper .tpl-modern .terms h4 {
+  color: var(--mod-purple);
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.quote-builder-wrapper .tpl-modern .terms p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #9CA3AF;
+}
+
+.quote-builder-wrapper .tpl-modern .totals-box {
+  width: 250px;
+}
+
+.quote-builder-wrapper .tpl-modern .tot-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 15px;
+  font-size: 12px;
+  margin-bottom: 4px;
+  border-radius: 15px;
+  background: var(--mod-grey-bg);
+}
+
+.quote-builder-wrapper .tpl-modern .tot-line span:first-child {
+  font-weight: 600;
+}
+
+.quote-builder-wrapper .tpl-modern .tot-line.grand {
+  background: var(--mod-purple);
+  color: #fff;
+}
+
+/* Footer Section */
+.quote-builder-wrapper .tpl-modern .footer-shape {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: var(--mod-purple);
+  border-top-right-radius: 100px;
+  display: flex;
+  align-items: center;
+  padding: 20px 40px 20px 90px;
+  color: #fff;
+}
+
+.quote-builder-wrapper .tpl-modern .footer-shape .contact-info {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.quote-builder-wrapper .tpl-modern .footer-shape .contact-info span:nth-child(odd) {
+  font-weight: 700;
+}
+
+.quote-builder-wrapper .tpl-modern .signature {
+  position: absolute;
+  bottom: 120px;
+  right: 60px;
+  text-align: center;
+}
+
+.quote-builder-wrapper .tpl-modern .sig-line {
+  width: 150px;
+  border-top: 1px solid var(--mod-text);
+  margin-bottom: 8px;
+}
+
+.quote-builder-wrapper .tpl-modern .sig-text {
+  font-size: 12px;
+  color: var(--mod-text);
+}

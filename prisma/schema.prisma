@@ -220,6 +220,7 @@ model Quote {
   id           String    @id @default(uuid())
   dealId       String?
   deal         Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  templateId   String    @default("modern")
   client       String
   contact      String?
   email        String?

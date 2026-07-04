@@ -76,8 +76,27 @@ export async function POST(req: NextRequest) {
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) return apiError(parsed.error.message, 422);
 
+    const { value, stage, tags, ...rest } = parsed.data;
     const deal = await prisma.deal.create({
-      data: parsed.data,
+      data: {
+        value,
+        stage,
+        tags,
+        title: rest.title ?? '',       // required String in Prisma schema
+        client: rest.client ?? undefined,
+        pipelineId: rest.pipelineId ?? undefined,
+        pipelineStageKey: rest.pipelineStageKey ?? undefined,
+        probability: rest.probability ?? undefined,
+        source: rest.source ?? undefined,
+        serviceType: rest.serviceType ?? undefined,
+        expectedClose: rest.expectedClose ?? undefined,
+        lastContactAt: rest.lastContactAt ?? undefined,
+        nextFollowUpAt: rest.nextFollowUpAt ?? undefined,
+        notes: rest.notes ?? undefined,
+        contactId: rest.contactId ?? undefined,
+        companyId: rest.companyId ?? undefined,
+        assignedToId: rest.assignedToId ?? undefined,
+      },
       include: {
         pipeline: { include: { stages: { orderBy: { order: 'asc' } } } },
         assignedTo: { select: { id: true, name: true } },

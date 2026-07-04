@@ -13,6 +13,7 @@ const lineItemSchema = z.object({
 
 const updateSchema = z.object({
   dealId: z.string().optional(),
+  templateId: z.string().optional(),
   client: z.string().min(1).optional(),
   contact: z.string().optional(),
   email: z.string().optional(),

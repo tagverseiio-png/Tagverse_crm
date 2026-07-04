@@ -57,7 +57,25 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const deal = await prisma.deal.update({
       where: { id },
-      data: parsed.data,
+      data: {
+        title: parsed.data.title ?? undefined,
+        client: parsed.data.client ?? undefined,
+        value: parsed.data.value ?? undefined,
+        stage: parsed.data.stage ?? undefined,
+        pipelineId: parsed.data.pipelineId ?? undefined,
+        pipelineStageKey: parsed.data.pipelineStageKey ?? undefined,
+        probability: parsed.data.probability ?? undefined,
+        source: parsed.data.source ?? undefined,
+        serviceType: parsed.data.serviceType ?? undefined,
+        tags: parsed.data.tags ?? undefined,
+        expectedClose: parsed.data.expectedClose ?? undefined,
+        lastContactAt: parsed.data.lastContactAt ?? undefined,
+        nextFollowUpAt: parsed.data.nextFollowUpAt ?? undefined,
+        notes: parsed.data.notes ?? undefined,
+        contactId: parsed.data.contactId ?? undefined,
+        companyId: parsed.data.companyId ?? undefined,
+        assignedToId: parsed.data.assignedToId ?? undefined,
+      },
       include: {
         pipeline: { include: { stages: { orderBy: { order: 'asc' } } } },
         assignedTo: { select: { id: true, name: true } },
