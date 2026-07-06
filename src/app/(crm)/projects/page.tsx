@@ -23,7 +23,6 @@ export default function ProjectsPage() {
   const [newProjectEstBudget, setNewProjectEstBudget] = useState('40000');
   const [newProjectActCost, setNewProjectActCost] = useState('0');
   const [newProjectMembers, setNewProjectMembers] = useState<string[]>([]);
-  const [newProjectEmoji, setNewProjectEmoji] = useState('📁');
 
   const handleCreateProject = () => {
     if (!newProjectName.trim()) {
@@ -36,7 +35,7 @@ export default function ProjectsPage() {
       color: newProjectColor,
       members: newProjectMembers,
       linkedDeal: null,
-      emoji: newProjectEmoji,
+      emoji: '📁',
       startDate: new Date().toISOString().split('T')[0],
       endDate: '',
       budget: {
@@ -125,17 +124,6 @@ export default function ProjectsPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Emoji</label>
-                <input
-                  type="text"
-                  value={newProjectEmoji}
-                  onChange={e => setNewProjectEmoji(e.target.value)}
-                  style={{ width: '100%', padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)', fontSize: '13px' }}
-                  placeholder="📁"
-                />
-              </div>
-
-              <div>
                 <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Color Theme</label>
                 <input
                   type="color"
@@ -159,20 +147,14 @@ export default function ProjectsPage() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Assign Members</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '120px', overflowY: 'auto', background: 'var(--bg-primary)', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)' }}>
-                  {members.map(m => (
-                    <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={newProjectMembers.includes(m.id)}
-                        onChange={() => handleMemberSelectToggle(m.id)}
-                      />
-                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'var(--purple-dim)', color: 'var(--purple)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700 }}>
-                        {m.avatar}
-                      </div>
-                      {m.name}
-                    </label>
-                  ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button
+                    className="btn btn-ghost"
+                    style={{ justifyContent: 'center', width: '100%', border: '1px dashed var(--border)' }}
+                    onClick={() => alert("Manual add member functionality to be implemented")}
+                  >
+                    ➕ Add Member Manually
+                  </button>
                 </div>
               </div>
             </div>
