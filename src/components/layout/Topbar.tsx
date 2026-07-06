@@ -91,10 +91,24 @@ export default function Topbar({ activePage }: Props) {
 
       <div className="topbar-right">
         {/* Search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
-          <span style={{ fontSize: 13 }}>🔍</span>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Search anything...</span>
-          <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 20, background: 'var(--border)', padding: '1px 6px', borderRadius: 4 }}>⌘K</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', cursor: 'text', flex: 1, maxWidth: 300 }}>
+          <span style={{ fontSize: 14, flexShrink: 0 }}>🔍</span>
+          <input 
+            type="text" 
+            placeholder="Search anything..." 
+            style={{
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              color: 'var(--text-primary)',
+              fontSize: 13,
+              width: '100%',
+              minWidth: 0,
+            }}
+          />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--border)', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>⌘K</span>
+          </div>
         </div>
 
         {/* TG Agent Button */}
@@ -155,10 +169,10 @@ export default function Topbar({ activePage }: Props) {
               top: 'calc(100% + 8px)',
               right: 0,
               width: 220,
-              background: 'var(--bg-card)',
+              background: 'var(--bg-secondary)',
               border: '1px solid var(--border)',
               borderRadius: 12,
-              boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
               padding: '8px',
               zIndex: 100,
               display: 'flex',
@@ -218,9 +232,7 @@ export default function Topbar({ activePage }: Props) {
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
         background: 'linear-gradient(135deg, rgba(123, 47, 255, 0.05) 0%, rgba(192, 132, 252, 0.15) 50%, rgba(123, 47, 255, 0.05) 100%)',
-        backgroundColor: 'var(--bg-card)', /* Fallback/base color */
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        backgroundColor: 'var(--bg-primary)',
         backgroundSize: '200% 200%',
         zIndex: 99999,
         display: 'flex',
@@ -250,7 +262,7 @@ export default function Topbar({ activePage }: Props) {
           <div style={{
             width: isChatSidebarOpen ? 280 : 0,
             transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            background: 'var(--bg-main)',
+            background: 'var(--bg-secondary)',
             borderRight: isChatSidebarOpen ? '1px solid var(--border)' : 'none',
             overflow: 'hidden',
             display: 'flex',
@@ -332,7 +344,7 @@ export default function Topbar({ activePage }: Props) {
 
                     {activeDropdown === item.id && (
                       <div style={{
-                        position: 'absolute', right: 8, top: 32, background: 'var(--bg-card)',
+                        position: 'absolute', right: 8, top: 32, background: 'var(--bg-secondary)',
                         border: '1px solid var(--border)', borderRadius: 6, padding: 4, zIndex: 100,
                         boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', minWidth: 100
                       }}>
