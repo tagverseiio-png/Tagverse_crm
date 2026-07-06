@@ -77,6 +77,10 @@ export default function MarketingCalendarPage() {
 
   const [form, setForm] = useState(blankForm);
 
+  const [authorList, setAuthorList] = useState<string[]>(AUTHORS);
+  const [isAuthorDropdownOpen, setIsAuthorDropdownOpen] = useState(false);
+  const [newAuthorName, setNewAuthorName] = useState('');
+
   const showToast = (msg: string, color = 'var(--emerald)') => {
     setToast(msg); setToastColor(color); setTimeout(() => setToast(''), 3000);
   };
@@ -263,11 +267,98 @@ export default function MarketingCalendarPage() {
         </div>
         {!forDate && <div />}
       </div>
-      <div>
+      <div style={{ position: 'relative' }}>
         <label style={labelStyle}>Author</label>
-        <select style={inputStyle} value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))}>
-          {AUTHORS.map(a => <option key={a}>{a}</option>)}
-        </select>
+        <div style={{ position: 'relative' }}>
+          <div
+            style={{ ...inputStyle, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            onClick={() => setIsAuthorDropdownOpen(!isAuthorDropdownOpen)}
+          >
+            <span>{form.author || 'Select Author'}</span>
+            <i className="ti ti-chevron-down" style={{ fontSize: 16, color: 'var(--text-muted)' }}></i>
+          </div>
+          {isAuthorDropdownOpen && (
+            <>
+              <div style={{ position: 'fixed', inset: 0, zIndex: 9 }} onClick={() => setIsAuthorDropdownOpen(false)} />
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4,
+                background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.2)', zIndex: 10, overflow: 'hidden'
+              }}>
+                <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                  {authorList.map(a => (
+                    <div key={a} style={{
+                      padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      cursor: 'pointer', background: form.author === a ? 'var(--bg-secondary)' : 'transparent'
+                    }} className="hover-bg-secondary" onClick={() => { setForm(f => ({ ...f, author: a })); setIsAuthorDropdownOpen(false); }}>
+                      <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{a}</span>
+                      <button
+                        title="Remove author"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAuthorList(prev => prev.filter(x => x !== a));
+                          if (form.author === a) setForm(f => ({ ...f, author: '' }));
+                        }}
+                        style={{ background: 'var(--rose-dim, rgba(244, 63, 94, 0.1))', border: 'none', color: 'var(--rose)', cursor: 'pointer', width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.8 }}
+                      >
+                        <span style={{ fontSize: 12, fontWeight: 'bold' }}>✕</span>
+                      </button>
+                    </div>
+                  ))}
+                  {authorList.length === 0 && (
+                    <div style={{ padding: '12px', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
+                      No authors available.
+                    </div>
+                  )}
+                </div>
+                <div style={{ padding: '8px', borderTop: '1px solid var(--border)', display: 'flex', gap: 6, background: 'var(--bg-secondary)' }}>
+                  <input
+                    style={{ ...inputStyle, padding: '6px 10px', fontSize: 13, flex: 1, background: 'var(--bg-card)', textTransform: 'capitalize' }}
+                    placeholder="New author..."
+                    value={newAuthorName}
+                    onChange={e => setNewAuthorName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = newAuthorName.trim();
+                        if (val) {
+                          const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+                          if (!authorList.includes(formatted)) {
+                            setAuthorList(prev => [...prev, formatted]);
+                          }
+                          setForm(f => ({ ...f, author: formatted }));
+                          setNewAuthorName('');
+                          setIsAuthorDropdownOpen(false);
+                        }
+                      }
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  />
+                  <button
+                    type="button"
+                    style={{ background: 'var(--text-primary)', color: 'var(--bg-card)', border: 'none', borderRadius: 8, padding: '0 12px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const val = newAuthorName.trim();
+                      if (val) {
+                        const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+                        if (!authorList.includes(formatted)) {
+                          setAuthorList(prev => [...prev, formatted]);
+                        }
+                        setForm(f => ({ ...f, author: formatted }));
+                        setNewAuthorName('');
+                        setIsAuthorDropdownOpen(false);
+                      }
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -491,7 +582,7 @@ export default function MarketingCalendarPage() {
       {/* Schedule Post Modal */}
       {showScheduleModal && (
         <Modal title="Schedule New Post" onClose={() => setShowScheduleModal(false)}>
-          <EventForm forDate={true} />
+          {EventForm({ forDate: true })}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 24 }}>
             <button className="btn btn-ghost" onClick={() => setShowScheduleModal(false)}>Cancel</button>
             <button className="btn btn-primary" onClick={handleSchedule} disabled={!form.title.trim()}>
@@ -504,7 +595,7 @@ export default function MarketingCalendarPage() {
       {/* Edit Post Modal */}
       {showEditModal && (
         <Modal title="Edit Scheduled Post" onClose={() => setShowEditModal(false)}>
-          <EventForm forDate={false} />
+          {EventForm({ forDate: false })}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 24 }}>
             <button className="btn btn-ghost" onClick={() => setShowEditModal(false)}>Cancel</button>
             <button className="btn btn-primary" onClick={handleSaveEdit}>Save Changes</button>
