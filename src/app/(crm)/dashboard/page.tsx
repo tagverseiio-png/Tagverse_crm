@@ -1,11 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   dashboardKpis,
-  dashboardPipelineStages,
-  dashboardFunnel,
   dashboardActivityItems,
-  dashboardRecentLeads,
   dashboardTasks,
   dashboardWorkflows,
 } from '@/lib/mockData';
@@ -15,6 +13,43 @@ function fmtINR(v: number) {
   if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
   if (v >= 1000) return `₹${(v / 1000).toFixed(0)}K`;
   return `₹${v}`;
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface DealCard {
+  id: string;
+  name: string;
+  company: string;
+  value: string;
+  owner: string;
+}
+
+interface PipelineStage {
+  id: string;
+  label: string;
+  key: string;
+  color: string;
+  headerColor: string;
+  deals: DealCard[];
+}
+
+interface FunnelItem {
+  stage: string;
+  count: number;
+  pct: number;
+  color: string;
+}
+
+interface RecentLead {
+  id: string;
+  name: string;
+  company: string;
+  source: string;
+  stage: string;
+  score: number;
+  owner: string;
+  time: string;
 }
 
 // ─── Derive JSX activity text from structured mock data ───────────────────────
@@ -58,7 +93,7 @@ function KpiCard({ label, value, delta, trend, color, icon }: typeof dashboardKp
   );
 }
 
-function DealCard({ name, company, value, owner }: { name: string; company: string; value: string; owner: string }) {
+function DealCardUI({ name, company, value, owner }: DealCard) {
   return (
     <div className="deal-card">
       <div className="deal-card-name">{name}</div>
@@ -71,11 +106,38 @@ function DealCard({ name, company, value, owner }: { name: string; company: stri
   );
 }
 
+// ─── Skeleton loaders ─────────────────────────────────────────────────────────
+
+function PipelineSkeleton() {
+  return (
+    <div className="pipeline-board" style={{ opacity: 0.5 }}>
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="pipeline-col new">
+          <div className="pipeline-col-header">
+            <span className="pipeline-col-title" style={{ background: 'var(--border)', borderRadius: 4, width: 80, height: 12, display: 'inline-block' }} />
+          </div>
+          <div className="pipeline-cards">
+            {[1, 2].map((j) => (
+              <div key={j} className="deal-card" style={{ background: 'var(--border)', height: 60 }} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const [kpis, setKpis] = useState(dashboardKpis);
+  const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([]);
+  const [funnelData, setFunnelData] = useState<FunnelItem[]>([]);
+  const [conversionRate, setConversionRate] = useState<string>('0.0');
+  const [recentLeads, setRecentLeads] = useState<RecentLead[]>([]);
+  const [loadingOverview, setLoadingOverview] = useState(true);
 
+  // KPIs
   useEffect(() => {
     fetch('/api/dashboard/kpis')
       .then(r => r.json())
@@ -93,6 +155,23 @@ export default function DashboardPage() {
       .catch(() => { });
   }, []);
 
+  // Pipeline + Funnel + Recent Leads
+  useEffect(() => {
+    setLoadingOverview(true);
+    fetch('/api/dashboard/overview')
+      .then(r => r.json())
+      .then(json => {
+        if (!json.data) return;
+        const d = json.data;
+        if (d.pipelineStages?.length) setPipelineStages(d.pipelineStages);
+        if (d.funnelData?.length) setFunnelData(d.funnelData);
+        if (d.conversionRate) setConversionRate(d.conversionRate);
+        if (d.recentLeads?.length) setRecentLeads(d.recentLeads);
+      })
+      .catch(() => { })
+      .finally(() => setLoadingOverview(false));
+  }, []);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
@@ -102,30 +181,43 @@ export default function DashboardPage() {
       </div>
 
       {/* Pipeline Kanban + Funnel */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 280px', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 280px', gap: 16, alignItems: 'stretch', minHeight: 360 }}>
         {/* Kanban */}
-        <div className="card" style={{ padding: '16px 18px' }}>
+        <div className="card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div className="section-header">
             <div>
               <div className="section-title">Deal Pipeline</div>
               <div className="section-sub">Drag deals across stages to update status</div>
             </div>
-            <button className="btn btn-ghost" style={{ fontSize: 12 }}>View All →</button>
+            <Link href="/pipeline" className="btn btn-ghost" style={{ fontSize: 12, textDecoration: 'none' }}>View All →</Link>
           </div>
-          <div className="pipeline-board">
-            {dashboardPipelineStages.map((col) => (
-              <div key={col.id} className={`pipeline-col ${col.color}`}>
-                <div className="pipeline-col-header">
-                  <span className="pipeline-col-title">{col.label}</span>
-                  <span className="pipeline-col-count">{col.deals.length}</span>
+          {loadingOverview ? (
+            <PipelineSkeleton />
+          ) : pipelineStages.length === 0 ? (
+            <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+              No pipeline data yet. <Link href="/pipeline" style={{ color: 'var(--purple)' }}>Set up your pipeline →</Link>
+            </div>
+          ) : (
+            <div className="pipeline-board">
+              {pipelineStages.map((col) => (
+                <div key={col.id} className={`pipeline-col ${col.color}`}>
+                  <div className="pipeline-col-header">
+                    <span className="pipeline-col-title">{col.label}</span>
+                    <span className="pipeline-col-count">{col.deals.length}</span>
+                  </div>
+                  <div className="pipeline-cards">
+                    {col.deals.length === 0 ? (
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', padding: '16px 0' }}>No deals</div>
+                    ) : (
+                      col.deals.map((d) => <DealCardUI key={d.id} {...d} />)
+                    )}
+                  </div>
                 </div>
-                <div className="pipeline-cards">
-                  {col.deals.map((d) => <DealCard key={d.name} {...d} />)}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
+
 
         {/* Funnel */}
         <div className="card">
@@ -135,24 +227,31 @@ export default function DashboardPage() {
               <div className="section-sub">This month</div>
             </div>
           </div>
-          <div className="funnel-bar" style={{ gap: 10 }}>
-            {dashboardFunnel.map((f) => (
-              <div key={f.stage} className="funnel-stage">
-                <span className="funnel-label">{f.stage}</span>
-                <div className="funnel-track">
-                  <div className="funnel-fill" style={{ width: `${f.pct}%`, background: f.color }} />
-                </div>
-                <span className="funnel-count">{f.count}</span>
+          {loadingOverview ? (
+            <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>Loading…</div>
+          ) : funnelData.length === 0 ? (
+            <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>No funnel data yet</div>
+          ) : (
+            <>
+              <div className="funnel-bar" style={{ gap: 10 }}>
+                {funnelData.map((f) => (
+                  <div key={f.stage} className="funnel-stage">
+                    <span className="funnel-label">{f.stage}</span>
+                    <div className="funnel-track">
+                      <div className="funnel-fill" style={{ width: `${f.pct}%`, background: f.color }} />
+                    </div>
+                    <span className="funnel-count">{f.count}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div style={{ marginTop: 18, padding: '12px 0', borderTop: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Overall Conversion Rate</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 700, color: 'var(--emerald)' }}>10.2%</span>
-              <span style={{ fontSize: 11, color: 'var(--emerald)', background: 'var(--emerald-dim)', padding: '2px 7px', borderRadius: 8 }}>↑ +1.4%</span>
-            </div>
-          </div>
+              <div style={{ marginTop: 18, padding: '12px 0', borderTop: '1px solid var(--border)' }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Overall Conversion Rate</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 700, color: 'var(--emerald)' }}>{conversionRate}%</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -166,7 +265,7 @@ export default function DashboardPage() {
               <div className="section-title">Recent Leads</div>
               <div className="section-sub">Latest from Meta Ads, forms &amp; webhooks</div>
             </div>
-            <button className="btn btn-ghost" style={{ fontSize: 12 }}>All Leads →</button>
+            <Link href="/leads" className="btn btn-ghost" style={{ fontSize: 12, textDecoration: 'none' }}>All Leads →</Link>
           </div>
           <div className="table-wrap">
             <table>
@@ -182,25 +281,41 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {dashboardRecentLeads.map((l) => (
-                  <tr key={l.name} style={{ cursor: 'pointer' }}>
-                    <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{l.name}</td>
-                    <td>{l.company}</td>
-                    <td><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{l.source}</span></td>
-                    <td><span className={`badge ${l.stage}`}>{l.stage}</span></td>
-                    <td>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: l.score >= 80 ? 'var(--emerald)' : l.score >= 60 ? 'var(--amber)' : 'var(--rose)' }}>
-                        {l.score}
-                      </span>
+                {loadingOverview ? (
+                  [1, 2, 3, 4].map((i) => (
+                    <tr key={i}>
+                      {[1, 2, 3, 4, 5, 6, 7].map((j) => (
+                        <td key={j}><span style={{ display: 'inline-block', width: '80%', height: 10, background: 'var(--border)', borderRadius: 4 }} /></td>
+                      ))}
+                    </tr>
+                  ))
+                ) : recentLeads.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, padding: '24px 0' }}>
+                      No leads yet. <Link href="/leads" style={{ color: 'var(--purple)' }}>Add your first lead →</Link>
                     </td>
-                    <td>
-                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, var(--purple), var(--blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'white' }}>
-                        {l.owner}
-                      </div>
-                    </td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: 11 }}>{l.time}</td>
                   </tr>
-                ))}
+                ) : (
+                  recentLeads.map((l) => (
+                    <tr key={l.id} style={{ cursor: 'pointer' }}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{l.name}</td>
+                      <td>{l.company}</td>
+                      <td><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{l.source}</span></td>
+                      <td><span className={`badge ${l.stage}`}>{l.stage}</span></td>
+                      <td>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: l.score >= 80 ? 'var(--emerald)' : l.score >= 60 ? 'var(--amber)' : 'var(--rose)' }}>
+                          {l.score}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, var(--purple), var(--blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'white' }}>
+                          {l.owner}
+                        </div>
+                      </td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: 11 }}>{l.time}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
