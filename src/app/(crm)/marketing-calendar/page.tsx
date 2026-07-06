@@ -1,11 +1,40 @@
 'use client';
 import { useState, useEffect } from 'react';
-import {
-  type ScheduledEvent,
-  marketingCalendarChannelColor as CHANNEL_COLOR,
-  marketingCalendarChannelBadge as CHANNEL_BADGE,
-  marketingCalendarAuthors as AUTHORS,
-} from '@/lib/mockData';
+export interface ScheduledEvent {
+  id: string | number;
+  date: string | number;
+  title: string;
+  channel: string;
+  time: string;
+  type?: string;
+  author: string;
+  company?: string;
+  client?: string;
+  badgeChannel?: string;
+  badgeStatus?: string;
+  status?: string;
+  color?: string;
+}
+
+const CHANNEL_COLOR: Record<string, string> = {
+  LinkedIn: '#0077b5',
+  Twitter: '#1da1f2',
+  Instagram: '#e1306c',
+  Email: '#ea4335',
+  Blog: '#f59e0b',
+  YouTube: '#ff0000',
+};
+
+const CHANNEL_BADGE: Record<string, string> = {
+  LinkedIn: 'blue',
+  Twitter: 'sky',
+  Instagram: 'rose',
+  Email: 'red',
+  Blog: 'amber',
+  YouTube: 'red',
+};
+
+const AUTHORS = ['Priya S.', 'Arjun M.', 'Kiran D.', 'Sneha R.'];
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
