@@ -3,11 +3,12 @@ import { prisma } from '@/lib/db';
 import { requireSession } from '@/lib/api/auth';
 import { apiSuccess, apiError, apiErrorFromUnknown } from '@/lib/api/response';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { session, error } = await requireSession();
   if (error) return error;
   try {
-    const { id } = params;
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
     const body = await req.json();
     
     // allow updating status, scheduledAt, and any other typical fields
@@ -25,11 +26,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { session, error } = await requireSession();
   if (error) return error;
   try {
-    const { id } = params;
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
     await prisma.activity.delete({
       where: { id },
     });
