@@ -85,7 +85,7 @@ export default function TemplateSelectorModal({ onSelect, onClose }: Props) {
                       top: 0, 
                       left: '50%',
                       width: 794,
-                      transform: 'scale(0.31)', 
+                      transform: 'translateX(-50%) scale(0.31)', 
                       transformOrigin: 'top center',
                       pointerEvents: 'none'
                     }}>

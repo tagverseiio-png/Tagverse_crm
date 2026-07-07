@@ -356,7 +356,7 @@
 /* Main Content Area */
 .quote-builder-wrapper .tpl-modern .main-content {
   margin-left: 60px;
-  padding: 40px 40px 100px 20px;
+  padding: 40px 40px 140px 20px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -523,49 +523,91 @@
 .quote-builder-wrapper .tpl-modern .col-total { width: 90px; text-align: right; }
 
 /* Totals Section */
-.quote-builder-wrapper .tpl-modern .bottom-section {
+.quote-builder-wrapper .tpl-modern .mod-totals-section {
   display: flex;
-  justify-content: space-between;
-  margin-top: auto;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 
-.quote-builder-wrapper .tpl-modern .terms {
-  max-width: 280px;
-}
-
-.quote-builder-wrapper .tpl-modern .terms h4 {
-  color: var(--mod-purple);
-  font-size: 14px;
-  margin: 0 0 8px;
-}
-
-.quote-builder-wrapper .tpl-modern .terms p {
-  font-size: 11px;
-  line-height: 1.6;
-  color: #9CA3AF;
-}
-
-.quote-builder-wrapper .tpl-modern .totals-box {
+.quote-builder-wrapper .tpl-modern .mod-totals-inner {
   width: 250px;
 }
 
-.quote-builder-wrapper .tpl-modern .tot-line {
+.quote-builder-wrapper .tpl-modern .mod-totals-inner .tot-line {
   display: flex;
   justify-content: space-between;
-  padding: 8px 15px;
+  padding: 8px 0;
   font-size: 12px;
-  margin-bottom: 4px;
-  border-radius: 15px;
-  background: var(--mod-grey-bg);
+  color: #4B5563;
 }
 
-.quote-builder-wrapper .tpl-modern .tot-line span:first-child {
+.quote-builder-wrapper .tpl-modern .mod-totals-inner .tot-line.grand {
+  border-top: 2px solid #111;
+  font-weight: 700;
+  color: #111;
+  font-size: 14px;
+  margin-top: 4px;
+  padding-top: 12px;
+}
+
+/* Terms Section */
+.quote-builder-wrapper .tpl-modern .mod-terms-section {
+  border-top: 1px solid #E5E7EB;
+  margin-top: 30px;
+  padding-top: 20px;
+}
+
+.quote-builder-wrapper .tpl-modern .mod-terms-section h4 {
+  color: #6C0CA6;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 12px;
+}
+
+.quote-builder-wrapper .tpl-modern .mod-terms-section p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #6B7280;
+}
+
+.quote-builder-wrapper .tpl-modern .mod-terms-meta {
+  display: flex;
+  gap: 32px;
+  font-size: 12px;
+  color: #4B5563;
+}
+
+/* Signature Section */
+.quote-builder-wrapper .tpl-modern .mod-sig-section {
+  border-top: 1px solid #E5E7EB;
+  margin-top: 30px;
+  padding-top: 20px;
+  display: flex;
+  gap: 80px;
+}
+
+.quote-builder-wrapper .tpl-modern .sig-block {
+  flex: 1;
+  max-width: 250px;
+}
+
+.quote-builder-wrapper .tpl-modern .sig-block .sig-label {
+  font-size: 10px;
   font-weight: 600;
+  color: #6B7280;
+  letter-spacing: 1px;
+  margin-bottom: 40px;
 }
 
-.quote-builder-wrapper .tpl-modern .tot-line.grand {
-  background: var(--mod-purple);
-  color: #fff;
+.quote-builder-wrapper .tpl-modern .sig-block .sig-line {
+  border-top: 1px solid #111;
+  margin-bottom: 6px;
+}
+
+.quote-builder-wrapper .tpl-modern .sig-block .sig-text {
+  font-size: 10px;
+  color: #9CA3AF;
 }
 
 /* Footer Section */
@@ -592,22 +634,4 @@
 
 .quote-builder-wrapper .tpl-modern .footer-shape .contact-info span:nth-child(odd) {
   font-weight: 700;
-}
-
-.quote-builder-wrapper .tpl-modern .signature {
-  position: absolute;
-  bottom: 120px;
-  right: 60px;
-  text-align: center;
-}
-
-.quote-builder-wrapper .tpl-modern .sig-line {
-  width: 150px;
-  border-top: 1px solid var(--mod-text);
-  margin-bottom: 8px;
-}
-
-.quote-builder-wrapper .tpl-modern .sig-text {
-  font-size: 12px;
-  color: var(--mod-text);
 }

@@ -15,9 +15,9 @@ export default function TemplateModern(props: TemplateRendererProps) {
         {/* Header Section */}
         <div className="header-section">
           <div className="invoice-details">
-            <div><span>Invoice</span> <strong>: {quoteId}</strong></div>
+            <div><span>{docType === 'Invoice' ? 'Invoice' : 'Quote'} No</span> <strong>: {quoteId}</strong></div>
             <div><span>Date</span> <strong>: {fmtDate(issued)}</strong></div>
-            {docType === 'Quote' && <div><span>Valid To</span> <strong>: {fmtDate(expires)}</strong></div>}
+            <div><span>{docType === 'Invoice' ? 'Due Date' : 'Valid Until'}</span> <strong>: {fmtDate(expires)}</strong></div>
           </div>
           
           <div className="company-header">
@@ -38,22 +38,52 @@ export default function TemplateModern(props: TemplateRendererProps) {
             </p>
           </div>
 
-          <div className="payment-info">
-            <h3>Payment Info:</h3>
-            <div className="info-row">
-              <span>Account No</span>
-              <span>: 000 111 222 333</span>
+          {docType === 'Invoice' ? (
+            <div className="payment-info">
+              <h3>Payment Info:</h3>
+              <div className="info-row">
+                <span>Account No</span>
+                <span>: 000 111 222 333</span>
+              </div>
+              <div className="info-row">
+                <span>A/c Name</span>
+                <span>: tagverse.io</span>
+              </div>
+              <div className="info-row">
+                <span>Bank Details</span>
+                <span>: HDFC Bank</span>
+              </div>
+              <div className="info-row">
+                <span>Due Date</span>
+                <span>: {fmtDate(expires)}</span>
+              </div>
             </div>
-            <div className="info-row">
-              <span>A/c Name</span>
-              <span>: tagverse.io</span>
+          ) : (
+            <div className="payment-info">
+              <h3>Prepared By:</h3>
+              <div className="info-row" style={{ fontWeight: 600, color: '#7c3aed' }}>
+                <span>tagverse.io</span>
+              </div>
+              <div className="info-row">
+                <span>Digital Growth Partner</span>
+              </div>
+              <div className="info-row">
+                <span>contact@tagverse.io</span>
+              </div>
+              <div className="info-row">
+                <span>www.tagverse.io</span>
+              </div>
             </div>
-            <div className="info-row">
-              <span>Bank Details</span>
-              <span>: HDFC Bank</span>
-            </div>
-          </div>
+          )}
         </div>
+
+        {/* Scope Section */}
+        {scope && (
+          <div style={{ margin: '0 0 12px', background: '#f3f0ff', borderRadius: 6, padding: '8px 14px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', fontSize: 10, letterSpacing: 1 }}>{docType === 'Invoice' ? 'Description' : 'Scope'}</span>
+            <span>{scope}</span>
+          </div>
+        )}
 
         {/* Table Section */}
         <div className="table-container">
@@ -83,41 +113,65 @@ export default function TemplateModern(props: TemplateRendererProps) {
         </div>
 
         {/* Totals Section */}
-        <div className="bottom-section">
-          <div className="terms">
-            <h4>Terms & Conditions:</h4>
-            <p style={{ whiteSpace: 'pre-wrap' }}>{notes || 'Please note that the prices are subject to change without prior notice.'}</p>
-          </div>
-
-          <div className="totals-box">
+        <div className="mod-totals-section">
+          <div className="mod-totals-inner">
             <div className="tot-line">
-              <span>Sub Total</span>
-              <span>: {currency}{subtotal.toLocaleString('en-IN')}</span>
+              <span>Subtotal</span>
+              <span>{currency}{subtotal.toLocaleString('en-IN')}</span>
             </div>
-            {cgstRate > 0 || sgstRate > 0 ? (
+            {cgstRate > 0 && (
               <div className="tot-line">
-                <span>Tax</span>
-                <span>: {currency}{(Math.round(cgstAmt) + Math.round(sgstAmt)).toLocaleString('en-IN')}</span>
+                <span>CGST ({cgstRate}%)</span>
+                <span>{currency}{Math.round(cgstAmt).toLocaleString('en-IN')}</span>
               </div>
-            ) : null}
+            )}
+            {sgstRate > 0 && (
+              <div className="tot-line">
+                <span>SGST ({sgstRate}%)</span>
+                <span>{currency}{Math.round(sgstAmt).toLocaleString('en-IN')}</span>
+              </div>
+            )}
             {discountRate > 0 && (
               <div className="tot-line">
                 <span>Discount ({discountRate}%)</span>
-                <span>: {currency}{Math.round(discountAmt).toLocaleString('en-IN')}</span>
+                <span>-{currency}{Math.round(discountAmt).toLocaleString('en-IN')}</span>
               </div>
             )}
             <div className="tot-line grand">
               <span>Total</span>
-              <span>: {currency}{Math.round(total).toLocaleString('en-IN')}</span>
+              <span>{currency}{Math.round(total).toLocaleString('en-IN')}</span>
             </div>
           </div>
         </div>
 
+        {/* Terms Section */}
+        <div className="mod-terms-section">
+          <h4>{docType === 'Invoice' ? 'NOTES & TERMS' : 'TERMS & CONDITIONS'}</h4>
+          {notes && <p style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>{notes}</p>}
+          <div className="mod-terms-meta">
+            {terms && <div><strong>Payment:</strong> {terms}</div>}
+            {delivery && <div><strong>Delivery:</strong> {delivery}</div>}
+          </div>
+          {!docType || docType === 'Quote' ? (
+            <p style={{ marginTop: 12, color: '#9ca3af', fontStyle: 'italic', fontSize: 11 }}>
+              This quotation is valid until {fmtDate(expires)}. Prices are subject to change after expiry.
+            </p>
+          ) : null}
+        </div>
+
         {/* Signature */}
         {docType === 'Invoice' && (
-          <div className="signature">
-            <div className="sig-line"></div>
-            <div className="sig-text">Signature</div>
+          <div className="mod-sig-section">
+            <div className="sig-block">
+              <div className="sig-label">AUTHORISED BY — TAGVERSE.IO</div>
+              <div className="sig-line"></div>
+              <div className="sig-text">Signature &amp; Date</div>
+            </div>
+            <div className="sig-block">
+              <div className="sig-label">ACCEPTED BY — {company ? company.toUpperCase() : 'CLIENT'}</div>
+              <div className="sig-line"></div>
+              <div className="sig-text">Signature &amp; Date</div>
+            </div>
           </div>
         )}
       </div>

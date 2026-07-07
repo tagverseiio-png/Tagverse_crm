@@ -286,16 +286,12 @@ export default function QuoteBuilderModal({ initialQuote, initialTemplate, onClo
               <div className="ps">
                 <div className="ps-title">Pricing</div>
                 <div className="tot-row">
-                  <span>CGST</span>
-                  <select value={cgstRate} onChange={e => setCgstRate(Number(e.target.value))}>
-                    <option value="0">None (0%)</option><option value="2.5">2.5%</option><option value="6">6%</option><option value="9">9%</option><option value="14">14%</option>
-                  </select>
+                  <span>CGST (%)</span>
+                  <input type="number" min="0" step="0.1" value={cgstRate} onChange={e => setCgstRate(Number(e.target.value))} style={{ width: '70px', padding: '4px', textAlign: 'right', borderRadius: '4px', border: '1px solid #D1D5DB' }} />
                 </div>
                 <div className="tot-row">
-                  <span>SGST</span>
-                  <select value={sgstRate} onChange={e => setSgstRate(Number(e.target.value))}>
-                    <option value="0">None (0%)</option><option value="2.5">2.5%</option><option value="6">6%</option><option value="9">9%</option><option value="14">14%</option>
-                  </select>
+                  <span>SGST (%)</span>
+                  <input type="number" min="0" step="0.1" value={sgstRate} onChange={e => setSgstRate(Number(e.target.value))} style={{ width: '70px', padding: '4px', textAlign: 'right', borderRadius: '4px', border: '1px solid #D1D5DB' }} />
                 </div>
                 <div className="tot-row">
                   <span>Discount</span>
