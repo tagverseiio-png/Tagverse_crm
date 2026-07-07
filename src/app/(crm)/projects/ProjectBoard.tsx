@@ -21,6 +21,7 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Project, Member, useWorkspace } from '@/context/WorkspaceContext';
+import { useDroppable } from '@dnd-kit/core';
 
 const COLUMNS = ['Kick-off', 'Planning', 'Implementation', 'Review', 'Closing'] as const;
 type ColumnType = typeof COLUMNS[number];
@@ -116,8 +117,9 @@ function SortableProjectCard({ project, members, onClick }: SortableProjectCardP
 }
 
 function DroppableColumn({ id, title, projects, members, onProjectClick }: { id: ColumnType, title: string, projects: Project[], members: Member[], onProjectClick: (p: Project) => void }) {
+  const { setNodeRef } = useDroppable({ id });
   return (
-    <div style={{ flex: '0 0 280px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column' }}>
+    <div ref={setNodeRef} style={{ flex: '0 0 280px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 4px' }}>
         <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{title}</h3>
         <span style={{ background: 'var(--purple-dim)', color: '#000', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>

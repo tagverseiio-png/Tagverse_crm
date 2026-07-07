@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 export interface ScheduledEvent {
   id: string | number;
   date: string | number;
@@ -88,8 +89,16 @@ const labelStyle = {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function MarketingCalendarPage() {
-  const [currentMonth] = useState('June 2026');
-  const [selectedDate, setSelectedDate] = useState<number>(24);
+  const today = new Date();
+  const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [selectedDate, setSelectedDate] = useState(today);
+
+  const formatYMD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
 
   const [events, setEvents] = useState<ScheduledEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,7 +111,7 @@ export default function MarketingCalendarPage() {
   const [detailsEvent, setDetailsEvent] = useState<ScheduledEvent | null>(null);
 
   const POST_COLORS = ['#6366f1','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#06b6d4','#84cc16','#f97316'];
-  const blankForm = { title: '', channel: 'LinkedIn', date: `2026-06-${String(selectedDate).padStart(2, '0')}`, time: '09:00', author: 'Priya S.', type: 'Social', company: '', client: '', color: '#6366f1' };
+  const blankForm = { title: '', channel: 'LinkedIn', date: formatYMD(selectedDate), time: '09:00', author: 'Priya S.', type: 'Social', company: '', client: '', color: '#6366f1' };
 
   const [form, setForm] = useState(blankForm);
 
@@ -141,20 +150,31 @@ export default function MarketingCalendarPage() {
   }, []);
 
   // Calendar data
-  const daysInMonth = 30;
-  const firstDayOfMonth = 0;
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  
   const days: { empty: boolean; day?: number; isToday?: boolean; evts?: ScheduledEvent[] }[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) days.push({ empty: true });
   for (let i = 1; i <= daysInMonth; i++) {
-    days.push({ empty: false, day: i, isToday: i === 24, evts: events.filter(e => {
-      if (typeof e.date === 'number') return e.date === i;
-      if (typeof e.date === 'string') return e.date.startsWith('2026-06-') && Number(e.date.split('-')[2]) === i;
-      return false;
-    })});
+    const dateStr = formatYMD(new Date(year, month, i));
+    days.push({ 
+      empty: false, 
+      day: i, 
+      isToday: year === today.getFullYear() && month === today.getMonth() && i === today.getDate(), 
+      evts: events.filter(e => {
+        if (typeof e.date === 'string') return e.date === dateStr;
+        if (typeof e.date === 'number' && year === 2026 && month === 5) return e.date === i;
+        return false;
+      })
+    });
   }
+
+  const selectedStr = formatYMD(selectedDate);
   const selectedEvents = events.filter(e => {
-    if (typeof e.date === 'number') return e.date === selectedDate;
-    if (typeof e.date === 'string') return e.date.startsWith('2026-06-') && Number(e.date.split('-')[2]) === selectedDate;
+    if (typeof e.date === 'string') return e.date === selectedStr;
+    if (typeof e.date === 'number' && selectedDate.getFullYear() === 2026 && selectedDate.getMonth() === 5) return e.date === selectedDate.getDate();
     return false;
   });
   const allScheduled = events.filter(e => e.status === 'Scheduled');
@@ -178,7 +198,11 @@ export default function MarketingCalendarPage() {
     };
     // Optimistic UI update
     setEvents(prev => [...prev, newEvt]);
-    setSelectedDate(typeof form.date === 'string' && form.date.startsWith('2026-06-') ? Number(form.date.split('-')[2]) : selectedDate);
+    if (typeof form.date === 'string') {
+      const [y, m, d] = form.date.split('-').map(Number);
+      setSelectedDate(new Date(y, m - 1, d));
+      setViewDate(new Date(y, m - 1, 1));
+    }
     setShowScheduleModal(false);
     showToast('Post scheduled successfully!');
     setForm({ ...blankForm, date: form.date });
@@ -409,7 +433,7 @@ export default function MarketingCalendarPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 10 }}
-            onClick={() => { setForm({ ...blankForm, date: `2026-06-${String(selectedDate).padStart(2, '0')}` }); setShowScheduleModal(true); }}>
+            onClick={() => { setForm({ ...blankForm, date: formatYMD(selectedDate) }); setShowScheduleModal(true); }}>
             <i className="ti ti-plus"></i> Schedule Post
           </button>
         </div>
@@ -420,9 +444,15 @@ export default function MarketingCalendarPage() {
         {/* Calendar */}
         <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-            <button className="btn btn-ghost" style={{ padding: '8px', borderRadius: '50%' }}><i className="ti ti-chevron-left" style={{ fontSize: 18 }}></i></button>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{currentMonth}</h2>
-            <button className="btn btn-ghost" style={{ padding: '8px', borderRadius: '50%' }}><i className="ti ti-chevron-right" style={{ fontSize: 18 }}></i></button>
+            <button className="btn btn-ghost hover-lift" style={{ padding: '8px', borderRadius: '50%', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewDate(new Date(year, month - 1, 1))}>
+              <ChevronLeft size={20} />
+            </button>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </h2>
+            <button className="btn btn-ghost hover-lift" style={{ padding: '8px', borderRadius: '50%', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewDate(new Date(year, month + 1, 1))}>
+              <ChevronRight size={20} />
+            </button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 10, flex: 1 }}>
@@ -431,9 +461,9 @@ export default function MarketingCalendarPage() {
             ))}
             {days.map((d, i) => {
               if (d.empty) return <div key={i} />;
-              const isSelected = selectedDate === d.day;
+              const isSelected = selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === d.day;
               return (
-                <div key={i} className="cal-day-item" onClick={() => setSelectedDate(d.day!)} style={{
+                <div key={i} className="cal-day-item" onClick={() => setSelectedDate(new Date(year, month, d.day!))} style={{
                   position: 'relative', height: 90, padding: '10px', borderRadius: 12, cursor: 'pointer',
                   border: isSelected ? '2px solid var(--purple)' : '1px solid var(--border)',
                   background: isSelected ? 'linear-gradient(145deg, var(--purple-dim), rgba(124,92,191,0.05))' : d.isToday ? 'var(--bg-secondary)' : 'var(--bg-card)',
@@ -460,13 +490,7 @@ export default function MarketingCalendarPage() {
             })}
           </div>
 
-          <div style={{ marginTop: 24, padding: '16px', background: 'var(--bg-secondary)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>
-            {[['var(--blue)', 'Acme Corp'], ['var(--purple)', 'Globex'], ['var(--emerald)', 'Soylent'], ['var(--rose)', 'Initech']].map(([clr, lbl]) => (
-              <span key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: clr, boxShadow: `0 0 8px ${clr}` }} /> {lbl}
-              </span>
-            ))}
-          </div>
+
         </div>
 
         {/* Day View */}
@@ -474,14 +498,14 @@ export default function MarketingCalendarPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
-                {currentMonth.split(' ')[0]} {selectedDate}
+                {selectedDate.toLocaleString('default', { month: 'long' })} {selectedDate.getDate()}
               </h3>
               <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Daily Schedule</div>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span className="badge" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>{selectedEvents.length} items</span>
               <button className="btn btn-ghost" style={{ padding: '6px 10px', fontSize: 12, color: 'var(--purple)' }}
-                onClick={() => { setForm({ ...blankForm, date: `2026-06-${String(selectedDate).padStart(2, '0')}` }); setShowScheduleModal(true); }}>
+                onClick={() => { setForm({ ...blankForm, date: formatYMD(selectedDate) }); setShowScheduleModal(true); }}>
                 <i className="ti ti-plus"></i>
               </button>
             </div>
@@ -496,7 +520,7 @@ export default function MarketingCalendarPage() {
                 <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Nothing scheduled</div>
                 <div style={{ fontSize: 13, marginTop: 6 }}>No posts planned for this date.</div>
                 <button className="btn btn-ghost" style={{ marginTop: 20, fontSize: 13, color: 'var(--purple)', fontWeight: 600 }}
-                  onClick={() => { setForm({ ...blankForm, date: `2026-06-${String(selectedDate).padStart(2, '0')}` }); setShowScheduleModal(true); }}>
+                  onClick={() => { setForm({ ...blankForm, date: formatYMD(selectedDate) }); setShowScheduleModal(true); }}>
                   + Schedule Item
                 </button>
               </div>
