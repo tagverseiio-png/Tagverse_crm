@@ -1,9 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   dashboardKpis,
-  dashboardActivityItems,
   dashboardTasks,
   dashboardWorkflows,
 } from '@/lib/mockData';
@@ -52,30 +51,49 @@ interface RecentLead {
   time: string;
 }
 
-// ─── Derive JSX activity text from structured mock data ───────────────────────
-function renderActivityText(a: typeof dashboardActivityItems[0]) {
-  if ('leadName' in a && a.leadName) {
-    return <><strong>{a.leadName}</strong> moved to <strong>{a.stage}</strong> stage</>;
-  }
-  if ('invoice' in a && a.invoice) {
-    return <><strong>Invoice {a.invoice}</strong> {a.action} — {a.amount} received</>;
-  }
-  if ('source' in a && a.source) {
-    return <><strong>n8n</strong>: New lead from {a.source} routed to <strong>{a.assignee}</strong></>;
-  }
-  if ('quote' in a && a.quote) {
-    return <><strong>Quote {a.quote}</strong> sent to <strong>{a.client}</strong> for {a.amount}</>;
-  }
-  if ('leadCount' in a && a.leadCount) {
-    return <><strong>Drip sequence</strong> triggered for {a.leadCount} new leads from campaign</>;
-  }
-  if ('task' in a && a.task) {
-    return <><strong>Task</strong> &quot;{a.task}&quot; due in 2 hours, assigned to <strong>{a.owner}</strong></>;
-  }
-  if ('post' in a && a.post) {
-    return <><strong>{a.post}</strong> published for campaign <em>{a.campaign}</em></>;
-  }
-  return null;
+// ─── Real activity feed types & helpers ──────────────────────────────────────
+interface RealActivity {
+  id: string;
+  type: string;
+  title: string;
+  status: string;
+  scheduledAt?: string;
+  createdAt: string;
+  contact?: { name: string };
+  deal?: { title: string };
+}
+
+const TYPE_DOT: Record<string, string> = {
+  meeting: 'purple',
+  task: 'blue',
+  deadline: 'rose',
+  followup: 'amber',
+  call: 'emerald',
+  email: 'emerald',
+  note: 'blue',
+};
+
+function relativeLabel(isoString: string): string {
+  const now = new Date();
+  const d = new Date(isoString);
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.round(diffMs / 60000);
+  const diffH = Math.round(diffMs / 3600000);
+  const todayStr = now.toISOString().split('T')[0];
+  const dStr = d.toISOString().split('T')[0];
+  // tomorrow
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  if (dStr === tomorrowStr) return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  if (dStr !== todayStr) return 'yesterday';
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  return `${diffH}h ago`;
+}
+
+function dateOf(a: RealActivity): string {
+  return (a.scheduledAt || a.createdAt).split('T')[0];
 }
 
 // ─── Components ──────────────────────────────────────────────────────────────
@@ -136,6 +154,8 @@ export default function DashboardPage() {
   const [conversionRate, setConversionRate] = useState<string>('0.0');
   const [recentLeads, setRecentLeads] = useState<RecentLead[]>([]);
   const [loadingOverview, setLoadingOverview] = useState(true);
+  const [feedItems, setFeedItems] = useState<RealActivity[]>([]);
+  const [loadingFeed, setLoadingFeed] = useState(true);
 
   // KPIs
   useEffect(() => {
@@ -171,6 +191,50 @@ export default function DashboardPage() {
       .catch(() => { })
       .finally(() => setLoadingOverview(false));
   }, []);
+
+  // Activity feed — today + yesterday unfinished + tomorrow upcoming
+  const fetchFeed = useCallback(async () => {
+    try {
+      setLoadingFeed(true);
+      const res = await fetch('/api/activities?limit=200');
+      const json = await res.json();
+      if (!res.ok || !Array.isArray(json.data)) return;
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+      const relevant = (json.data as RealActivity[]).filter(a => {
+        const ds = dateOf(a);
+        if (ds === todayStr) return true;
+        if (ds === yesterdayStr && a.status !== 'completed' && a.status !== 'done') return true;
+        if (ds === tomorrowStr && (a.status === 'upcoming' || a.status === 'scheduled')) return true;
+        return false;
+      });
+
+      // Sort: today first (newest first), then yesterday, then tomorrow
+      relevant.sort((a, b) => {
+        const da = dateOf(a);
+        const db = dateOf(b);
+        const order = (s: string) => s === todayStr ? 0 : s === yesterdayStr ? 1 : 2;
+        if (order(da) !== order(db)) return order(da) - order(db);
+        // within same day: most recent first
+        const ta = new Date(a.scheduledAt || a.createdAt).getTime();
+        const tb = new Date(b.scheduledAt || b.createdAt).getTime();
+        return tb - ta;
+      });
+
+      setFeedItems(relevant);
+    } catch {
+      /* silently ignore */
+    } finally {
+      setLoadingFeed(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchFeed(); }, [fetchFeed]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -321,7 +385,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Activity Feed */}
+        {/* Activity Feed — real data */}
         <div className="card">
           <div className="section-header">
             <div>
@@ -329,15 +393,39 @@ export default function DashboardPage() {
                 <span className="live-dot" />Activity Feed
               </div>
             </div>
+            <Link href="/activity" className="btn btn-ghost" style={{ fontSize: 12, textDecoration: 'none' }}>View All →</Link>
           </div>
           <div className="activity-list">
-            {dashboardActivityItems.map((a, i) => (
-              <div key={i} className="activity-item">
-                <div className={`activity-dot ${a.dot}`} />
-                <div className="activity-text">{renderActivityText(a)}</div>
-                <div className="activity-time">{a.time}</div>
+            {loadingFeed ? (
+              [1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="activity-item">
+                  <div className="activity-dot purple" style={{ opacity: 0.3 }} />
+                  <div className="activity-text" style={{ flex: 1 }}>
+                    <span style={{ display: 'inline-block', width: '80%', height: 10, background: 'var(--border)', borderRadius: 4 }} />
+                  </div>
+                </div>
+              ))
+            ) : feedItems.length === 0 ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
+                No activity yet. <Link href="/activity" style={{ color: 'var(--purple)' }}>Schedule something →</Link>
               </div>
-            ))}
+            ) : (
+              feedItems.map(a => {
+                const dot = TYPE_DOT[a.type] || 'emerald';
+                const label = relativeLabel(a.scheduledAt || a.createdAt);
+                const sub = a.contact?.name || a.deal?.title;
+                return (
+                  <div key={a.id} className="activity-item">
+                    <div className={`activity-dot ${dot}`} />
+                    <div className="activity-text">
+                      <strong>{a.title}</strong>
+                      {sub ? <> — <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>{sub}</span></> : null}
+                    </div>
+                    <div className="activity-time">{label}</div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
