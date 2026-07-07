@@ -98,6 +98,13 @@ export default function ActivityPage() {
   const [activities, setActivities] = useState<UIActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Form states
+  const [addTitle, setAddTitle] = useState('');
+  const [addType, setAddType] = useState('meeting');
+  const [addDate, setAddDate] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+
   const fetchActivities = React.useCallback(async () => {
     try {
       setLoading(true);
@@ -137,7 +144,69 @@ export default function ActivityPage() {
     fetchActivities();
   }, [fetchActivities]);
 
+  const handleAddActivity = async () => {
+    if (!addTitle || !addDate) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: addTitle,
+          type: addType,
+          scheduledAt: new Date(addDate).toISOString(),
+          status: 'upcoming'
+        })
+      });
+      if (res.ok) {
+        setShowAddModal(false);
+        setAddTitle('');
+        setAddDate('');
+        fetchActivities();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleComplete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/activities/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed' })
+      });
+      if (res.ok) {
+        setSelectedActivity(null);
+        fetchActivities();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRescheduleSubmit = async (id: string) => {
+    if (!rescheduleDate) return;
+    try {
+      const res = await fetch(`/api/activities/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheduledAt: new Date(rescheduleDate).toISOString() })
+      });
+      if (res.ok) {
+        setSelectedActivity(null);
+        setIsRescheduling(false);
+        fetchActivities();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const dayActivities = activities.filter(a => a.dateStr === selectedDate);
+
   const completedActivities = dayActivities.filter(a => a.status === 'completed' || a.status === 'done');
   const pendingActivities = dayActivities.filter(a => a.status !== 'completed' && a.status !== 'done');
 
@@ -451,26 +520,26 @@ export default function ActivityPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Activity Title</label>
-                <input type="text" placeholder="e.g. Acme Corp Contract Review" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }} />
+                <input type="text" value={addTitle} onChange={e => setAddTitle(e.target.value)} placeholder="e.g. Acme Corp Contract Review" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Type</label>
-                  <select style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }}>
-                    <option>Meeting</option>
-                    <option>Task</option>
-                    <option>Deadline</option>
+                  <select value={addType} onChange={e => setAddType(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }}>
+                    <option value="meeting">Meeting</option>
+                    <option value="task">Task</option>
+                    <option value="deadline">Deadline</option>
                   </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Date & Time</label>
-                  <input type="datetime-local" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }} />
+                  <input type="datetime-local" value={addDate} onChange={e => setAddDate(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }} />
                 </div>
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 32, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
               <button style={{ padding: '10px 16px', borderRadius: 10, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600, color: 'var(--text-muted)', fontSize: 13 }} onClick={() => setShowAddModal(false)}>Cancel</button>
-              <button style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--text-primary)', color: 'var(--bg-card)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13 }} onClick={() => setShowAddModal(false)}>Schedule Activity</button>
+              <button disabled={isSubmitting} style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--text-primary)', color: 'var(--bg-card)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, opacity: isSubmitting ? 0.7 : 1 }} onClick={handleAddActivity}>{isSubmitting ? 'Scheduling...' : 'Schedule Activity'}</button>
             </div>
           </div>
         </div>
@@ -501,10 +570,10 @@ export default function ActivityPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Select New Time</label>
-                  <input type="datetime-local" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }} />
+                  <input type="datetime-local" value={rescheduleDate} onChange={e => setRescheduleDate(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }} />
                 </div>
                 <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-                  <button className="btn" style={{ flex: 1, padding: '12px', borderRadius: 10, background: 'var(--brand-accent)', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer' }} onClick={() => { alert('Rescheduled'); setSelectedActivity(null); setIsRescheduling(false); }}>
+                  <button className="btn" style={{ flex: 1, padding: '12px', borderRadius: 10, background: 'var(--brand-accent)', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer' }} onClick={() => handleRescheduleSubmit(selectedActivity.id)}>
                     Confirm Reschedule
                   </button>
                   <button className="btn btn-ghost" style={{ flex: 1, padding: '12px', borderRadius: 10, background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: 'none', fontWeight: 600, cursor: 'pointer' }} onClick={() => setIsRescheduling(false)}>
@@ -514,7 +583,7 @@ export default function ActivityPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', gap: 12, marginTop: 32, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
-                <button className="btn" style={{ flex: 1, padding: '12px', borderRadius: 10, background: 'var(--emerald, #10b981)', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer' }} onClick={() => { alert('Marked as completed'); setSelectedActivity(null); }}>
+                <button className="btn" style={{ flex: 1, padding: '12px', borderRadius: 10, background: 'var(--emerald, #10b981)', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer' }} onClick={() => handleComplete(selectedActivity.id)}>
                   Mark as Completed
                 </button>
                 <button className="btn" style={{ flex: 1, padding: '12px', borderRadius: 10, background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', fontWeight: 600, cursor: 'pointer' }} onClick={() => setIsRescheduling(true)}>
