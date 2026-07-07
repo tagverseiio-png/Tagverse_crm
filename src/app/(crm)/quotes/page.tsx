@@ -64,6 +64,7 @@ export default function QuotesPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
+  const [editMode, setEditMode] = useState<'view' | 'edit'>('edit');
   const [selectedTemplate, setSelectedTemplate] = useState<string | undefined>();
   const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = useState(false);
 
@@ -95,6 +96,7 @@ export default function QuotesPage() {
 
   const openNew = () => {
     setEditingQuote(null);
+    setEditMode('edit');
     setIsTemplateSelectorOpen(true);
   };
 
@@ -104,8 +106,9 @@ export default function QuotesPage() {
     setIsModalOpen(true);
   };
 
-  const openEdit = (q: Quote) => {
+  const openEdit = (q: Quote, mode: 'view' | 'edit' = 'edit') => {
     setEditingQuote(q);
+    setEditMode(mode);
     setIsModalOpen(true);
   };
 
@@ -234,14 +237,14 @@ export default function QuotesPage() {
       </div>
 
       {/* Table */}
-      <div className="card table-wrap" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card table-wrap" style={{ padding: 0, overflow: 'visible' }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading quotes...</div>
         ) : (
-          <table>
+          <table style={{ overflow: 'visible' }}>
             <thead>
               <tr>
-                <th>Quote #</th><th>Client</th><th>Amount</th><th>Sent On</th><th>Expires</th><th>Status</th><th>Actions</th>
+                <th>Quote #</th><th>Client</th><th>Amount</th><th>Sent On</th><th>Expires</th><th>Status</th><th style={{ textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -253,19 +256,49 @@ export default function QuotesPage() {
                   <td style={{ color: 'var(--text-secondary)' }}>{fmtDisplayDate(q.sentOn)}</td>
                   <td style={{ color: 'var(--text-secondary)' }}>{fmtDisplayDate(q.expires)}</td>
                   <td><span className={STATUS_BADGE[q.status]}>{q.status}</span></td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
-                      <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => openEdit(q)}>
-                        <i className="ti ti-edit"></i> Edit
+                  <td style={{ textAlign: 'center' }}>
+                    <div style={{ position: 'relative', display: 'inline-block', zIndex: 1 }} onClick={e => e.stopPropagation()}>
+                      <button 
+                        className="btn btn-ghost" 
+                        style={{ padding: '6px 14px', borderRadius: '12px', background: '#EADDFF', color: '#65558F', fontSize: '16px', fontWeight: 900, lineHeight: 1, letterSpacing: '1px' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const parent = e.currentTarget.parentElement as HTMLElement;
+                          const el = e.currentTarget.nextElementSibling as HTMLElement;
+                          
+                          // Close all other dropdowns
+                          document.querySelectorAll('.action-dropdown').forEach(dropdown => {
+                            if (dropdown !== el) {
+                              (dropdown as HTMLElement).style.display = 'none';
+                              (dropdown.parentElement as HTMLElement).style.zIndex = '1';
+                            }
+                          });
+
+                          if (el) {
+                            const isOpening = el.style.display === 'none' || el.style.display === '';
+                            el.style.display = isOpening ? 'block' : 'none';
+                            parent.style.zIndex = isOpening ? '50' : '1';
+                          }
+                        }}
+                      >
+                        ...
                       </button>
-                      {q.status === 'Accepted' && (
-                        <button className="btn btn-ghost" onClick={(e) => { e.stopPropagation(); openInvoice(q); }} style={{ padding: '4px 10px', fontSize: 12, color: 'var(--blue)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <i className="ti ti-file-invoice"></i> Invoice
+                      <div className="action-dropdown" style={{ display: 'none', position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 10, background: 'var(--white)', border: '1px solid #EADDFF', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', minWidth: 140, padding: '4px' }}>
+                        <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: '#1D192B', background: 'transparent', borderBottom: '1px solid #F3EDF7', borderRadius: '8px 8px 0 0' }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); openEdit(q, 'view'); }}>
+                          View
                         </button>
-                      )}
-                      <button className="btn btn-ghost" onClick={(e) => { e.stopPropagation(); handleDelete(q.id); }} style={{ padding: '4px 10px', fontSize: 12, color: 'var(--rose)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <i className="ti ti-trash"></i>
-                      </button>
+                        <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: '#1D192B', background: 'transparent', borderBottom: '1px solid #F3EDF7', borderRadius: 0 }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); openEdit(q, 'edit'); }}>
+                          Edit
+                        </button>
+                        {q.status === 'Accepted' && (
+                          <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--blue)', background: 'transparent', borderBottom: '1px solid #F3EDF7', borderRadius: 0 }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); openInvoice(q); }}>
+                            Invoice
+                          </button>
+                        )}
+                        <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--rose)', background: 'transparent', borderRadius: '0 0 8px 8px' }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); handleDelete(q.id); }}>
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -283,8 +316,10 @@ export default function QuotesPage() {
         <QuoteBuilderModal
           initialQuote={editingQuote}
           initialTemplate={selectedTemplate}
+          mode={editMode}
           onClose={() => setIsModalOpen(false)}
           onSave={handleSaveQuote}
+          onDelete={editingQuote ? () => handleDelete(editingQuote.id) : undefined}
         />
       )}
 

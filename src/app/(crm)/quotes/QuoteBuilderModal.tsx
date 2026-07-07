@@ -38,6 +38,8 @@ interface Props {
   onSave: (quote: Quote) => void;
   docType?: 'Quote' | 'Invoice';
   actionLabel?: string;
+  mode?: 'view' | 'edit';
+  onDelete?: () => void;
 }
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -52,9 +54,11 @@ const iso = (d: Date) => d.toISOString().split('T')[0];
 
 const defaultNotes = "Prices are valid until the expiry date. Any work outside the agreed scope will be quoted separately and requires written approval before proceeding.";
 
-export default function QuoteBuilderModal({ initialQuote, initialTemplate, onClose, onSave, docType = 'Quote', actionLabel = 'Save Quote' }: Props) {
+export default function QuoteBuilderModal({ initialQuote, initialTemplate, onClose, onSave, docType = 'Quote', actionLabel = 'Save Quote', mode: initialMode = 'edit', onDelete }: Props) {
   const today = new Date();
   const exp30 = new Date(today); exp30.setDate(exp30.getDate() + 30);
+
+  const [currentMode, setCurrentMode] = useState<'view' | 'edit'>(initialMode);
 
   const [qid, setQid] = useState(initialQuote?.id || `#QT-${Math.floor(1000 + Math.random() * 9000)}`);
   const [status, setStatus] = useState<Quote['status']>(initialQuote?.status || 'Draft');
@@ -179,17 +183,35 @@ export default function QuoteBuilderModal({ initialQuote, initialTemplate, onClo
               <div className="e-status-dot"></div>
               <div className="e-label">{status} — editing</div>
             </div>
-            <div className="editor-bar-r">
-              <button className="btn-close" onClick={onClose}>Close</button>
-              <button className="btn-export" onClick={handleSave}>
-                {actionLabel}
-              </button>
+            <div className="editor-bar-r" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              {currentMode === 'edit' ? (
+                <>
+                  <button className="btn-close" onClick={() => setCurrentMode('view')}>View</button>
+                  {onDelete && (
+                    <button className="btn-close" style={{ color: 'var(--rose)' }} onClick={() => onDelete()}>Delete</button>
+                  )}
+                  <button className="btn-export" onClick={handleSave}>
+                    {actionLabel}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="btn-close" onClick={() => setCurrentMode('edit')}>Edit</button>
+                  {onDelete && (
+                    <button className="btn-close" style={{ color: 'var(--rose)' }} onClick={() => onDelete()}>Delete</button>
+                  )}
+                  <button className="btn-export" onClick={onClose}>
+                    Close
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
           <div className="editor-body">
 
-            <div className="panel">
+            {currentMode === 'edit' && (
+              <div className="panel">
               <div className="ps">
                 <div className="ps-title">Document</div>
                 <div className="pf">
@@ -319,9 +341,10 @@ export default function QuoteBuilderModal({ initialQuote, initialTemplate, onClo
                 </div>
               </div>
 
-            </div>
+              </div>
+            )}
 
-            <div className="preview">
+            <div className="preview" style={{ width: currentMode === 'view' ? '100%' : undefined, maxWidth: currentMode === 'view' ? '800px' : undefined, margin: currentMode === 'view' ? '0 auto' : undefined }}>
               {(() => {
                 const Renderer = TEMPLATE_RENDERERS[template] || TEMPLATE_RENDERERS['modern'];
                 return (
