@@ -401,8 +401,8 @@ export default function CalendarPage() {
   }, []);
 
   const [viewMode, setViewMode] = useState<ViewMode>('month');
-  const [calendarYear, setCalendarYear] = useState(2026);
-  const [calendarMonth, setCalendarMonth] = useState(5);
+  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
   const [selectedDate, setSelectedDate] = useState(TODAY);
 
   // Event detail popup
@@ -495,7 +495,7 @@ export default function CalendarPage() {
     }
   };
 
-  const handleToday = () => { setCalendarYear(2026); setCalendarMonth(5); setSelectedDate(TODAY); };
+  const handleToday = () => { const n = new Date(); setCalendarYear(n.getFullYear()); setCalendarMonth(n.getMonth()); setSelectedDate(TODAY); };
 
   const getHeaderLabel = () => {
     if (viewMode === 'month') return `${MONTHS[calendarMonth]} ${calendarYear}`;
