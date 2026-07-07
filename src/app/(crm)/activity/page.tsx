@@ -37,6 +37,11 @@ const ChevronDown = ({ size = 16, color }: { size?: number; color?: string }) =>
     <polyline points="6 9 12 15 18 9" />
   </svg>
 );
+const Trash = ({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" />
+  </svg>
+);
 import styles from './activity.module.css';
 
 type ApiActivity = {
@@ -100,6 +105,7 @@ export default function ActivityPage() {
 
   // Form states
   const [addTitle, setAddTitle] = useState('');
+  const [addDescription, setAddDescription] = useState('');
   const [addType, setAddType] = useState('meeting');
   const [addDate, setAddDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -153,6 +159,7 @@ export default function ActivityPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: addTitle,
+          description: addDescription || undefined,
           type: addType,
           scheduledAt: new Date(addDate).toISOString(),
           status: 'upcoming'
@@ -161,6 +168,7 @@ export default function ActivityPage() {
       if (res.ok) {
         setShowAddModal(false);
         setAddTitle('');
+        setAddDescription('');
         setAddDate('');
         fetchActivities();
       }
@@ -198,6 +206,20 @@ export default function ActivityPage() {
       if (res.ok) {
         setSelectedActivity(null);
         setIsRescheduling(false);
+        fetchActivities();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this activity?')) return;
+    try {
+      const res = await fetch(`/api/activities/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
         fetchActivities();
       }
     } catch (err) {
@@ -401,9 +423,27 @@ export default function ActivityPage() {
                           
                           <div className={styles.actionsRow}>
                             <div style={{ display: 'flex' }}>
-                              <div className={styles.ownerAvatar} style={{ backgroundColor: activity.ownerColor }} title={activity.ownerName}>
-                                {activity.ownerInitials}
-                              </div>
+                              <button
+                                onClick={() => handleDelete(activity.id)}
+                                title="Delete Activity"
+                                style={{
+                                  background: 'var(--bg-glass)',
+                                  border: '1px solid var(--border)',
+                                  borderRadius: '50%',
+                                  width: '32px',
+                                  height: '32px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: 'pointer',
+                                  color: 'var(--rose, #f43f5e)',
+                                  transition: 'background 0.2s',
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-glass)'}
+                              >
+                                <Trash size={14} />
+                              </button>
                             </div>
 
                             <button className={styles.viewBtn} onClick={() => setSelectedActivity(activity)}>
@@ -521,6 +561,10 @@ export default function ActivityPage() {
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Activity Title</label>
                 <input type="text" value={addTitle} onChange={e => setAddTitle(e.target.value)} placeholder="e.g. Acme Corp Contract Review" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14 }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Description (Optional)</label>
+                <textarea value={addDescription} onChange={e => setAddDescription(e.target.value)} placeholder="Add any extra notes or context..." style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontSize: 14, minHeight: '60px', resize: 'vertical' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
