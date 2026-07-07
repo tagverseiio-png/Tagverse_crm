@@ -367,7 +367,38 @@ function RescheduleModal({
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function CalendarPage() {
-  const { members, projects, tasks, events, addEvent, updateEvent, deleteEvent } = useWorkspace();
+  const { members, projects } = useWorkspace();
+
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const [eventsRes, tasksRes] = await Promise.all([
+        fetch('/api/calendar'),
+        fetch('/api/tasks')
+      ]);
+      const eventsData = await eventsRes.json();
+      const tasksData = await tasksRes.json();
+      if (eventsData.success) setEvents(eventsData.data);
+      if (tasksData.success) {
+        setTasks(tasksData.data.map((t: any) => ({
+          ...t,
+          due: t.dueDate ? new Date(t.dueDate).toISOString().split('T')[0] : '',
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching calendar data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [calendarYear, setCalendarYear] = useState(2026);
@@ -402,15 +433,50 @@ export default function CalendarPage() {
     }
   };
 
-  const handleSaveReschedule = (updated: CalendarEvent) => {
-    updateEvent(updated);
-    setRescheduleEvent(null);
+  const handleSaveReschedule = async (updated: CalendarEvent) => {
+    try {
+      // Create local ISO string date + time for scheduledAt
+      let scheduledAt = new Date();
+      if (updated.date) {
+        const datePart = updated.date; 
+        let timePart = updated.time || '00:00';
+        if (timePart.includes('AM') || timePart.includes('PM')) {
+          const [time, modifier] = timePart.split(' ');
+          let [hours, minutes] = time.split(':');
+          if (hours === '12') hours = '00';
+          if (modifier === 'PM') hours = String(parseInt(hours, 10) + 12);
+          timePart = `${hours.padStart(2, '0')}:${minutes}:00`;
+        } else if (timePart.split(':').length === 2) {
+          timePart += ':00';
+        }
+        scheduledAt = new Date(`${datePart}T${timePart}Z`);
+      }
+
+      await fetch(`/api/activities/${updated.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scheduledAt: scheduledAt.toISOString(),
+        })
+      });
+      await fetchData();
+      setRescheduleEvent(null);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleDeleteEvent = () => {
+  const handleDeleteEvent = async () => {
     if (detailEvent) {
-      deleteEvent(detailEvent.id);
-      setDetailEvent(null);
+      try {
+        await fetch(`/api/activities/${detailEvent.id}`, {
+          method: 'DELETE',
+        });
+        await fetchData();
+        setDetailEvent(null);
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
 
@@ -469,12 +535,29 @@ export default function CalendarPage() {
   const calendarDays = getCalendarDays();
 
   // ── Create event ──
-  const handleCreateEvent = () => {
+  const handleCreateEvent = async () => {
     if (!newEventTitle.trim()) { alert('Event title is required!'); return; }
     if (newEventAttendees.length === 0) { alert('Select at least one attendee!'); return; }
     const proj = projects.find(p => p.id === newEventProject);
-    addEvent({ title: newEventTitle.trim(), date: newEventDate, time: newEventTime, attendees: newEventAttendees, linkedRecord: newEventProject ? { type: 'project', id: newEventProject } : null, color: proj?.color ?? 'var(--brand-primary)' });
-    setNewEventTitle(''); setNewEventAttendees([]); setCreateOpen(false);
+    
+    try {
+      await fetch('/api/calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newEventTitle.trim(),
+          date: newEventDate,
+          time: newEventTime,
+          type: 'meeting',
+          color: proj?.color ?? 'var(--brand-primary)',
+          dealId: newEventProject || undefined, // mapping project to deal for now or use metadata
+        })
+      });
+      await fetchData();
+      setNewEventTitle(''); setNewEventAttendees([]); setCreateOpen(false);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // ── Side panel ──
