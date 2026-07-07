@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
-import { List, LayoutGrid, Activity, Calendar, Layout, Plus, CheckCircle2, Circle, AlertCircle, Clock, X, Bell } from 'lucide-react';
+import { List, LayoutGrid, Activity, Calendar, Layout, Plus, CheckCircle2, Circle, AlertCircle, Clock, X, Bell, Trash2, Edit2 } from 'lucide-react';
 import styles from './tasks.module.css';
 
 import { REPS, STAGES, DEALS, INITIAL_TASKS, TODAY } from './mockData';
@@ -35,9 +35,39 @@ function calculateTaskScore(task: any, deal: any) {
 
 // --- MAIN COMPONENT ---
 function TasksContent() {
-  const [tasks, setTasks] = useState(INITIAL_TASKS);
+  const [tasks, setTasks] = useState<any[]>(() => INITIAL_TASKS.map(t => {
+    const deal = DEALS.find(d => d.id === t.dealId);
+    return { ...t, stage: deal?.stage || 'Lead' };
+  }));
   const [deals, setDeals] = useState(DEALS);
-  const [viewMode, setViewMode] = useState<'list' | 'timeline' | 'heatmap' | 'kanban'>('list');
+  const [stages, setStages] = useState(STAGES);
+  const [viewMode, setViewMode] = useState<'kanban'>('kanban');
+  
+  const [addingColumn, setAddingColumn] = useState(false);
+  const [newColumnLabel, setNewColumnLabel] = useState('');
+  const [activeColumn, setActiveColumn] = useState<string | null>(null);
+  const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
+  
+  const handleAddStage = () => {
+    if (newColumnLabel.trim()) {
+      setStages(prev => [...prev, newColumnLabel.trim()]);
+      setAddingColumn(false);
+      setNewColumnLabel('');
+    }
+  };
+
+  const handleRenameStage = (oldName: string) => {
+    const newName = window.prompt('Rename column:', oldName);
+    if (!newName || !newName.trim() || newName.trim() === oldName) return;
+    
+    const trimmed = newName.trim();
+    setStages(prev => prev.map(s => s === oldName ? trimmed : s));
+    setTasks(prev => prev.map(t => t.stage === oldName ? { ...t, stage: trimmed } : t));
+    
+    if (activeColumn === oldName) {
+      setActiveColumn(trimmed);
+    }
+  };
   
   // Nudge Engine State
   const [toasts, setToasts] = useState<any[]>([]);
@@ -148,7 +178,8 @@ function TasksContent() {
       rep: 'r1', // default to current user
       due: '2026-06-29', // default today
       done: false,
-      lastActivity: 0
+      lastActivity: 0,
+      stage: 'Lead'
     };
     setTasks(prev => [newTask, ...prev]);
     setShowQuickCapture(false);
@@ -193,17 +224,8 @@ function TasksContent() {
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <div className={styles.tabs}>
-            <button className={`${styles.tab} ${viewMode === 'list' ? styles.tabActive : ''}`} onClick={() => setViewMode('list')}>
-              <List size={16} /> List
-            </button>
             <button className={`${styles.tab} ${viewMode === 'kanban' ? styles.tabActive : ''}`} onClick={() => setViewMode('kanban')}>
               <Layout size={16} /> Kanban
-            </button>
-            <button className={`${styles.tab} ${viewMode === 'timeline' ? styles.tabActive : ''}`} onClick={() => setViewMode('timeline')}>
-              <LayoutGrid size={16} /> Timeline
-            </button>
-            <button className={`${styles.tab} ${viewMode === 'heatmap' ? styles.tabActive : ''}`} onClick={() => setViewMode('heatmap')}>
-              <Activity size={16} /> Heatmap
             </button>
           </div>
           <button className={styles.createTaskBtn} onClick={() => setShowCreateModal(true)}>
@@ -244,119 +266,13 @@ function TasksContent() {
         {/* Content Area */}
         <div className={styles.contentArea}>
           
-          {/* LIST VIEW */}
-          {viewMode === 'list' && (
-            <div className={styles.listView}>
-              {deals.map(deal => {
-                const dealTasks = tasks.filter(t => t.dealId === deal.id);
-                if (dealTasks.length === 0) return null;
-                const health = getDealHealth(deal.id);
-                
-                return (
-                  <div key={deal.id} className={styles.dealGroup}>
-                    <div className={styles.dealGroupHeader}>
-                      <span className={styles.dealName}>{deal.title}</span>
-                      <span className={`${styles.healthBadge} ${
-                        health.status === 'green' ? styles.healthGreen : 
-                        health.status === 'amber' ? styles.healthAmber : styles.healthRed
-                      }`}>
-                        Health: {health.score}%
-                      </span>
-                    </div>
-                    {dealTasks.map(t => {
-                      const isOverdue = !t.done && new Date(t.due) < TODAY;
-                      return (
-                        <div key={t.id} className={styles.taskRow}>
-                          <input 
-                            type="checkbox" 
-                            className={styles.taskCheckbox} 
-                            checked={t.done} 
-                            onChange={() => toggleTask(t.id)} 
-                          />
-                          <span className={styles.taskTitle} style={{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--text-muted)' : 'inherit' }}>
-                            {t.title}
-                          </span>
-                          <span className={`${styles.taskDue} ${isOverdue ? styles.taskDueOverdue : ''}`}>
-                            <Clock size={12} /> {t.due}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })}
-            </div>
-          )}
 
-          {/* TIMELINE / SWIMLANE VIEW (Feature 2) */}
-          {viewMode === 'timeline' && (
-            <div className={styles.timelineView}>
-              <div className={styles.swimlaneGrid}>
-                {/* Header Row */}
-                <div className={styles.swimlaneHeader}>
-                  <div className={styles.swimlaneHeaderCell} style={{ borderRight: '1px solid var(--border)' }}>Deals</div>
-                  {STAGES.map(stage => (
-                    <div key={stage} className={styles.swimlaneHeaderCell}>{stage}</div>
-                  ))}
-                </div>
-
-                {/* Body Rows */}
-                {deals.map(deal => {
-                  const health = getDealHealth(deal.id);
-                  const dealTasks = tasks.filter(t => t.dealId === deal.id);
-
-                  return (
-                    <div key={deal.id} className={styles.swimlaneRow}>
-                      <div className={styles.swimlaneRowHeader}>
-                        <div style={{ fontWeight: 600, fontSize: '13px' }}>{deal.title}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatCurrency(deal.value)}</div>
-                        <span className={`${styles.healthBadge} ${
-                          health.status === 'green' ? styles.healthGreen : 
-                          health.status === 'amber' ? styles.healthAmber : styles.healthRed
-                        }`} style={{ alignSelf: 'flex-start' }}>
-                          Health: {health.score}%
-                        </span>
-                      </div>
-                      
-                      {STAGES.map(stage => (
-                        <div 
-                          key={stage} 
-                          className={styles.swimlaneCell}
-                          onDragOver={onDragOver}
-                          onDrop={(e) => onDrop(e, deal.id, stage)}
-                          style={{ background: deal.stage === stage ? 'var(--bg-card-hover)' : 'var(--bg-primary)' }}
-                        >
-                          {deal.stage === stage && dealTasks.map(t => (
-                            <div 
-                              key={t.id} 
-                              className={styles.timelineCard}
-                              draggable
-                              onDragStart={(e) => onDragStart(e, t.id)}
-                            >
-                              <div className={styles.timelineCardTitle} style={{ textDecoration: t.done ? 'line-through' : 'none' }}>
-                                {t.title}
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{t.due}</span>
-                                {t.done ? <CheckCircle2 size={12} color="var(--emerald)" /> : <Circle size={12} color="var(--text-muted)" />}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* KANBAN VIEW */}
           {viewMode === 'kanban' && (
             <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16, height: '100%' }} className="scrollbar-thin">
-              {STAGES.map(stage => {
-                const stageDeals = deals.filter(d => d.stage === stage);
-                const stageTasks = tasks.filter(t => stageDeals.some(d => d.id === t.dealId));
+              {stages.map(stage => {
+                const stageTasks = tasks.filter(t => t.stage === stage);
                 
                 return (
                   <div
@@ -371,10 +287,7 @@ function TasksContent() {
                     onDrop={(e) => {
                        e.preventDefault();
                        const taskId = e.dataTransfer.getData('taskId');
-                       const task = tasks.find(t => t.id === taskId);
-                       if (task) {
-                         setDeals(prev => prev.map(d => d.id === task.dealId ? { ...d, stage } : d));
-                       }
+                       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, stage } : t));
                     }}
                   >
                     <div style={{
@@ -385,14 +298,59 @@ function TasksContent() {
                       padding: '12px 16px',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}>
+                      justifyContent: 'space-between',
+                      cursor: 'pointer'
+                    }} onClick={() => setActiveColumn(activeColumn === stage ? null : stage)}>
                       <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{stage}</div>
-                      <span style={{
-                        fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)',
-                        background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: 12,
-                        border: '1px solid var(--border)'
-                      }}>{stageTasks.length}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{
+                          fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)',
+                          background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: 12,
+                          border: '1px solid var(--border)'
+                        }}>{stageTasks.length}</span>
+                        {activeColumn === stage && (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRenameStage(stage);
+                              }}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-muted)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: 4
+                              }}
+                              title="Rename Column"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setColumnToDelete(stage);
+                              }}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--rose)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: 4
+                              }}
+                              title="Delete Column"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div style={{
@@ -456,74 +414,68 @@ function TasksContent() {
                           No tasks
                         </div>
                       )}
+                      
+                      <button
+                        style={{
+                          border: '1px dashed var(--border)', borderRadius: 8,
+                          padding: '10px', fontSize: 12, fontWeight: 500,
+                          color: 'var(--text-muted)', background: 'transparent',
+                          cursor: 'pointer', transition: 'all 0.2s', marginTop: 4,
+                        }}
+                        onClick={() => setShowCreateModal(true)}
+                      >+ Add Task</button>
                     </div>
                   </div>
                 )
               })}
-            </div>
-          )}
 
-          {/* HEATMAP VIEW (Feature 4) */}
-          {viewMode === 'heatmap' && (
-            <div className={styles.heatmapView}>
-              <div style={{ marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0' }}>Team Workload Heatmap</h3>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Task density per rep over the next 7 days.</p>
-              </div>
-              <div className={styles.heatmapGrid}>
-                {/* Header Row */}
-                <div className={styles.heatmapHeaderCell}>Rep</div>
-                {[0, 1, 2, 3, 4, 5, 6].map(offset => {
-                  const d = new Date(TODAY);
-                  d.setDate(d.getDate() + offset);
-                  return (
-                    <div key={offset} className={styles.heatmapHeaderCell}>
-                      {d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              {/* Add Column */}
+              <div style={{ width: 300, flexShrink: 0 }}>
+                {addingColumn ? (
+                  <div style={{
+                    background: 'var(--bg-card)', border: '1px solid var(--border)',
+                    borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 8,
+                  }}>
+                    <input
+                      autoFocus
+                      value={newColumnLabel}
+                      onChange={e => setNewColumnLabel(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleAddStage();
+                        if (e.key === 'Escape') { setAddingColumn(false); setNewColumnLabel(''); }
+                      }}
+                      placeholder="Column name..."
+                      style={{
+                        width: '100%', boxSizing: 'border-box', padding: '8px 10px',
+                        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                        borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+                        outline: 'none', fontFamily: 'Inter, sans-serif',
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={handleAddStage} style={{ flex: 1, padding: '6px', background: 'var(--purple)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Add</button>
+                      <button onClick={() => { setAddingColumn(false); setNewColumnLabel(''); }} style={{ flex: 1, padding: '6px', background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
                     </div>
-                  );
-                })}
-
-                {/* Grid Rows */}
-                {REPS.map(rep => {
-                  return (
-                    <React.Fragment key={rep.id}>
-                      <div className={styles.heatmapRowHeader}>
-                        <div className={styles.repAvatar} style={{ marginRight: '8px' }}>{rep.avatar}</div>
-                        {rep.name}
-                      </div>
-                      
-                      {[0, 1, 2, 3, 4, 5, 6].map(offset => {
-                        const d = new Date(TODAY);
-                        d.setDate(d.getDate() + offset);
-                        const dateStr = d.toISOString().split('T')[0];
-                        
-                        // Count tasks for this rep on this date
-                        const dayTasks = tasks.filter(t => t.rep === rep.id && t.due === dateStr);
-                        const count = dayTasks.length;
-                        
-                        // Color intensity based on count
-                        let bg = 'rgba(99, 102, 241, 0.05)';
-                        if (count === 1) bg = 'rgba(99, 102, 241, 0.3)';
-                        if (count === 2) bg = 'rgba(99, 102, 241, 0.6)';
-                        if (count >= 3) bg = 'rgba(99, 102, 241, 1)';
-                        
-                        return (
-                          <div 
-                            key={offset} 
-                            className={styles.heatmapCell}
-                            style={{ background: bg, border: count === 0 ? '1px dashed var(--border)' : 'none' }}
-                            title={`${count} tasks for ${rep.name} on ${dateStr}`}
-                          >
-                            {count > 0 ? count : ''}
-                          </div>
-                        )
-                      })}
-                    </React.Fragment>
-                  )
-                })}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setAddingColumn(true)}
+                    style={{
+                      width: '100%', height: 52, border: '1px dashed var(--border)',
+                      borderRadius: 10, background: 'transparent', color: 'var(--text-muted)',
+                      cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                      fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    }}
+                  >
+                    <Plus size={16} /> Add Column
+                  </button>
+                )}
               </div>
             </div>
           )}
+
+
 
         </div>
       </div>
@@ -646,12 +598,40 @@ function TasksContent() {
                   rep: 'r1',
                   due: newTask.due || TODAY.toISOString().split('T')[0],
                   done: false,
-                  lastActivity: 0
+                  lastActivity: 0,
+                  stage: 'Lead'
                 };
                 setTasks(prev => [createdTask as any, ...prev]);
                 setShowCreateModal(false);
                 setNewTask({ title: '', dealId: '', due: '', description: '' });
               }}>Create Task</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Column Confirmation Modal */}
+      {columnToDelete && (
+        <div className={styles.quickCaptureOverlay} onClick={() => setColumnToDelete(null)}>
+          <div className={styles.createTaskModal} style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+            <div className={styles.createTaskHeader}>
+              <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--rose)' }}>Delete Column</h2>
+              <button onClick={() => setColumnToDelete(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className={styles.createTaskBody} style={{ padding: '24px 20px' }}>
+              <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                Are you sure you want to delete the <strong>"{columnToDelete}"</strong> column and all its contents? This action cannot be undone.
+              </p>
+            </div>
+            <div className={styles.createTaskFooter}>
+              <button className={styles.toastBtnSecondary} onClick={() => setColumnToDelete(null)}>Cancel</button>
+              <button className={styles.toastBtnPrimary} style={{ background: 'var(--rose)', border: '1px solid var(--rose)' }} onClick={() => {
+                setStages(prev => prev.filter(s => s !== columnToDelete));
+                setActiveColumn(null);
+                setColumnToDelete(null);
+              }}>Delete</button>
             </div>
           </div>
         </div>
