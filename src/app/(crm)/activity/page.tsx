@@ -37,10 +37,55 @@ const ChevronDown = ({ size = 16, color }: { size?: number; color?: string }) =>
     <polyline points="6 9 12 15 18 9" />
   </svg>
 );
-import { store, getCompanyById, getMemberById } from '@/lib/mockData';
 import styles from './activity.module.css';
 
-const { upcomingEvents, productivityTracker } = store;
+type ApiActivity = {
+  id: string;
+  type: string;
+  title: string;
+  description?: string;
+  status: string;
+  scheduledAt?: string;
+  createdAt: string;
+  contact?: { id: string; name: string };
+  deal?: { id: string; title: string };
+  createdBy?: { id: string; name: string };
+  metadata?: any;
+};
+
+type UIActivity = {
+  id: string;
+  type: string;
+  title: string;
+  status: string;
+  time: string;
+  dateStr: string;
+  ownerInitials: string;
+  ownerName: string;
+  ownerColor: string;
+  companyName: string | null;
+  duration?: string;
+  priority?: string;
+  note?: string;
+};
+
+function formatTime(isoString?: string) {
+  if (!isoString) return '—';
+  const d = new Date(isoString);
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+function formatDateStr(isoString?: string) {
+  if (!isoString) return '';
+  return new Date(isoString).toISOString().split('T')[0];
+}
+
+const colors = ['#7c5cbf', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e'];
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
 
 export default function ActivityPage() {
   const [filter, setFilter] = useState('all');
@@ -48,18 +93,100 @@ export default function ActivityPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [isRescheduling, setIsRescheduling] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const meetingsCount = store.activities.filter(a => a.type === 'meeting' && a.status !== 'done').length;
-  const tasksCount = store.activities.filter(a => a.type === 'task' && a.status !== 'done').length;
-  const deadlinesCount = store.activities.filter(a => a.type === 'deadline' && a.status !== 'done').length;
+  const [activities, setActivities] = useState<UIActivity[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredActivities = store.activities.filter(a => {
-    if (a.status === 'done') return false;
+  const fetchActivities = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/activities?limit=500');
+      const json = await res.json();
+      if (res.ok && Array.isArray(json.data)) {
+        const mapped = json.data.map((a: ApiActivity) => {
+          const ownerName = a.createdBy?.name || 'Unknown';
+          const ownerInitials = ownerName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+          const companyName = a.contact?.name || a.deal?.title || null;
+          return {
+            id: a.id,
+            type: a.type,
+            title: a.title,
+            status: a.status,
+            time: formatTime(a.scheduledAt || a.createdAt),
+            dateStr: formatDateStr(a.scheduledAt || a.createdAt),
+            ownerInitials,
+            ownerName,
+            ownerColor: getAvatarColor(ownerName),
+            companyName,
+            note: a.description || a.metadata?.note,
+            duration: a.metadata?.duration,
+            priority: a.metadata?.priority,
+          };
+        });
+        setActivities(mapped);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchActivities();
+  }, [fetchActivities]);
+
+  const dayActivities = activities.filter(a => a.dateStr === selectedDate);
+  const completedActivities = dayActivities.filter(a => a.status === 'completed' || a.status === 'done');
+  const pendingActivities = dayActivities.filter(a => a.status !== 'completed' && a.status !== 'done');
+
+  const meetingsCount = pendingActivities.filter(a => a.type === 'meeting').length;
+  const tasksCount = pendingActivities.filter(a => a.type === 'task').length;
+  const deadlinesCount = pendingActivities.filter(a => a.type === 'deadline').length;
+
+  const filteredActivities = pendingActivities.filter(a => {
     if (filter === 'all') return true;
     return a.type === filter;
   });
 
-  const completedActivities = store.activities.filter(a => a.status === 'done');
+  const totalForDay = dayActivities.length;
+  const pct = totalForDay > 0 ? Math.round((completedActivities.length / totalForDay) * 100) : 0;
+  let prodLabel = 'On Track';
+  if (pct === 100 && totalForDay > 0) prodLabel = 'Perfect Day';
+  else if (pct >= 50) prodLabel = 'Good Progress';
+  else if (pct > 0) prodLabel = 'Getting Started';
+  else prodLabel = 'No Progress Yet';
+
+  const todayStrRaw = new Date().toISOString().split('T')[0];
+  const upcomingRaw = activities.filter(a => a.dateStr > todayStrRaw && a.status !== 'completed' && a.status !== 'done');
+  const upcomingGroups = upcomingRaw.reduce((acc, curr) => {
+    if (!acc[curr.dateStr]) acc[curr.dateStr] = [];
+    acc[curr.dateStr].push(curr);
+    return acc;
+  }, {} as Record<string, UIActivity[]>);
+
+  const upcomingEvents = Object.keys(upcomingGroups).sort().slice(0, 3).map(dateKey => {
+    const d = new Date(dateKey);
+    const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d.getDay()];
+    return {
+      group: dateKey === new Date(new Date().getTime() + 86400000).toISOString().split('T')[0] ? 'Tomorrow' : dayName,
+      events: upcomingGroups[dateKey].map(a => ({
+        title: a.title,
+        time: a.time,
+        owner: a.ownerName,
+        color: a.type === 'meeting' ? '#3b82f6' : a.type === 'deadline' ? '#f43f5e' : '#f59e0b'
+      }))
+    };
+  });
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isToday = selectedDate === todayStr;
+  const dateObj = new Date(selectedDate);
+  // Fix for timezone issues when parsing YYYY-MM-DD
+  const displayDate = new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000);
+  const dateLabel = isToday ? 'Today' : displayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const dateSubLabel = displayDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
     <div className={styles.container}>
@@ -67,9 +194,33 @@ export default function ActivityPage() {
       {/* SECTION A: Day Header Banner */}
       <section className={styles.headerBanner}>
         <div>
-          <div className={styles.headerTag}>TODAY'S SCHEDULE</div>
-          <h2 className={styles.headerTitle}>Today</h2>
-          <p className={styles.headerSub}>Friday, 27 June 2026</p>
+          <div className={styles.headerTag}>
+            {isToday ? "TODAY'S SCHEDULE" : "SELECTED SCHEDULE"}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h2 className={styles.headerTitle} style={{ margin: 0 }}>
+              {dateLabel}
+            </h2>
+            <div style={{ position: 'relative', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer' }}>
+               <Calendar size={16} color="var(--text-primary)" />
+               <input 
+                 type="date"
+                 value={selectedDate}
+                 onChange={(e) => setSelectedDate(e.target.value)}
+                 style={{
+                   position: 'absolute',
+                   top: 0,
+                   left: 0,
+                   width: '100%',
+                   height: '100%',
+                   opacity: 0,
+                   cursor: 'pointer'
+                 }}
+                 title="Select Date"
+               />
+            </div>
+          </div>
+          <p className={styles.headerSub}>{dateSubLabel}</p>
         </div>
 
         {/* Overview Count Badges */}
@@ -143,8 +294,6 @@ export default function ActivityPage() {
 
               <div>
                 {filteredActivities.map(activity => {
-                  const member = getMemberById(activity.owner);
-                  const company = activity.company ? getCompanyById(activity.company) : null;
                   
                   let icon = <CheckSquare size={16} />;
                   let iconClass = styles.badgeIconAmber;
@@ -169,8 +318,8 @@ export default function ActivityPage() {
                           <div>
                             <h4 className={styles.activityTitle}>{activity.title}</h4>
                             <div className={styles.metaRow}>
-                              {company && (
-                                <span className={styles.companyTag}>{company.name}</span>
+                              {activity.companyName && (
+                                <span className={styles.companyTag}>{activity.companyName}</span>
                               )}
                               {activity.duration && <span>{activity.duration}</span>}
                               {activity.priority && (
@@ -183,12 +332,11 @@ export default function ActivityPage() {
                           
                           <div className={styles.actionsRow}>
                             <div style={{ display: 'flex' }}>
-                              {member && (
-                                <div className={styles.ownerAvatar} style={{ backgroundColor: member.color }} title={member.name}>
-                                  {member.avatar}
-                                </div>
-                              )}
+                              <div className={styles.ownerAvatar} style={{ backgroundColor: activity.ownerColor }} title={activity.ownerName}>
+                                {activity.ownerInitials}
+                              </div>
                             </div>
+
                             <button className={styles.viewBtn} onClick={() => setSelectedActivity(activity)}>
                               View
                             </button>
@@ -279,11 +427,11 @@ export default function ActivityPage() {
             <p className={styles.insightsText}>You completed {completedActivities.length} crucial pipeline workflows today. Keep up the high momentum with the team!</p>
             <div>
               <div className={styles.progressLabel}>
-                <span>{productivityTracker.label}</span>
-                <span>{productivityTracker.dailyGoalPct}% Achieved</span>
+                <span>{prodLabel}</span>
+                <span>{pct}% Achieved</span>
               </div>
               <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ width: `${productivityTracker.dailyGoalPct}%` }}></div>
+                <div className={styles.progressFill} style={{ width: `${pct}%` }}></div>
               </div>
             </div>
           </div>
