@@ -1,53 +1,20 @@
 'use client';
 import React, { useState } from 'react';
-import {
-  DndContext,
-  DragOverlay,
-  closestCorners,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragStartEvent,
-  DragOverEvent,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  arrayMove,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { Project, Member, useWorkspace } from '@/context/WorkspaceContext';
-import { useDroppable } from '@dnd-kit/core';
 
 const COLUMNS = ['Kick-off', 'Planning', 'Implementation', 'Review', 'Closing'] as const;
 type ColumnType = typeof COLUMNS[number];
 
-interface SortableProjectCardProps {
+interface ProjectCardProps {
   project: Project;
   members: Member[];
   onClick: (project: Project) => void;
+  isDragged: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
 }
 
-function SortableProjectCard({ project, members, onClick }: SortableProjectCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: project.id, data: { type: 'Project', project } });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  };
-
+function ProjectCard({ project, members, onClick, isDragged, onDragStart, onDragEnd }: ProjectCardProps) {
   const assignees = members.filter(m => project.members.includes(m.id));
 
   // Progress ring
@@ -57,15 +24,11 @@ function SortableProjectCard({ project, members, onClick }: SortableProjectCardP
 
   return (
     <div
-      ref={setNodeRef}
-      style={{ ...style, cursor: 'grab' }}
-      {...attributes}
-      {...listeners}
-      onClick={(e) => {
-        // Prevent drag events from triggering click
-        if (transform && (Math.abs(transform.x) > 5 || Math.abs(transform.y) > 5)) return;
-        onClick(project);
-      }}
+      draggable
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      style={{ cursor: 'grab', opacity: isDragged ? 0.4 : 1 }}
+      onClick={() => onClick(project)}
       className="project-card-item"
     >
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', marginBottom: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
@@ -116,23 +79,51 @@ function SortableProjectCard({ project, members, onClick }: SortableProjectCardP
   );
 }
 
-function DroppableColumn({ id, title, projects, members, onProjectClick }: { id: ColumnType, title: string, projects: Project[], members: Member[], onProjectClick: (p: Project) => void }) {
-  const { setNodeRef } = useDroppable({ id });
+interface DroppableColumnProps {
+  id: ColumnType;
+  title: string;
+  projects: Project[];
+  members: Member[];
+  onProjectClick: (p: Project) => void;
+  draggedProjectId: string | null;
+  dragOverStatusId: ColumnType | null;
+  setDraggedProjectId: (id: string | null) => void;
+  setDragOverStatusId: (id: ColumnType | null) => void;
+  handleDrop: (targetStatus: ColumnType) => void;
+}
+
+function DroppableColumn({
+  id, title, projects, members, onProjectClick,
+  draggedProjectId, dragOverStatusId, setDraggedProjectId, setDragOverStatusId, handleDrop
+}: DroppableColumnProps) {
+  const isDragOver = dragOverStatusId === id;
+
   return (
-    <div ref={setNodeRef} style={{ flex: '0 0 280px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column' }}>
+    <div
+      style={{ flex: '0 0 280px', background: isDragOver ? 'var(--purple-dim)' : 'var(--bg-primary)', border: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`, borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', transition: 'background 0.15s, border-color 0.15s' }}
+      onDragOver={e => { e.preventDefault(); if (draggedProjectId) setDragOverStatusId(id); }}
+      onDragLeave={() => { if (dragOverStatusId === id) setDragOverStatusId(null); }}
+      onDrop={() => { if (draggedProjectId) handleDrop(id); }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 4px' }}>
         <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{title}</h3>
         <span style={{ background: 'var(--purple-dim)', color: '#000', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>
           {projects.length}
         </span>
       </div>
-      <SortableContext id={id} items={projects.map(p => p.id)} strategy={verticalListSortingStrategy}>
-        <div style={{ flex: 1, minHeight: '150px' }}>
-          {projects.map(project => (
-            <SortableProjectCard key={project.id} project={project} members={members} onClick={onProjectClick} />
-          ))}
-        </div>
-      </SortableContext>
+      <div style={{ flex: 1, minHeight: '150px', display: 'flex', flexDirection: 'column' }}>
+        {projects.map(project => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            members={members}
+            onClick={onProjectClick}
+            isDragged={draggedProjectId === project.id}
+            onDragStart={() => setDraggedProjectId(project.id)}
+            onDragEnd={() => { setDraggedProjectId(null); setDragOverStatusId(null); }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -143,72 +134,38 @@ interface ProjectBoardProps {
 
 export default function ProjectBoard({ onProjectClick }: ProjectBoardProps) {
   const { projects, members, updateProject } = useWorkspace();
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
+  const [dragOverStatusId, setDragOverStatusId] = useState<ColumnType | null>(null);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
+  const handleDrop = (targetStatus: ColumnType) => {
+    setDragOverStatusId(null);
+    if (!draggedProjectId) return;
+    
+    const activeProject = projects.find(p => p.id === draggedProjectId);
+    setDraggedProjectId(null);
+    
+    if (!activeProject || activeProject.status === targetStatus) return;
+    
+    updateProject({ ...activeProject, status: targetStatus });
   };
-
-  const handleDragOver = (event: DragOverEvent) => {
-    // We don't need strict over logic here for column changing if DragEnd handles status
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    setActiveId(null);
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeProject = projects.find(p => p.id === active.id);
-    if (!activeProject) return;
-
-    let newStatus = activeProject.status;
-
-    if (COLUMNS.includes(over.id as any)) {
-      newStatus = over.id as any;
-    } else {
-      const overProject = projects.find(p => p.id === over.id);
-      if (overProject) {
-        newStatus = overProject.status;
-      }
-    }
-
-    if (newStatus !== activeProject.status) {
-      updateProject({ ...activeProject, status: newStatus as any });
-    }
-  };
-
-  const activeProject = projects.find(p => p.id === activeId);
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px' }}>
-        {COLUMNS.map(col => (
-          <DroppableColumn
-            key={col}
-            id={col}
-            title={col}
-            projects={projects.filter(p => p.status === col)}
-            members={members}
-            onProjectClick={onProjectClick}
-          />
-        ))}
-      </div>
-      <DragOverlay>
-        {activeProject ? (
-          <SortableProjectCard project={activeProject} members={members} onClick={() => {}} />
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+    <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px' }}>
+      {COLUMNS.map(col => (
+        <DroppableColumn
+          key={col}
+          id={col}
+          title={col}
+          projects={projects.filter(p => p.status === col)}
+          members={members}
+          onProjectClick={onProjectClick}
+          draggedProjectId={draggedProjectId}
+          dragOverStatusId={dragOverStatusId}
+          setDraggedProjectId={setDraggedProjectId}
+          setDragOverStatusId={setDragOverStatusId}
+          handleDrop={handleDrop}
+        />
+      ))}
+    </div>
   );
 }
