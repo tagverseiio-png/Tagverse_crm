@@ -82,7 +82,7 @@ export async function GET() {
     ) || 1;
 
     // Get total deal counts per stage (not capped at 10)
-    const funnelData = pipeline
+    const rawFunnelData = pipeline
       ? await Promise.all(
           pipeline.stages.map(async (stage, i) => {
             const count = await prisma.deal.count({
@@ -97,6 +97,17 @@ export async function GET() {
           })
         )
       : [];
+
+    // Apply cumulative logic (deals in a stage include all deals in subsequent stages)
+    const funnelData: typeof rawFunnelData = [];
+    let runningTotal = 0;
+    for (let i = rawFunnelData.length - 1; i >= 0; i--) {
+      runningTotal += rawFunnelData[i].count;
+      funnelData.unshift({
+        ...rawFunnelData[i],
+        count: runningTotal,
+      });
+    }
 
     // Compute percentages relative to first-stage (largest expected)
     const firstCount = funnelData[0]?.count || 1;
