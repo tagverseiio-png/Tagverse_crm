@@ -6,7 +6,7 @@ import { calendarPresetColors } from '@/lib/mockData';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const MAX_VISIBLE_PILLS = 3;
-const TODAY = '2026-06-25';
+const TODAY = new Date().toISOString().split('T')[0];
 
 const HOURS: string[] = [];
 for (let h = 8; h <= 20; h++) {
@@ -382,8 +382,8 @@ export default function CalendarPage() {
       ]);
       const eventsData = await eventsRes.json();
       const tasksData = await tasksRes.json();
-      if (eventsData.success) setEvents(eventsData.data);
-      if (tasksData.success) {
+      if (eventsData.data) setEvents(eventsData.data);
+      if (tasksData.data) {
         setTasks(tasksData.data.map((t: any) => ({
           ...t,
           due: t.dueDate ? new Date(t.dueDate).toISOString().split('T')[0] : '',
