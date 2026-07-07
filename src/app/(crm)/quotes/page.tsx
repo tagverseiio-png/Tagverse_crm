@@ -283,15 +283,15 @@ export default function QuotesPage() {
                       >
                         ...
                       </button>
-                      <div className="action-dropdown" style={{ display: 'none', position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 10, background: 'var(--white)', border: '1px solid #EADDFF', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', minWidth: 140, padding: '4px' }}>
-                        <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: '#1D192B', background: 'transparent', borderBottom: '1px solid #F3EDF7', borderRadius: '8px 8px 0 0' }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); openEdit(q, 'view'); }}>
+                      <div className="action-dropdown" style={{ display: 'none', position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 10, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)', minWidth: 140, padding: '4px' }}>
+                        <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', background: 'transparent', borderBottom: '1px solid var(--border)', borderRadius: '8px 8px 0 0' }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); openEdit(q, 'view'); }}>
                           View
                         </button>
-                        <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: '#1D192B', background: 'transparent', borderBottom: '1px solid #F3EDF7', borderRadius: 0 }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); openEdit(q, 'edit'); }}>
+                        <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', background: 'transparent', borderBottom: '1px solid var(--border)', borderRadius: 0 }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); openEdit(q, 'edit'); }}>
                           Edit
                         </button>
                         {q.status === 'Accepted' && (
-                          <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--blue)', background: 'transparent', borderBottom: '1px solid #F3EDF7', borderRadius: 0 }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); openInvoice(q); }}>
+                          <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--blue)', background: 'transparent', borderBottom: '1px solid var(--border)', borderRadius: 0 }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); openInvoice(q); }}>
                             Invoice
                           </button>
                         )}

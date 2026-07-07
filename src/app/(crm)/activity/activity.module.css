@@ -505,44 +505,45 @@
 }
 
 .insightsCard {
-  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
-  color: white;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 1.25rem;
-  box-shadow: var(--shadow-glow-blue);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .insightsTitle {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 700;
   margin-bottom: 0.5rem;
 }
 
 .insightsText {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.8);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
   margin-bottom: 1rem;
 }
 
 .progressLabel {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: rgba(255,255,255,0.9);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
 
 .progressBar {
   width: 100%;
   height: 0.375rem;
-  background: rgba(255,255,255,0.3);
+  background: var(--border);
   border-radius: 9999px;
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background: white;
+  background: var(--purple);
   border-radius: 9999px;
 }

@@ -191,7 +191,7 @@ export default function AssetsPage() {
               <th style={{ width: '14%' }}>Type</th>
               <th style={{ width: '14%' }}>Size</th>
               <th style={{ width: '18%' }}>Folder</th>
-              <th style={{ width: '18%' }}>Actions</th>
+              <th style={{ width: '18%', textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -205,17 +205,43 @@ export default function AssetsPage() {
                 <td><span className={`badge ${a.badge}`}>{a.type}</span></td>
                 <td>{a.size}</td>
                 <td>{a.folder}</td>
-                <td>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => { setViewAsset(a); setShowViewModal(true); }}>
-                      <i className="ti ti-eye"></i> View
+                <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                  <div style={{ position: 'relative', display: 'inline-block', zIndex: 1 }}>
+                    <button 
+                      className="btn btn-ghost" 
+                      style={{ padding: '6px 14px', borderRadius: '12px', background: '#EADDFF', color: '#65558F', fontSize: '16px', fontWeight: 900, lineHeight: 1, letterSpacing: '1px' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const parent = e.currentTarget.parentElement as HTMLElement;
+                        const el = e.currentTarget.nextElementSibling as HTMLElement;
+                        
+                        document.querySelectorAll('.action-dropdown').forEach(dropdown => {
+                          if (dropdown !== el) {
+                            (dropdown as HTMLElement).style.display = 'none';
+                            (dropdown.parentElement as HTMLElement).style.zIndex = '1';
+                          }
+                        });
+
+                        if (el) {
+                          const isOpening = el.style.display === 'none' || el.style.display === '';
+                          el.style.display = isOpening ? 'block' : 'none';
+                          parent.style.zIndex = isOpening ? '50' : '1';
+                        }
+                      }}
+                    >
+                      ...
                     </button>
-                    <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => showToast(`Downloading ${a.name}...`)}>
-                      <i className="ti ti-download"></i>
-                    </button>
-                    <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 12, color: 'var(--rose)' }} onClick={() => handleDelete(assets.indexOf(a))}>
-                      <i className="ti ti-trash"></i>
-                    </button>
+                    <div className="action-dropdown" style={{ display: 'none', position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 10, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)', minWidth: 140, padding: '4px' }}>
+                      <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', background: 'transparent', borderBottom: '1px solid var(--border)', borderRadius: '8px 8px 0 0' }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); setViewAsset(a); setShowViewModal(true); }}>
+                        View
+                      </button>
+                      <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', background: 'transparent', borderBottom: '1px solid var(--border)', borderRadius: 0 }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); showToast(`Downloading ${a.name}...`); }}>
+                        Download
+                      </button>
+                      <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--rose)', background: 'transparent', borderRadius: '0 0 8px 8px' }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); handleDelete(assets.indexOf(a)); }}>
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </td>
               </tr>
