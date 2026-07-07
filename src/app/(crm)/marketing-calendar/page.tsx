@@ -606,7 +606,7 @@ export default function MarketingCalendarPage() {
                 <td style={{ padding: '16px 24px', color: 'var(--text-secondary)', fontSize: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, var(--purple), var(--blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#ffffff' }}>
-                      {s.author.split(' ')[0][0]}{s.author.split(' ')[1][0]}
+                      {s.author ? s.author.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase() : '?'}
                     </div>
                     <span style={{ fontWeight: 500 }}>{s.author}</span>
                   </div>
@@ -697,7 +697,7 @@ export default function MarketingCalendarPage() {
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Assignee</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid var(--border)', padding: '12px 16px', borderRadius: 8 }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
-                  {detailsEvent.author.split(' ')[0][0]}{detailsEvent.author.split(' ')[1]?.[0] || ''}
+                  {detailsEvent.author ? detailsEvent.author.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase() : '?'}
                 </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{detailsEvent.author}</div>
