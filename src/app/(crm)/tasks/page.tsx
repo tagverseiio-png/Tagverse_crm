@@ -37,7 +37,7 @@ function calculateTaskScore(task: any, deal: any) {
 function TasksContent() {
   const [tasks, setTasks] = useState(INITIAL_TASKS);
   const [deals, setDeals] = useState(DEALS);
-  const [viewMode, setViewMode] = useState<'list' | 'timeline' | 'heatmap'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'timeline' | 'heatmap' | 'kanban'>('list');
   
   // Nudge Engine State
   const [toasts, setToasts] = useState<any[]>([]);
@@ -196,6 +196,9 @@ function TasksContent() {
             <button className={`${styles.tab} ${viewMode === 'list' ? styles.tabActive : ''}`} onClick={() => setViewMode('list')}>
               <List size={16} /> List
             </button>
+            <button className={`${styles.tab} ${viewMode === 'kanban' ? styles.tabActive : ''}`} onClick={() => setViewMode('kanban')}>
+              <Layout size={16} /> Kanban
+            </button>
             <button className={`${styles.tab} ${viewMode === 'timeline' ? styles.tabActive : ''}`} onClick={() => setViewMode('timeline')}>
               <LayoutGrid size={16} /> Timeline
             </button>
@@ -345,6 +348,118 @@ function TasksContent() {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* KANBAN VIEW */}
+          {viewMode === 'kanban' && (
+            <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16, height: '100%' }} className="scrollbar-thin">
+              {STAGES.map(stage => {
+                const stageDeals = deals.filter(d => d.stage === stage);
+                const stageTasks = tasks.filter(t => stageDeals.some(d => d.id === t.dealId));
+                
+                return (
+                  <div
+                    key={stage}
+                    style={{
+                      width: 300,
+                      flexShrink: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                    onDragOver={onDragOver}
+                    onDrop={(e) => {
+                       e.preventDefault();
+                       const taskId = e.dataTransfer.getData('taskId');
+                       const task = tasks.find(t => t.id === taskId);
+                       if (task) {
+                         setDeals(prev => prev.map(d => d.id === task.dealId ? { ...d, stage } : d));
+                       }
+                    }}
+                  >
+                    <div style={{
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      borderTop: '3px solid var(--purple)',
+                      borderRadius: '10px 10px 0 0',
+                      padding: '12px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}>
+                      <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{stage}</div>
+                      <span style={{
+                        fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)',
+                        background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: 12,
+                        border: '1px solid var(--border)'
+                      }}>{stageTasks.length}</span>
+                    </div>
+
+                    <div style={{
+                      background: 'var(--bg-secondary)',
+                      borderLeft: '1px solid var(--border)',
+                      borderRight: '1px solid var(--border)',
+                      borderBottom: '1px solid var(--border)',
+                      borderRadius: '0 0 10px 10px',
+                      padding: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 12,
+                      overflowY: 'auto',
+                      flex: 1,
+                      minHeight: 120
+                    }} className="scrollbar-thin">
+                      {stageTasks.map(t => {
+                        const deal = deals.find(d => d.id === t.dealId);
+                        return (
+                          <div
+                            key={t.id}
+                            draggable
+                            onDragStart={(e) => onDragStart(e, t.id)}
+                            style={{
+                              background: 'var(--bg-card)',
+                              border: '1px solid var(--border)',
+                              borderRadius: 8,
+                              padding: 16,
+                              cursor: 'grab',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                              <span className="badge purple" style={{ fontSize: 11, padding: '3px 8px' }}>
+                                {deal?.title}
+                              </span>
+                              <input 
+                                type="checkbox" 
+                                checked={t.done} 
+                                onChange={() => toggleTask(t.id)} 
+                                onClick={e => e.stopPropagation()}
+                              />
+                            </div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: t.done ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: t.done ? 'line-through' : 'none', marginBottom: 14, lineHeight: 1.4 }}>
+                              {t.title}
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 4 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <Clock size={14} color="var(--text-muted)" />
+                                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.due}</span>
+                              </div>
+                              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>
+                                {REPS.find(r => r.id === t.rep)?.avatar || '??'}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {stageTasks.length === 0 && (
+                        <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, border: '1px dashed var(--border)', borderRadius: 8 }}>
+                          No tasks
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
 

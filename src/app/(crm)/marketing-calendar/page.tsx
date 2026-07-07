@@ -630,7 +630,7 @@ export default function MarketingCalendarPage() {
       </div>
 
       {/* Upcoming Table */}
-      <div className="card table-wrap" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card table-wrap" style={{ padding: 0, overflow: 'visible' }}>
         <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-card)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--blue-dim)', color: 'var(--blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -654,7 +654,7 @@ export default function MarketingCalendarPage() {
               <th style={{ padding: '16px 24px', fontWeight: 700 }}>Scheduled For</th>
               <th style={{ padding: '16px 24px', fontWeight: 700 }}>Author</th>
               <th style={{ padding: '16px 24px', fontWeight: 700 }}>Status</th>
-              <th style={{ padding: '16px 24px', fontWeight: 700 }}>Actions</th>
+              <th style={{ padding: '16px 24px', fontWeight: 700, textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -683,14 +683,43 @@ export default function MarketingCalendarPage() {
                     <span className="live-dot" style={{ background: 'var(--amber)' }} /> {s.status}
                   </span>
                 </td>
-                <td style={{ padding: '16px 24px' }}>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn btn-ghost" style={{ padding: '6px 10px', fontSize: 14, borderRadius: 8, color: 'var(--text-secondary)' }} title="Edit" onClick={(e) => { e.stopPropagation(); openEdit(s); }}>
-                      <i className="ti ti-edit"></i>
+                <td style={{ padding: '16px 24px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                  <div style={{ position: 'relative', display: 'inline-block', zIndex: 1 }}>
+                    <button 
+                      className="btn btn-ghost" 
+                      style={{ padding: '6px 14px', borderRadius: '12px', background: '#EADDFF', color: '#65558F', fontSize: '16px', fontWeight: 900, lineHeight: 1, letterSpacing: '1px' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const parent = e.currentTarget.parentElement as HTMLElement;
+                        const el = e.currentTarget.nextElementSibling as HTMLElement;
+                        
+                        document.querySelectorAll('.action-dropdown').forEach(dropdown => {
+                          if (dropdown !== el) {
+                            (dropdown as HTMLElement).style.display = 'none';
+                            (dropdown.parentElement as HTMLElement).style.zIndex = '1';
+                          }
+                        });
+
+                        if (el) {
+                          const isOpening = el.style.display === 'none' || el.style.display === '';
+                          el.style.display = isOpening ? 'block' : 'none';
+                          parent.style.zIndex = isOpening ? '50' : '1';
+                        }
+                      }}
+                    >
+                      ...
                     </button>
-                    <button className="btn btn-ghost" style={{ padding: '6px 10px', fontSize: 14, borderRadius: 8, color: 'var(--rose)' }} title="Delete" onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}>
-                      <i className="ti ti-trash"></i>
-                    </button>
+                    <div className="action-dropdown" style={{ display: 'none', position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 10, background: 'var(--white)', border: '1px solid #EADDFF', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', minWidth: 140, padding: '4px' }}>
+                      <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: '#1D192B', background: 'transparent', borderBottom: '1px solid #F3EDF7', borderRadius: '8px 8px 0 0' }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); setDetailsEvent(s); }}>
+                        View
+                      </button>
+                      <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: '#1D192B', background: 'transparent', borderBottom: '1px solid #F3EDF7', borderRadius: 0 }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); openEdit(s); }}>
+                        Edit
+                      </button>
+                      <button className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--rose)', background: 'transparent', borderRadius: '0 0 8px 8px' }} onClick={() => { (document.activeElement as HTMLElement)?.blur(); handleDelete(s.id); }}>
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </td>
               </tr>
