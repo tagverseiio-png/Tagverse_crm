@@ -92,6 +92,7 @@ export default function MarketingCalendarPage() {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState(today);
+  const [isMonthView, setIsMonthView] = useState(false);
 
   const formatYMD = (d: Date) => {
     const y = d.getFullYear();
@@ -116,8 +117,30 @@ export default function MarketingCalendarPage() {
   const [form, setForm] = useState(blankForm);
 
   const [authorList, setAuthorList] = useState<string[]>(AUTHORS);
+  const [authorsLoaded, setAuthorsLoaded] = useState(false);
   const [isAuthorDropdownOpen, setIsAuthorDropdownOpen] = useState(false);
   const [newAuthorName, setNewAuthorName] = useState('');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('marketing-authors');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setAuthorList(parsed);
+        }
+      } catch (e) {}
+    } else {
+      setAuthorList(AUTHORS);
+    }
+    setAuthorsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (authorsLoaded) {
+      localStorage.setItem('marketing-authors', JSON.stringify(authorList));
+    }
+  }, [authorList, authorsLoaded]);
 
   const showToast = (msg: string, color = 'var(--emerald)') => {
     setToast(msg); setToastColor(color); setTimeout(() => setToast(''), 3000);
@@ -135,8 +158,12 @@ export default function MarketingCalendarPage() {
         title: e.title,
         date: e.date, // e.g. "2026-06-25"
         time: e.time,
-        channel: e.type === 'social' ? 'Social' : e.type === 'meeting' ? 'Zoom' : 'Email',
-        author: AUTHORS[0],
+        channel: e.channel || (e.type === 'social' ? 'Social' : e.type === 'meeting' ? 'Zoom' : 'Email'),
+        author: e.author || AUTHORS[0],
+        company: e.company,
+        client: e.client,
+        status: e.status === 'upcoming' ? 'Scheduled' : (e.status || 'Scheduled'),
+        badgeChannel: CHANNEL_BADGE[e.channel] || 'blue',
         type: e.type,
         color: e.color,
       })));
@@ -172,11 +199,47 @@ export default function MarketingCalendarPage() {
   }
 
   const selectedStr = formatYMD(selectedDate);
-  const selectedEvents = events.filter(e => {
+  
+  const dayEvents = events.filter(e => {
     if (typeof e.date === 'string') return e.date === selectedStr;
     if (typeof e.date === 'number' && selectedDate.getFullYear() === 2026 && selectedDate.getMonth() === 5) return e.date === selectedDate.getDate();
     return false;
   });
+
+  const monthEvents = events.filter(e => {
+    let eYear, eMonth;
+    if (typeof e.date === 'string') {
+      const [y, m, d] = e.date.split('-').map(Number);
+      eYear = y;
+      eMonth = m - 1;
+    } else if (typeof e.date === 'number') {
+      eYear = 2026;
+      eMonth = 5;
+    }
+    return eYear === year && eMonth === month;
+  });
+
+  const timeToMin = (t: string) => {
+    if (!t) return 0;
+    const [time, ampm] = t.split(' ');
+    if (!time) return 0;
+    let [h, m] = time.split(':').map(Number);
+    if (ampm === 'PM' && h < 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    return h * 60 + (m || 0);
+  };
+
+  const sortEvents = (evts: ScheduledEvent[]) => {
+    return [...evts].sort((a, b) => {
+      let dateA = typeof a.date === 'string' ? a.date : `2026-06-${String(a.date).padStart(2, '0')}`;
+      let dateB = typeof b.date === 'string' ? b.date : `2026-06-${String(b.date).padStart(2, '0')}`;
+      if (dateA !== dateB) return dateA.localeCompare(dateB);
+      return timeToMin(a.time) - timeToMin(b.time);
+    });
+  };
+
+  const displayEvents = isMonthView ? sortEvents(monthEvents) : sortEvents(dayEvents);
+  
   const allScheduled = events.filter(e => e.status === 'Scheduled');
 
   // Convert 24h "HH:MM" to display "H:MM AM/PM"
@@ -447,7 +510,7 @@ export default function MarketingCalendarPage() {
             <button className="btn btn-ghost hover-lift" style={{ padding: '8px', borderRadius: '50%', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewDate(new Date(year, month - 1, 1))}>
               <ChevronLeft size={20} />
             </button>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            <h2 onClick={() => setIsMonthView(true)} style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0, cursor: 'pointer' }} className="hover-lift" title="Click to view all events in this month">
               {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
             </h2>
             <button className="btn btn-ghost hover-lift" style={{ padding: '8px', borderRadius: '50%', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewDate(new Date(year, month + 1, 1))}>
@@ -461,9 +524,9 @@ export default function MarketingCalendarPage() {
             ))}
             {days.map((d, i) => {
               if (d.empty) return <div key={i} />;
-              const isSelected = selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === d.day;
+              const isSelected = !isMonthView && selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === d.day;
               return (
-                <div key={i} className="cal-day-item" onClick={() => setSelectedDate(new Date(year, month, d.day!))} style={{
+                <div key={i} className="cal-day-item" onClick={() => { setSelectedDate(new Date(year, month, d.day!)); setIsMonthView(false); }} style={{
                   position: 'relative', height: 90, padding: '10px', borderRadius: 12, cursor: 'pointer',
                   border: isSelected ? '2px solid var(--purple)' : '1px solid var(--border)',
                   background: isSelected ? 'linear-gradient(145deg, var(--purple-dim), rgba(124,92,191,0.05))' : d.isToday ? 'var(--bg-secondary)' : 'var(--bg-card)',
@@ -498,12 +561,12 @@ export default function MarketingCalendarPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
-                {selectedDate.toLocaleString('default', { month: 'long' })} {selectedDate.getDate()}
+                {isMonthView ? `${viewDate.toLocaleString('default', { month: 'long' })} ${year}` : `${selectedDate.toLocaleString('default', { month: 'long' })} ${selectedDate.getDate()}`}
               </h3>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Daily Schedule</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>{isMonthView ? 'Monthly Schedule' : 'Daily Schedule'}</div>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span className="badge" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>{selectedEvents.length} items</span>
+              <span className="badge" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>{displayEvents.length} items</span>
               <button className="btn btn-ghost" style={{ padding: '6px 10px', fontSize: 12, color: 'var(--purple)' }}
                 onClick={() => { setForm({ ...blankForm, date: formatYMD(selectedDate) }); setShowScheduleModal(true); }}>
                 <i className="ti ti-plus"></i>
@@ -512,20 +575,20 @@ export default function MarketingCalendarPage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', flex: 1, paddingRight: 8 }} className="scrollbar-thin">
-            {selectedEvents.length === 0 ? (
+            {displayEvents.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted)', border: '2px dashed var(--border)', borderRadius: 16, background: 'rgba(255,255,255,0.02)' }}>
                 <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   <i className="ti ti-calendar-off" style={{ fontSize: 32, opacity: 0.5 }}></i>
                 </div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Nothing scheduled</div>
-                <div style={{ fontSize: 13, marginTop: 6 }}>No posts planned for this date.</div>
+                <div style={{ fontSize: 13, marginTop: 6 }}>{isMonthView ? 'No posts planned for this month.' : 'No posts planned for this date.'}</div>
                 <button className="btn btn-ghost" style={{ marginTop: 20, fontSize: 13, color: 'var(--purple)', fontWeight: 600 }}
                   onClick={() => { setForm({ ...blankForm, date: formatYMD(selectedDate) }); setShowScheduleModal(true); }}>
                   + Schedule Item
                 </button>
               </div>
             ) : (
-              selectedEvents.map(evt => (
+              displayEvents.map(evt => (
                 <div key={evt.id} style={{ padding: 18, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, position: 'relative', overflow: 'hidden', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }} className="hover-lift" onClick={() => setDetailsEvent(evt)}>
                   <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: evt.color }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
@@ -538,7 +601,11 @@ export default function MarketingCalendarPage() {
                   <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>{evt.title}</div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13, color: 'var(--text-secondary)' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}><i className="ti ti-clock" style={{ color: 'var(--text-muted)' }}></i> {evt.time}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}>
+                        <i className="ti ti-clock" style={{ color: 'var(--text-muted)' }}></i> 
+                        {isMonthView && <span style={{ color: 'var(--purple)', marginRight: 2 }}>{typeof evt.date === 'string' ? parseInt(evt.date.split('-')[2]) : evt.date} {viewDate.toLocaleString('default', { month: 'short' })} • </span>}
+                        {evt.time}
+                      </span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}>
                         <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}><i className="ti ti-user"></i></div>
                         {evt.author}

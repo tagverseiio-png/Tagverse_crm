@@ -38,16 +38,22 @@ export async function GET(req: NextRequest) {
     const events = [
       ...activities.map(a => {
         const d = a.scheduledAt ? new Date(a.scheduledAt) : new Date();
+        const meta = (a.metadata as any) || {};
         return {
           id: a.id,
           title: a.title,
-          type: a.type,
+          type: meta.type || a.type,
+          channel: meta.channel,
+          author: meta.author,
+          company: meta.company,
+          client: meta.client,
           date: d.toISOString().split('T')[0],
           time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
-          duration: (a.metadata as any)?.duration || 60,
+          duration: meta.duration || 60,
           attendees: [],
-          color: a.type === 'meeting' ? '#3b82f6' : a.type === 'task' ? '#8b5cf6' : '#10b981',
+          color: meta.color || (a.type === 'meeting' ? '#3b82f6' : a.type === 'task' ? '#8b5cf6' : '#10b981'),
           description: a.description || '',
+          status: a.status || 'Scheduled',
           linkedRecord: a.dealId ? { type: 'deal', id: a.dealId, title: a.deal?.title } : a.contactId ? { type: 'contact', id: a.contactId, title: a.contact?.name } : undefined
         };
       }),
