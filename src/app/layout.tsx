@@ -14,12 +14,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-      </head>
-      <body>
         {/* Blocking script: runs before paint to prevent theme flash */}
-        <Script
+        <script
           id="theme-initializer"
-          strategy="beforeInteractive"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -35,6 +33,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             `,
           }}
         />
+      </head>
+      <body>
         <AuthProvider>
           <ThemeProvider>
             {children}

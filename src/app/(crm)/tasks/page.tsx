@@ -247,18 +247,27 @@ function useTaskStore() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [columns, setColumns] = useState<string[]>(() => {
-    const saved = localStorage.getItem('veloce_columns');
-    return saved ? JSON.parse(saved) : INITIAL_COLUMNS;
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('veloce_columns');
+      return saved ? JSON.parse(saved) : INITIAL_COLUMNS;
+    }
+    return INITIAL_COLUMNS;
   });
 
   const [widgets, setWidgets] = useState<DashboardWidget[]>(() => {
-    const saved = localStorage.getItem('veloce_widgets');
-    return saved ? JSON.parse(saved) : INITIAL_WIDGETS;
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('veloce_widgets');
+      return saved ? JSON.parse(saved) : INITIAL_WIDGETS;
+    }
+    return INITIAL_WIDGETS;
   });
 
   const [darkMode, setDarkMode] = useState<boolean>(() => {
-    const saved = localStorage.getItem('veloce_darkmode');
-    return saved ? JSON.parse(saved) : true;
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('veloce_darkmode');
+      return saved ? JSON.parse(saved) : true;
+    }
+    return true;
   });
 
   useEffect(() => {
@@ -607,17 +616,17 @@ export default function App() {
           </div>
 
           {/* BULK ACTIONS STRIP */}
-          {bulkSelection.length > 0 && (
-            <div className="bg-violet-600/10 border-b border-violet-500/20 px-6 py-2.5 flex items-center justify-between transition-all">
-              <div className="flex items-center gap-2 text-xs font-semibold text-violet-400">
-                <CheckCircle2 className="w-4 h-4 text-violet-500 animate-pulse" />
+          {bulkSelection.length > 0 && (view === 'List' || view === 'Table') && (
+            <div className="bg-violet-600/10 border-b border-violet-500/20 px-10 py-8 flex items-center justify-between transition-all">
+              <div className="flex items-center gap-3 text-lg font-bold text-violet-400">
+                <CheckCircle2 className="w-7 h-7 text-violet-500 animate-pulse" />
                 <span>{bulkSelection.length} tasks selected</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <select
                   onChange={(e) => handleBulkStatusChange(e.target.value)}
                   defaultValue=""
-                  className="px-2 py-1 text-xs rounded border border-violet-500/30 bg-slate-900 text-slate-300 outline-none"
+                  className="px-4 py-3 text-base rounded-lg border border-violet-500/30 bg-slate-900 text-slate-300 outline-none"
                 >
                   <option value="" disabled>Move status to...</option>
                   {columns.map(col => (
@@ -626,24 +635,28 @@ export default function App() {
                 </select>
                 <button
                   onClick={handleBulkDelete}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold"
+                  className="flex items-center gap-1 px-5 py-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-base font-bold"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-5 h-5" />
                   <span>Delete</span>
                 </button>
                 <button
                   onClick={() => setBulkSelection([])}
-                  className="p-1 text-slate-400 hover:text-slate-200"
+                  className="p-1 text-slate-400 hover:text-slate-200 ml-1"
                   title="Clear Selection"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
             </div>
           )}
 
           {/* DYNAMIC VIEWS CONTAINER */}
-          <div className="flex-1 overflow-auto p-6 relative">
+          <style>{`
+            .hide-scroll::-webkit-scrollbar { display: none; }
+            .hide-scroll { scrollbar-width: none; ms-overflow-style: none; }
+          `}</style>
+          <div className="flex-1 overflow-auto p-6 relative hide-scroll">
             {view === 'Board' && (
               <BoardView 
                 columns={columns}
@@ -801,7 +814,11 @@ function BoardView({
   const [newColumnName, setNewColumnName] = useState('');
 
   return (
-    <div style={{ display: 'flex', gap: 16, overflowX: 'visible', paddingBottom: 8, height: '100%', alignItems: 'stretch' }}>
+    <>
+      <style>{`
+        .hide-scroll::-webkit-scrollbar { display: none; }
+      `}</style>
+      <div className="hide-scroll" style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 8, height: '100%', alignItems: 'stretch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
       {columns.map((col, index) => {
         const columnTasks = tasks.filter(t => t.status === col);
         const palette = STAGE_COLOR_PALETTE[index % STAGE_COLOR_PALETTE.length];
@@ -926,6 +943,7 @@ function BoardView({
         )}
       </div>
     </div>
+    </>
   );
 }
 
@@ -977,7 +995,7 @@ function ListView({
         display: 'flex', 
         alignItems: 'center', 
         padding: '0 20px', 
-        fontSize: 12, 
+        fontSize: 13, 
         fontWeight: 700, 
         color: 'var(--text-muted)',
         marginBottom: 8
@@ -987,7 +1005,7 @@ function ListView({
             type="checkbox"
             checked={tasks.length > 0 && bulkSelection.length === tasks.length}
             onChange={toggleSelectAll}
-            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
+            style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
           />
         </div>
         <div style={{ flex: 1, paddingLeft: 12 }}>Task Details</div>
@@ -1007,7 +1025,7 @@ function ListView({
             style={{ 
               display: 'flex', 
               alignItems: 'center', 
-              padding: '16px 20px', 
+              padding: '18px 22px', 
               background: isSelected ? 'var(--bg-secondary)' : 'var(--bg-card)', 
               border: `1px solid ${isSelected ? 'var(--brand-accent)' : 'var(--border)'}`, 
               borderRadius: 12,
@@ -1027,7 +1045,7 @@ function ListView({
                 type="checkbox"
                 checked={isSelected}
                 onChange={() => toggleSelectOne(task.id)}
-                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
+                style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
               />
             </div>
 
@@ -1038,7 +1056,7 @@ function ListView({
                 style={{ 
                   textAlign: 'left', 
                   fontWeight: 700, 
-                  fontSize: 14, 
+                  fontSize: 13, 
                   color: 'var(--text-primary)', 
                   background: 'none', 
                   border: 'none', 
@@ -1078,7 +1096,7 @@ function ListView({
                 onChange={(e) => handleUpdateTask({ ...task, status: e.target.value })}
                 style={{ 
                   width: '100%', 
-                  padding: '8px 12px', 
+                  padding: '10px 14px', 
                   fontSize: 13, 
                   fontWeight: 600,
                   borderRadius: 8, 
@@ -1102,7 +1120,7 @@ function ListView({
                 onChange={(e) => handleUpdateTask({ ...task, priority: e.target.value as any })}
                 style={{ 
                   width: '100%', 
-                  padding: '8px 12px', 
+                  padding: '10px 14px', 
                   fontSize: 13, 
                   fontWeight: 600,
                   borderRadius: 8, 
@@ -1128,7 +1146,7 @@ function ListView({
                 onChange={(e) => handleUpdateTask({ ...task, dueDate: e.target.value })}
                 style={{ 
                   width: '100%', 
-                  padding: '8px 12px', 
+                  padding: '10px 14px', 
                   fontSize: 13, 
                   fontWeight: 600,
                   borderRadius: 8, 
@@ -1143,7 +1161,7 @@ function ListView({
 
             {/* Assignee */}
             <div style={{ width: 140, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <img src={task.assignee.avatar} alt={task.assignee.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+              <img src={task.assignee.avatar} alt={task.assignee.name} style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover' }} />
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {task.assignee.name.split(' ')[0]}
               </span>
@@ -1177,7 +1195,7 @@ function ListView({
       })}
 
       {tasks.length === 0 && (
-        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
           No records matching selected criteria exist.
         </div>
       )}
@@ -1231,28 +1249,28 @@ function TableView({
         <thead>
           <tr style={{ 
             borderBottom: '1px solid var(--border)', 
-            fontSize: 11, 
+            fontSize: 13, 
             fontWeight: 800, 
             textTransform: 'uppercase', 
             letterSpacing: '0.5px', 
             color: 'var(--text-muted)',
             background: 'var(--bg-secondary)'
           }}>
-            <th style={{ padding: '16px 20px', width: 48, textAlign: 'center' }}>
+            <th style={{ padding: '24px 28px', width: 48, textAlign: 'center' }}>
               <input
                 type="checkbox"
                 checked={tasks.length > 0 && bulkSelection.length === tasks.length}
                 onChange={toggleSelectAll}
-                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
+                style={{ width: 20, height: 20, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
               />
             </th>
-            <th style={{ padding: '16px 20px' }}>Title / Core Goal Description</th>
-            <th style={{ padding: '16px 20px', width: 140 }}>Status</th>
-            <th style={{ padding: '16px 20px', width: 130 }}>Priority</th>
-            <th style={{ padding: '16px 20px', width: 150 }}>Due Date</th>
-            <th style={{ padding: '16px 20px', width: 150 }}>Lead Owner</th>
-            <th style={{ padding: '16px 20px', width: 120 }}>Deal Context</th>
-            <th style={{ padding: '16px 20px', width: 60, textAlign: 'center' }}>Action</th>
+            <th style={{ padding: '24px 28px' }}>Title / Core Goal Description</th>
+            <th style={{ padding: '24px 28px', width: 140 }}>Status</th>
+            <th style={{ padding: '24px 28px', width: 130 }}>Priority</th>
+            <th style={{ padding: '24px 28px', width: 150 }}>Due Date</th>
+            <th style={{ padding: '24px 28px', width: 150 }}>Lead Owner</th>
+            <th style={{ padding: '24px 28px', width: 120 }}>Deal Context</th>
+            <th style={{ padding: '24px 28px', width: 60, textAlign: 'center' }}>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -1265,7 +1283,7 @@ function TableView({
                   borderBottom: '1px solid var(--border)', 
                   background: isSelected ? 'var(--bg-secondary)' : 'transparent',
                   transition: 'background 0.2s',
-                  fontSize: 13
+                  fontSize: 15
                 }}
                 onMouseOver={(e) => {
                   if(!isSelected) e.currentTarget.style.background = 'var(--bg-glass)';
@@ -1274,22 +1292,22 @@ function TableView({
                   if(!isSelected) e.currentTarget.style.background = 'transparent';
                 }}
               >
-                <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                <td style={{ padding: '24px 28px', textAlign: 'center' }}>
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggleSelectOne(task.id)}
-                    style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
+                    style={{ width: 20, height: 20, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
                   />
                 </td>
-                <td style={{ padding: '16px 20px', fontWeight: 600 }}>
+                <td style={{ padding: '24px 28px', fontWeight: 600 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <button
                       onClick={() => handleOpenTaskDetails(task.id)}
                       style={{ 
                         textAlign: 'left', 
                         fontWeight: 700, 
-                        fontSize: 14, 
+                        fontSize: 16, 
                         color: 'var(--text-primary)', 
                         background: 'none', 
                         border: 'none', 
@@ -1302,19 +1320,19 @@ function TableView({
                     >
                       {task.title}
                     </button>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 300 }}>
+                    <span style={{ fontSize: 13, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 300 }}>
                       {task.description || 'No additional summary details entered.'}
                     </span>
                   </div>
                 </td>
-                <td style={{ padding: '16px 20px' }}>
+                <td style={{ padding: '24px 28px' }}>
                   <select
                     value={task.status}
                     onChange={(e) => handleUpdateTask({ ...task, status: e.target.value })}
                     style={{ 
                       width: '100%', 
-                      padding: '8px 12px', 
-                      fontSize: 13, 
+                      padding: '12px 16px', 
+                      fontSize: 15, 
                       fontWeight: 600,
                       borderRadius: 8, 
                       border: '1px solid var(--border)', 
@@ -1329,14 +1347,14 @@ function TableView({
                     ))}
                   </select>
                 </td>
-                <td style={{ padding: '16px 20px' }}>
+                <td style={{ padding: '24px 28px' }}>
                   <select
                     value={task.priority}
                     onChange={(e) => handleUpdateTask({ ...task, priority: e.target.value as any })}
                     style={{ 
                       width: '100%', 
-                      padding: '8px 12px', 
-                      fontSize: 13, 
+                      padding: '12px 16px', 
+                      fontSize: 15, 
                       fontWeight: 600,
                       borderRadius: 8, 
                       border: '1px solid var(--border)', 
@@ -1352,15 +1370,15 @@ function TableView({
                     <option value="Urgent">Urgent</option>
                   </select>
                 </td>
-                <td style={{ padding: '16px 20px' }}>
+                <td style={{ padding: '24px 28px' }}>
                   <input
                     type="date"
                     value={task.dueDate}
                     onChange={(e) => handleUpdateTask({ ...task, dueDate: e.target.value })}
                     style={{ 
                       width: '100%', 
-                      padding: '8px 12px', 
-                      fontSize: 13, 
+                      padding: '12px 16px', 
+                      fontSize: 15, 
                       fontWeight: 600,
                       borderRadius: 8, 
                       border: '1px solid var(--border)', 
@@ -1371,7 +1389,7 @@ function TableView({
                     }}
                   />
                 </td>
-                <td style={{ padding: '16px 20px' }}>
+                <td style={{ padding: '24px 28px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <img src={task.assignee.avatar} alt={task.assignee.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
                     <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 100 }}>
@@ -1379,13 +1397,13 @@ function TableView({
                     </span>
                   </div>
                 </td>
-                <td style={{ padding: '16px 20px' }}>
+                <td style={{ padding: '24px 28px' }}>
                   {task.dealReference ? (
                     <div style={{ 
                       display: 'inline-flex', 
                       alignItems: 'center', 
                       gap: 6, 
-                      fontSize: 11, 
+                      fontSize: 13, 
                       fontWeight: 800, 
                       color: 'var(--brand-accent)', 
                       background: 'var(--purple-dim)', 
@@ -1396,10 +1414,10 @@ function TableView({
                       <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 80 }}>{task.dealReference.name}</span>
                     </div>
                   ) : (
-                    <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>—</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: 15 }}>—</span>
                   )}
                 </td>
-                <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                <td style={{ padding: '24px 28px', textAlign: 'center' }}>
                   <button
                     onClick={() => handleDeleteTask(task.id)}
                     style={{ 
@@ -1429,7 +1447,7 @@ function TableView({
       </table>
 
       {tasks.length === 0 && (
-        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 16 }}>
           No records matching the current layout properties.
         </div>
       )}
@@ -2404,7 +2422,7 @@ function NewTaskModal({
     });
 
     if (!result.success) {
-      setFormErrors(result.error.format() as any);
+      setFormErrors(result.error!.format() as any);
       return;
     }
 
