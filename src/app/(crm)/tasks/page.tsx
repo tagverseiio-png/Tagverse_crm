@@ -431,6 +431,7 @@ export default function App() {
   // Creator state
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [newTaskInitialDate, setNewTaskInitialDate] = useState<string | undefined>(undefined);
+  const [newTaskInitialStatus, setNewTaskInitialStatus] = useState<string | undefined>(undefined);
 
   const activeTask = useMemo(() => {
     return tasks.find(t => t.id === selectedTaskId) || null;
@@ -569,6 +570,7 @@ export default function App() {
                 <button
                   onClick={() => {
                     setNewTaskInitialDate(undefined);
+                    setNewTaskInitialStatus(undefined);
                     setIsNewTaskModalOpen(true);
                   }}
                   className="btn btn-primary"
@@ -673,6 +675,11 @@ export default function App() {
                 handleOpenTaskDetails={handleOpenTaskDetails}
                 deleteColumn={deleteColumn}
                 addColumn={addColumn}
+                onOpenNewTaskModal={(status) => {
+                  setNewTaskInitialStatus(status);
+                  setNewTaskInitialDate(undefined);
+                  setIsNewTaskModalOpen(true);
+                }}
               />
             )}
 
@@ -734,6 +741,7 @@ export default function App() {
       {isNewTaskModalOpen && (
         <NewTaskModal 
           initialDueDate={newTaskInitialDate}
+          initialStatus={newTaskInitialStatus}
           onClose={() => setIsNewTaskModalOpen(false)}
           onSubmit={(validatedData) => {
             const finalTask: Task = {
@@ -778,6 +786,7 @@ interface BoardViewProps {
   handleOpenTaskDetails: (id: string) => void;
   deleteColumn: (name: string) => void;
   addColumn: (name: string) => void;
+  onOpenNewTaskModal?: (status: string) => void;
 }
 
 function BoardView({
@@ -790,7 +799,8 @@ function BoardView({
   handleDropToColumn,
   handleOpenTaskDetails,
   deleteColumn,
-  addColumn
+  addColumn,
+  onOpenNewTaskModal
 }: BoardViewProps) {
   const STAGE_COLOR_PALETTE = [
     { color: 'new', headerColor: '#3b82f6' },
@@ -893,7 +903,7 @@ function BoardView({
                 </div>
               ))}
               
-              <button style={{ border: '1px dashed var(--border)', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', background: 'transparent', cursor: 'pointer', transition: 'all 0.2s', marginTop: 'auto' }}>+ Add Task</button>
+              <button onClick={() => onOpenNewTaskModal && onOpenNewTaskModal(col)} style={{ border: '1px dashed var(--border)', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', background: 'transparent', cursor: 'pointer', transition: 'all 0.2s', marginTop: 'auto' }}>+ Add Task</button>
             </div>
           </div>
         );
@@ -2367,6 +2377,7 @@ interface NewTaskModalProps {
   members: Assignee[];
   darkMode: boolean;
   initialDueDate?: string;
+  initialStatus?: string;
 }
 
 function NewTaskModal({ 
@@ -2375,11 +2386,12 @@ function NewTaskModal({
   darkMode, 
   columns, 
   members,
-  initialDueDate
+  initialDueDate,
+  initialStatus
 }: NewTaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState(columns[0] || 'To Do');
+  const [status, setStatus] = useState(initialStatus || columns[0] || 'To Do');
   const [priority, setPriority] = useState<'Low'|'Medium'|'High'|'Urgent'>('Medium');
   const [dueDate, setDueDate] = useState(initialDueDate || '');
   const [assignee, setAssignee] = useState<Assignee>(members[0]);
