@@ -107,7 +107,7 @@ export interface DashboardWidget {
 
 const INITIAL_COLUMNS = ['To Do', 'In Progress', 'Review', 'Done'];
 
-const MEMBERS: Assignee[] = [
+const INITIAL_MEMBERS: Assignee[] = [
   { id: 'm1', name: 'Sarah Connor', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', email: 'sarah@acme-crm.com' },
   { id: 'm2', name: 'Marcus Wright', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', email: 'marcus@acme-crm.com' },
   { id: 'm3', name: 'John Doe', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', email: 'john@acme-crm.com' },
@@ -122,7 +122,7 @@ const INITIAL_TASKS: Task[] = [
     title: 'Migrate pipeline database to secure cloud hosting',
     description: 'We need to move the production client records into the isolated EU-West database shard for complete compliance. Make sure the testing pipeline is verified with green checks first.',
     status: 'To Do',
-    assignee: MEMBERS[0],
+    assignee: INITIAL_MEMBERS[0],
     priority: 'High',
     dueDate: '2026-07-15',
     subtasks: [
@@ -144,7 +144,7 @@ const INITIAL_TASKS: Task[] = [
     title: 'Draft quarterly contract update for legal alignment',
     description: 'Update the regional enterprise indemnity provisions to accommodate the latest regulatory mandates.',
     status: 'In Progress',
-    assignee: MEMBERS[3],
+    assignee: INITIAL_MEMBERS[3],
     priority: 'Medium',
     dueDate: '2026-07-10',
     subtasks: [
@@ -165,7 +165,7 @@ const INITIAL_TASKS: Task[] = [
     title: 'Rebrand product presentation pitch deck templates',
     description: 'Align color swatches, typography styles, and core branding elements to reflect the refined corporate violet design guidelines.',
     status: 'Review',
-    assignee: MEMBERS[1],
+    assignee: INITIAL_MEMBERS[1],
     priority: 'Low',
     dueDate: '2026-07-09',
     subtasks: [
@@ -182,7 +182,7 @@ const INITIAL_TASKS: Task[] = [
     title: 'Resolve memory leaks in WebSocket real-time updates',
     description: 'Track connections keeping the server sockets alive past client-side termination. Profiler indicates heavy memory retainment in message queues.',
     status: 'Done',
-    assignee: MEMBERS[2],
+    assignee: INITIAL_MEMBERS[2],
     priority: 'Urgent',
     dueDate: '2026-07-05',
     subtasks: [
@@ -246,6 +246,8 @@ function useTaskStore() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [members, setMembers] = useState<Assignee[]>(INITIAL_MEMBERS);
+
   const [columns, setColumns] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('veloce_columns');
@@ -273,6 +275,22 @@ function useTaskStore() {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
+        try {
+          const teamRes = await fetch('/api/team');
+          const teamJson = await teamRes.json();
+          if (teamJson.reps && teamJson.reps.length > 0) {
+            const dbMembers = teamJson.reps.map((r: any) => ({
+              id: r.id,
+              name: r.name,
+              avatar: r.color ? undefined : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+              email: r.email,
+            }));
+            setMembers(dbMembers);
+          }
+        } catch(err) {
+          console.error("Failed to fetch team members", err);
+        }
+
         const res = await fetch('/api/tasks');
         const json = await res.json();
         if (json.data) {
@@ -329,6 +347,7 @@ function useTaskStore() {
   return {
     tasks,
     isLoading,
+    members,
     columns,
     widgets,
     darkMode,
@@ -348,6 +367,7 @@ function useTaskStore() {
             priority: newTask.priority,
             status: newTask.status,
             dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : undefined,
+            assignedToId: newTask.assignee?.id && newTask.assignee.id !== 'u-unknown' ? newTask.assignee.id : undefined,
           })
         });
       } catch (err) {
@@ -369,6 +389,7 @@ function useTaskStore() {
             priority: updatedTask.priority,
             status: updatedTask.status,
             dueDate: updatedTask.dueDate ? new Date(updatedTask.dueDate).toISOString() : undefined,
+            assignedToId: updatedTask.assignee?.id && updatedTask.assignee.id !== 'u-unknown' ? updatedTask.assignee.id : undefined,
           })
         });
       } catch (err) {
@@ -421,7 +442,7 @@ function useTaskStore() {
 
 export default function App() {
   const store = useTaskStore();
-  const { tasks, columns, widgets, darkMode, setDarkMode, addTask, updateTask, deleteTask, addColumn, deleteColumn, reorderWidgets } = store;
+  const { tasks, members, columns, widgets, darkMode, setDarkMode, addTask, updateTask, deleteTask, addColumn, deleteColumn, reorderWidgets } = store;
 
   // Navigation & View States
   const [view, setView] = useState<'Board' | 'List' | 'Table' | 'Calendar' | 'Dashboard'>('Board');
@@ -596,7 +617,7 @@ export default function App() {
                   <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Owner</span>
                   <select value={filterAssignee} onChange={(e) => setFilterAssignee(e.target.value)} style={{ padding: '6px 12px', fontSize: 13, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-primary)', outline: 'none' }}>
                     <option value="All">All Members</option>
-                    {MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                   </select>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -696,6 +717,7 @@ export default function App() {
                 tasks={tasks}
                 widgets={widgets}
                 darkMode={darkMode}
+                members={members.length > 0 ? members : INITIAL_MEMBERS}
                 reorderWidgets={reorderWidgets}
               />
             )}
@@ -765,7 +787,7 @@ export default function App() {
                 title: validatedData.title || 'Untitled Action Item',
                 description: validatedData.description || '',
                 status: validatedData.status || columns[0],
-                assignee: validatedData.assignee || MEMBERS[0],
+                assignee: validatedData.assignee || members[0] || INITIAL_MEMBERS[0],
                 priority: validatedData.priority as any || 'Medium',
                 dueDate: validatedData.dueDate || new Date().toISOString().split('T')[0],
                 subtasks: [],
@@ -779,7 +801,7 @@ export default function App() {
             }
           }}
           columns={columns}
-          members={MEMBERS}
+          members={members.length > 0 ? members : INITIAL_MEMBERS}
           darkMode={darkMode}
         />
       )}
@@ -1753,6 +1775,7 @@ interface DashboardViewProps {
   tasks: Task[];
   widgets: DashboardWidget[];
   darkMode: boolean;
+  members: Assignee[];
   reorderWidgets: (draggedId: string, targetId: string) => void;
 }
 
@@ -1760,6 +1783,7 @@ function DashboardView({
   tasks,
   widgets,
   darkMode,
+  members,
   reorderWidgets
 }: DashboardViewProps) {
   // SVG charts calculation helpers
@@ -1961,7 +1985,7 @@ function DashboardView({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Assignee Task Distribution Density</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    {MEMBERS.map(member => {
+                    {members.map(member => {
                       const memberTasksCount = tasks.filter(t => t.assignee.id === member.id).length;
                       const pct = stats.total > 0 ? (memberTasksCount / stats.total) * 100 : 0;
                       return (
