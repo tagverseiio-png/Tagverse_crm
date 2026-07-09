@@ -426,7 +426,7 @@ export default function App() {
   // Navigation & View States
   const [view, setView] = useState<'Board' | 'List' | 'Table' | 'Calendar' | 'Dashboard'>('Board');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [taskModalMode, setTaskModalMode] = useState<'view' | 'edit' | 'delete' | null>(null);
   const [bulkSelection, setBulkSelection] = useState<string[]>([]);
   
   // Filtering, Sorting & Search States
@@ -447,11 +447,11 @@ export default function App() {
 
   const handleOpenTaskDetails = (taskId: string) => {
     setSelectedTaskId(taskId);
-    setIsSidebarOpen(true);
+    setTaskModalMode('view');
   };
 
   const handleCloseTaskDetails = () => {
-    setIsSidebarOpen(false);
+    setTaskModalMode(null);
     setSelectedTaskId(null);
   };
 
@@ -745,32 +745,65 @@ export default function App() {
 
       </div>
 
-      {/* NEW TASK CREATION MODAL */}
-      {isNewTaskModalOpen && (
+      {/* NEW TASK CREATION / EDIT MODAL */}
+      {(isNewTaskModalOpen || taskModalMode === 'edit') && (
         <NewTaskModal 
           initialDueDate={newTaskInitialDate}
           initialStatus={newTaskInitialStatus}
-          onClose={() => setIsNewTaskModalOpen(false)}
+          taskToEdit={taskModalMode === 'edit' && activeTask ? activeTask : undefined}
+          onClose={() => {
+            if (taskModalMode === 'edit') setTaskModalMode('view');
+            else setIsNewTaskModalOpen(false);
+          }}
           onSubmit={(validatedData) => {
-            const finalTask: Task = {
-              id: `task-${Date.now()}`,
-              title: validatedData.title || 'Untitled Action Item',
-              description: validatedData.description || '',
-              status: validatedData.status || columns[0],
-              assignee: validatedData.assignee || MEMBERS[0],
-              priority: validatedData.priority as any || 'Medium',
-              dueDate: validatedData.dueDate || new Date().toISOString().split('T')[0],
-              subtasks: [],
-              comments: [],
-              labels: validatedData.labels || [],
-              dealReference: null,
-              attachments: []
-            };
-            addTask(finalTask);
-            setIsNewTaskModalOpen(false);
+            if (taskModalMode === 'edit' && activeTask) {
+              updateTask({ ...activeTask, ...validatedData } as Task);
+              setTaskModalMode('view');
+            } else {
+              const finalTask: Task = {
+                id: `task-${Date.now()}`,
+                title: validatedData.title || 'Untitled Action Item',
+                description: validatedData.description || '',
+                status: validatedData.status || columns[0],
+                assignee: validatedData.assignee || MEMBERS[0],
+                priority: validatedData.priority as any || 'Medium',
+                dueDate: validatedData.dueDate || new Date().toISOString().split('T')[0],
+                subtasks: [],
+                comments: [],
+                labels: validatedData.labels || [],
+                dealReference: null,
+                attachments: []
+              };
+              addTask(finalTask);
+              setIsNewTaskModalOpen(false);
+            }
           }}
           columns={columns}
           members={MEMBERS}
+          darkMode={darkMode}
+        />
+      )}
+
+      {/* TASK DETAILS VIEW MODAL */}
+      {taskModalMode === 'view' && activeTask && (
+        <TaskViewModal
+          task={activeTask}
+          onClose={handleCloseTaskDetails}
+          onEdit={() => setTaskModalMode('edit')}
+          onDelete={() => setTaskModalMode('delete')}
+          darkMode={darkMode}
+        />
+      )}
+
+      {/* DELETE CONFIRM MODAL */}
+      {taskModalMode === 'delete' && activeTask && (
+        <DeleteConfirmModal
+          taskTitle={activeTask.title}
+          onClose={() => setTaskModalMode('view')}
+          onConfirm={() => {
+            deleteTask(activeTask.id);
+            handleCloseTaskDetails();
+          }}
           darkMode={darkMode}
         />
       )}
@@ -1964,6 +1997,162 @@ function DashboardView({
 // 11. NOTION-STYLE DETAIL SLIDE-OVER SIDEBAR
 // ==========================================
 
+interface TaskViewModalProps {
+  task: Task;
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  darkMode: boolean;
+}
+
+function TaskViewModal({ task, onClose, onEdit, onDelete, darkMode }: TaskViewModalProps) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} />
+
+      <div style={{ 
+        position: 'relative', 
+        width: '100%', 
+        maxWidth: 600, 
+        background: darkMode ? '#0f172a' : '#fbfafc', 
+        borderRadius: 20, 
+        boxShadow: '0 24px 64px rgba(0,0,0,0.2)', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        overflow: 'hidden', 
+        maxHeight: '90vh' 
+      }}>
+        
+        <div style={{ padding: '24px 32px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: `1px solid ${darkMode ? '#1e293b' : '#e2e8f0'}` }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: darkMode ? '#f8fafc' : '#1e1b4b', lineHeight: 1.2 }}>
+              {task.title}
+            </h3>
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <span style={{ fontSize: 12, padding: '4px 10px', borderRadius: 12, background: 'var(--purple-dim)', color: 'var(--brand-accent)', fontWeight: 700 }}>{task.status}</span>
+              <PriorityBadge priority={task.priority} />
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: darkMode ? '#1e293b' : '#f4ebff', border: 'none', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', color: darkMode ? '#94a3b8' : '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={18} strokeWidth={2.5} />
+          </button>
+        </div>
+
+        <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto' }} className="custom-scrollbar">
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>Assignee</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <img src={task.assignee.avatar} alt={task.assignee.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{task.assignee.name}</span>
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>Due Date</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                <CalendarIcon size={16} className="text-violet-500" />
+                {task.dueDate}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>Description</div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: darkMode ? '#1e293b' : '#f8fafc', padding: 16, borderRadius: 12, border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>
+              {task.description || <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>No description provided.</span>}
+            </div>
+          </div>
+
+          {task.labels && task.labels.length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>Labels</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {task.labels.map(l => (
+                  <span key={l} style={{ fontSize: 12, padding: '4px 12px', borderRadius: 16, background: darkMode ? '#334155' : '#e2e8f0', color: 'var(--text-primary)', fontWeight: 600 }}>{l}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {task.dealReference && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>Linked Deal</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--purple-dim)', padding: 12, borderRadius: 12, border: '1px solid var(--purple-dim)' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-accent)' }}>
+                  <Briefcase size={20} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--brand-accent)' }}>{task.dealReference.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-primary)' }}>{task.dealReference.value} • {task.dealReference.stage}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        <div style={{ padding: '16px 32px', background: darkMode ? '#1e293b' : '#f1f5f9', display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>
+          <button onClick={onDelete} style={{ padding: '8px 20px', borderRadius: 8, background: 'transparent', border: '1px solid var(--rose)', color: 'var(--rose)', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Trash2 size={16} /> Delete
+          </button>
+          <button onClick={onEdit} style={{ padding: '8px 24px', borderRadius: 8, background: 'var(--brand-accent)', border: 'none', color: '#fff', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Edit2 size={16} /> Edit Task
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+interface DeleteConfirmModalProps {
+  taskTitle: string;
+  onClose: () => void;
+  onConfirm: () => void;
+  darkMode: boolean;
+}
+
+function DeleteConfirmModal({ taskTitle, onClose, onConfirm, darkMode }: DeleteConfirmModalProps) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} />
+
+      <div style={{ 
+        position: 'relative', 
+        width: '100%', 
+        maxWidth: 400, 
+        background: darkMode ? '#0f172a' : '#fff', 
+        borderRadius: 16, 
+        boxShadow: '0 24px 64px rgba(0,0,0,0.2)', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        overflow: 'hidden',
+        padding: 32,
+        textAlign: 'center'
+      }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--rose-dim)', color: 'var(--rose)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <AlertTriangle size={32} />
+        </div>
+        
+        <h3 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>Delete Task?</h3>
+        <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+          Are you sure you want to delete <strong>"{taskTitle}"</strong>? This action cannot be undone.
+        </p>
+
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px 0', borderRadius: 8, background: darkMode ? '#1e293b' : '#f1f5f9', border: 'none', color: 'var(--text-primary)', fontWeight: 600, cursor: 'pointer' }}>
+            Cancel
+          </button>
+          <button onClick={onConfirm} style={{ flex: 1, padding: '10px 0', borderRadius: 8, background: 'var(--rose)', border: 'none', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
+            Confirm Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface TaskDetailSidebarProps {
   task: Task;
   onClose: () => void;
@@ -2386,6 +2575,7 @@ interface NewTaskModalProps {
   darkMode: boolean;
   initialDueDate?: string;
   initialStatus?: string;
+  taskToEdit?: Task;
 }
 
 function NewTaskModal({ 
@@ -2395,15 +2585,16 @@ function NewTaskModal({
   columns, 
   members,
   initialDueDate,
-  initialStatus
+  initialStatus,
+  taskToEdit
 }: NewTaskModalProps) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState(initialStatus || columns[0] || 'To Do');
-  const [priority, setPriority] = useState<'Low'|'Medium'|'High'|'Urgent'>('Medium');
-  const [dueDate, setDueDate] = useState(initialDueDate || '');
-  const [assignee, setAssignee] = useState<Assignee>(members[0]);
-  const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [title, setTitle] = useState(taskToEdit?.title || '');
+  const [description, setDescription] = useState(taskToEdit?.description || '');
+  const [status, setStatus] = useState(taskToEdit?.status || initialStatus || columns[0] || 'To Do');
+  const [priority, setPriority] = useState<'Low'|'Medium'|'High'|'Urgent'>(taskToEdit?.priority || 'Medium');
+  const [dueDate, setDueDate] = useState(taskToEdit?.dueDate || initialDueDate || '');
+  const [assignee, setAssignee] = useState<Assignee>(taskToEdit?.assignee || members[0]);
+  const [selectedLabels, setSelectedLabels] = useState<string[]>(taskToEdit?.labels || []);
   
   const [formErrors, setFormErrors] = useState<{title?: string; dueDate?: string}>({});
 
@@ -2460,7 +2651,7 @@ function NewTaskModal({
         
         <div style={{ padding: '24px 32px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0, fontSize: 22, fontWeight: 700, fontFamily: 'Georgia, serif', color: '#1e1b4b', letterSpacing: '-0.5px' }}>
-            Schedule New Task
+            {taskToEdit ? 'Edit Task' : 'Schedule New Task'}
           </h3>
           <button onClick={onClose} style={{ background: '#f4ebff', border: 'none', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', color: '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
             <X size={18} strokeWidth={2.5} />
@@ -2679,7 +2870,7 @@ function NewTaskModal({
                 cursor: 'pointer'
               }}
             >
-              Schedule Task
+              {taskToEdit ? 'Save Changes' : 'Schedule Task'}
             </button>
           </div>
 
