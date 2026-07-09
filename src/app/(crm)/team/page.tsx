@@ -317,97 +317,12 @@ function ActivityFeed() {
   );
 }
 
-// ─── LEADERBOARD ──────────────────────────────────────────────────
-function Leaderboard() {
-  const sorted = [...REPS].sort((a, b) => b.points - a.points);
-
-  const BADGE = (rep: typeof REPS[0], rank: number) => {
-    const badges: { label:string; color:string }[] = [];
-    if (rank === 0) badges.push({ label:'🏆 Top closer', color:'#f59e0b' });
-    if (rep.revenue > 100000) badges.push({ label:'💰 Big hitter', color:'#10b981' });
-    if (parseFloat(rep.responseTime) < 1.5) badges.push({ label:'⚡ Fast Replier', color:T.accent });
-    return badges;
-  };
-
-  const NEXT_LEVEL_PTS = 1000;
-
-  return (
-    <div style={{ maxWidth: 940, margin: '0 auto' }}>
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: T.text, fontFamily: T.font }}>Weekly leaderboard</h2>
-        <p style={{ fontSize: 13, color: T.textMuted, marginTop: 3 }}>Points from closed deals, follow-ups and tasks</p>
-      </div>
-
-      <Card style={{ padding: 0, overflow: 'hidden' }}>
-        {/* Table header */}
-        <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 200px 100px 100px 140px', gap: 0, padding: '12px 20px', borderBottom: T.border, background: T.surface }}>
-          {['#','Rep','Badges','Response','Points','Level'].map(h => (
-            <span key={h} style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: T.font }}>{h}</span>
-          ))}
-        </div>
-
-        {sorted.map((rep, idx) => {
-          const badges = BADGE(rep, idx);
-          const pct = (rep.points % NEXT_LEVEL_PTS) / NEXT_LEVEL_PTS * 100;
-          const rankColor = idx === 0 ? '#f59e0b' : idx === 1 ? '#94a3b8' : idx === 2 ? '#cd7c2f' : T.textMuted;
-
-          return (
-            <div
-              key={rep.id}
-              style={{
-                display: 'grid', gridTemplateColumns: '48px 1fr 200px 100px 100px 140px',
-                gap: 0, padding: '14px 20px', borderBottom: T.border, alignItems: 'center',
-                background: idx === 0 ? 'rgba(245,158,11,0.04)' : 'transparent',
-                transition: 'background 0.15s',
-              }}
-            >
-              {/* Rank */}
-              <span style={{ fontSize: 16, fontWeight: 800, color: rankColor, fontFamily: T.font }}>{idx + 1}</span>
-
-              {/* Rep */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Avatar rep={rep} size={36} />
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: T.text, fontFamily: T.font, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{rep.name}</p>
-                  <p style={{ fontSize: 11, color: T.textMuted, fontFamily: T.font }}>{rep.role} · {rep.dealsClosed} deals</p>
-                </div>
-              </div>
-
-              {/* Badges */}
-              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', paddingRight: 10 }}>
-                {badges.map(b => <Tag key={b.label} label={b.label} color={b.color} />)}
-              </div>
-
-              {/* Response */}
-              <span style={{ fontSize: 14, fontWeight: 600, color: T.textSub, fontFamily: T.font }}>{rep.responseTime}</span>
-
-              {/* Points */}
-              <span style={{ fontSize: 18, fontWeight: 800, color: T.accent, fontFamily: T.font }}>{rep.points.toLocaleString()}</span>
-
-              {/* Level + progress */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: T.textSub, fontFamily: T.font }}>Lv {rep.level}</span>
-                  <span style={{ fontSize: 11, color: T.textMuted, fontFamily: T.font }}>{Math.round(pct)}%</span>
-                </div>
-                <div style={{ height: 4, background: T.surfaceHover, borderRadius: 99, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${pct}%`, background: T.accent, borderRadius: 99, transition: 'width 0.6s ease' }} />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </Card>
-    </div>
-  );
-}
 
 // ─── NAV SHELL ────────────────────────────────────────────────────
 const VIEWS = [
   { id: 'members',     label: 'Members',             icon: Users,    component: MembersTab },
   { id: 'roles',       label: 'Roles & Permissions', icon: Shield,   component: RolesMatrix },
   { id: 'activity',    label: 'Activity Log',        icon: Activity, component: ActivityFeed },
-  { id: 'leaderboard', label: 'Leaderboard',         icon: Trophy,   component: Leaderboard },
 ];
 
 export default function TeamPage() {
