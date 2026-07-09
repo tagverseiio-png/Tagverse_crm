@@ -2014,7 +2014,7 @@ function TaskViewModal({ task, onClose, onEdit, onDelete, darkMode }: TaskViewMo
         position: 'relative', 
         width: '100%', 
         maxWidth: 600, 
-        background: darkMode ? '#0f172a' : '#fbfafc', 
+        background: 'var(--bg-card)', 
         borderRadius: 20, 
         boxShadow: '0 24px 64px rgba(0,0,0,0.2)', 
         display: 'flex', 
@@ -2023,9 +2023,9 @@ function TaskViewModal({ task, onClose, onEdit, onDelete, darkMode }: TaskViewMo
         maxHeight: '90vh' 
       }}>
         
-        <div style={{ padding: '24px 32px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: `1px solid ${darkMode ? '#1e293b' : '#e2e8f0'}` }}>
+        <div style={{ padding: '24px 32px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: `1px solid var(--border)` }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: darkMode ? '#f8fafc' : '#1e1b4b', lineHeight: 1.2 }}>
+            <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
               {task.title}
             </h3>
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
@@ -2033,7 +2033,7 @@ function TaskViewModal({ task, onClose, onEdit, onDelete, darkMode }: TaskViewMo
               <PriorityBadge priority={task.priority} />
             </div>
           </div>
-          <button onClick={onClose} style={{ background: darkMode ? '#1e293b' : '#f4ebff', border: 'none', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', color: darkMode ? '#94a3b8' : '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={onClose} style={{ background: 'var(--bg-primary)', border: 'none', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={18} strokeWidth={2.5} />
           </button>
         </div>
@@ -2059,7 +2059,7 @@ function TaskViewModal({ task, onClose, onEdit, onDelete, darkMode }: TaskViewMo
 
           <div>
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>Description</div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: darkMode ? '#1e293b' : '#f8fafc', padding: 16, borderRadius: 12, border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: 'var(--bg-primary)', padding: 16, borderRadius: 12, border: `1px solid var(--border)` }}>
               {task.description || <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>No description provided.</span>}
             </div>
           </div>
@@ -2069,7 +2069,7 @@ function TaskViewModal({ task, onClose, onEdit, onDelete, darkMode }: TaskViewMo
               <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>Labels</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {task.labels.map(l => (
-                  <span key={l} style={{ fontSize: 12, padding: '4px 12px', borderRadius: 16, background: darkMode ? '#334155' : '#e2e8f0', color: 'var(--text-primary)', fontWeight: 600 }}>{l}</span>
+                  <span key={l} style={{ fontSize: 12, padding: '4px 12px', borderRadius: 16, background: 'var(--bg-primary)', color: 'var(--text-primary)', fontWeight: 600 }}>{l}</span>
                 ))}
               </div>
             </div>
@@ -2092,7 +2092,7 @@ function TaskViewModal({ task, onClose, onEdit, onDelete, darkMode }: TaskViewMo
 
         </div>
 
-        <div style={{ padding: '16px 32px', background: darkMode ? '#1e293b' : '#f1f5f9', display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>
+        <div style={{ padding: '16px 32px', background: 'var(--bg-primary)', display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: `1px solid var(--border)` }}>
           <button onClick={onDelete} style={{ padding: '8px 20px', borderRadius: 8, background: 'transparent', border: '1px solid var(--rose)', color: 'var(--rose)', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
             <Trash2 size={16} /> Delete
           </button>
@@ -2122,7 +2122,7 @@ function DeleteConfirmModal({ taskTitle, onClose, onConfirm, darkMode }: DeleteC
         position: 'relative', 
         width: '100%', 
         maxWidth: 400, 
-        background: darkMode ? '#0f172a' : '#fff', 
+        background: 'var(--bg-card)', 
         borderRadius: 16, 
         boxShadow: '0 24px 64px rgba(0,0,0,0.2)', 
         display: 'flex', 
@@ -2141,7 +2141,7 @@ function DeleteConfirmModal({ taskTitle, onClose, onConfirm, darkMode }: DeleteC
         </p>
 
         <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '10px 0', borderRadius: 8, background: darkMode ? '#1e293b' : '#f1f5f9', border: 'none', color: 'var(--text-primary)', fontWeight: 600, cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px 0', borderRadius: 8, background: 'var(--bg-primary)', border: 'none', color: 'var(--text-primary)', fontWeight: 600, cursor: 'pointer' }}>
             Cancel
           </button>
           <button onClick={onConfirm} style={{ flex: 1, padding: '10px 0', borderRadius: 8, background: 'var(--rose)', border: 'none', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
