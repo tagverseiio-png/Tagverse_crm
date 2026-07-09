@@ -1,48 +1,113 @@
 "use client";
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useTheme } from '@/components/ThemeProvider';
-import {
-  Kanban,
-  List,
-  Table2,
-  Calendar as CalendarIcon,
-  Plus,
-  Search,
-  Filter,
-  ArrowUpDown,
-  SlidersHorizontal,
-  CheckSquare,
-  MessageSquare,
-  Paperclip,
-  Clock,
-  Tag,
-  UserPlus,
-  MoreHorizontal,
-  Trash2,
-  X,
-  ChevronRight,
-  ExternalLink,
-  CheckCircle2,
-  User,
-  Grid,
-  FileText,
-  CornerDownRight,
+import { 
+  Kanban, 
+  List, 
+  Table2, 
+  Calendar as CalendarIcon, 
+  Plus, 
+  Search, 
+  ArrowUpDown, 
+  CheckSquare, 
+  MessageSquare, 
+  Paperclip, 
+  Clock, 
+  User, 
+  FileText, 
   Check,
   AlertTriangle,
   Flame,
   Briefcase,
-  ChevronDown,
+  X, 
   Edit2,
   CalendarDays,
-  Menu,
   Sun,
-  Moon
+  Moon,
+  Trash2,
+  CheckCircle2,
+  BarChart3,
+  TrendingUp,
+  PieChart as PieIcon,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  CornerDownRight,
+  UserPlus,
+  Info,
+  Maximize2,
+  Layers,
+  Settings
 } from 'lucide-react';
 
-// --- INITIAL MOCK DATA ---
+// ==========================================
+// 1. TYPES & INTERFACES (TypeScript v5)
+// ==========================================
+
+export interface Assignee {
+  id: string;
+  name: string;
+  avatar: string;
+  email: string;
+}
+
+export interface SubTask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+export interface Comment {
+  id: string;
+  author: string;
+  avatar: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface DealReference {
+  name: string;
+  value: string;
+  stage: string;
+}
+
+export interface Attachment {
+  id: string;
+  name: string;
+  size: string;
+  type: string;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: string; // 'To Do' | 'In Progress' | 'Review' | 'Done'
+  assignee: Assignee;
+  priority: 'Low' | 'Medium' | 'High' | 'Urgent';
+  dueDate: string; // YYYY-MM-DD
+  subtasks: SubTask[];
+  comments: Comment[];
+  labels: string[];
+  dealReference: DealReference | null;
+  attachments: Attachment[];
+}
+
+// Custom Grid layout interface for Dashboard widgets
+export interface DashboardWidget {
+  id: string;
+  title: string;
+  w: number; // grid column span
+  h: number; // height type
+  type: 'overview' | 'status-chart' | 'priority-chart' | 'team-activity';
+}
+
+// ==========================================
+// 2. CONSTANTS & INITIAL DATA
+// ==========================================
+
 const INITIAL_COLUMNS = ['To Do', 'In Progress', 'Review', 'Done'];
 
-const MEMBERS = [
+const MEMBERS: Assignee[] = [
   { id: 'm1', name: 'Sarah Connor', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', email: 'sarah@acme-crm.com' },
   { id: 'm2', name: 'Marcus Wright', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', email: 'marcus@acme-crm.com' },
   { id: 'm3', name: 'John Doe', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', email: 'john@acme-crm.com' },
@@ -51,7 +116,7 @@ const MEMBERS = [
 
 const PRESET_LABELS = ['Marketing', 'Development', 'Design', 'Legal', 'Enterprise', 'Security'];
 
-const INITIAL_TASKS = [
+const INITIAL_TASKS: Task[] = [
   {
     id: 'task-1',
     title: 'Migrate pipeline database to secure cloud hosting',
@@ -134,301 +199,386 @@ const INITIAL_TASKS = [
   }
 ];
 
+const INITIAL_WIDGETS: DashboardWidget[] = [
+  { id: 'w-1', title: 'Overview KPI metrics', w: 12, h: 100, type: 'overview' },
+  { id: 'w-2', title: 'Status Distribution Flow', w: 6, h: 260, type: 'status-chart' },
+  { id: 'w-3', title: 'Priority Density Matrix', w: 6, h: 260, type: 'priority-chart' },
+  { id: 'w-4', title: 'Workspace Core Resource Distribution', w: 12, h: 300, type: 'team-activity' }
+];
+
+// ==========================================
+// 3. RUNTIME SCHEMA CHECKER (Zod Mimicry)
+// ==========================================
+
+const TaskZodSchema = {
+  safeParse: (data: any) => {
+    const errors: Record<string, string> = {};
+    
+    if (!data.title || typeof data.title !== 'string' || data.title.trim().length < 3) {
+      errors.title = 'Title is required and must be at least 3 characters long.';
+    }
+    
+    if (!data.dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(data.dueDate)) {
+      errors.dueDate = 'Due date must be a valid YYYY-MM-DD string.';
+    }
+    
+    if (!data.priority || !['Low', 'Medium', 'High', 'Urgent'].includes(data.priority)) {
+      errors.priority = 'Priority must be Low, Medium, High, or Urgent.';
+    }
+
+    if (!data.status || typeof data.status !== 'string') {
+      errors.status = 'Status is required.';
+    }
+
+    return {
+      success: Object.keys(errors).length === 0,
+      error: Object.keys(errors).length > 0 ? { format: () => errors } : null,
+      data: data as Partial<Task>
+    };
+  }
+};
+
+// ==========================================
+// 4. MAIN CENTRALIZED STORE (Zustand Mock Hook)
+// ==========================================
+
+function useTaskStore() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [columns, setColumns] = useState<string[]>(() => {
+    const saved = localStorage.getItem('veloce_columns');
+    return saved ? JSON.parse(saved) : INITIAL_COLUMNS;
+  });
+
+  const [widgets, setWidgets] = useState<DashboardWidget[]>(() => {
+    const saved = localStorage.getItem('veloce_widgets');
+    return saved ? JSON.parse(saved) : INITIAL_WIDGETS;
+  });
+
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('veloce_darkmode');
+    return saved ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const res = await fetch('/api/tasks');
+        const json = await res.json();
+        if (json.data) {
+          const mappedTasks = json.data.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            description: t.description || '',
+            status: t.status === 'todo' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'done' ? 'Done' : t.status.charAt(0).toUpperCase() + t.status.slice(1),
+            assignee: {
+              id: t.assignedTo?.id || 'u-unknown',
+              name: t.assignedTo?.name || 'Unassigned User',
+              avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+              email: ''
+            },
+            priority: t.priority.charAt(0).toUpperCase() + t.priority.slice(1),
+            dueDate: t.dueDate ? t.dueDate.split('T')[0] : new Date().toISOString().split('T')[0],
+            subtasks: [],
+            comments: [],
+            labels: [t.contextType || 'General'],
+            dealReference: t.deal ? { name: t.deal.title, value: '-', stage: '-' } : null,
+            attachments: []
+          }));
+          setTasks(mappedTasks);
+        }
+      } catch (err) {
+        console.error('Failed to fetch tasks:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTasks();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('veloce_columns', JSON.stringify(columns));
+  }, [columns]);
+
+  useEffect(() => {
+    localStorage.setItem('veloce_widgets', JSON.stringify(widgets));
+  }, [widgets]);
+
+  useEffect(() => {
+    localStorage.setItem('veloce_darkmode', JSON.stringify(darkMode));
+  }, [darkMode]);
+
+  return {
+    tasks,
+    isLoading,
+    columns,
+    widgets,
+    darkMode,
+    setDarkMode,
+    
+    addTask: async (newTask: Task) => {
+      // Optimistic update
+      setTasks(prev => [newTask, ...prev]);
+      
+      try {
+        await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newTask.title,
+            description: newTask.description,
+            priority: newTask.priority.toLowerCase(),
+            status: newTask.status.toLowerCase().replace(' ', '-'),
+            dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : undefined,
+          })
+        });
+      } catch (err) {
+        console.error('Failed to save task:', err);
+      }
+    },
+    
+    updateTask: async (updatedTask: Task) => {
+      // Optimistic update
+      setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+      
+      try {
+        await fetch(`/api/tasks/${updatedTask.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: updatedTask.title,
+            description: updatedTask.description,
+            priority: updatedTask.priority.toLowerCase(),
+            status: updatedTask.status.toLowerCase().replace(' ', '-'),
+            dueDate: updatedTask.dueDate ? new Date(updatedTask.dueDate).toISOString() : undefined,
+          })
+        });
+      } catch (err) {
+        console.error('Failed to update task:', err);
+      }
+    },
+    
+    deleteTask: async (taskId: string) => {
+      // Optimistic update
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+      
+      try {
+        await fetch(`/api/tasks/${taskId}`, {
+          method: 'DELETE'
+        });
+      } catch (err) {
+        console.error('Failed to delete task:', err);
+      }
+    },
+    
+    addColumn: (newCol: string) => {
+      if (!columns.includes(newCol)) {
+        setColumns(prev => [...prev, newCol]);
+      }
+    },
+    
+    deleteColumn: (colName: string) => {
+      if (columns.length <= 1) return;
+      const filtered = columns.filter(c => c !== colName);
+      setColumns(filtered);
+      setTasks(prev => prev.map(t => t.status === colName ? { ...t, status: filtered[0] } : t));
+    },
+
+    reorderWidgets: (draggedId: string, targetId: string) => {
+      const draggedIndex = widgets.findIndex(w => w.id === draggedId);
+      const targetIndex = widgets.findIndex(w => w.id === targetId);
+      if (draggedIndex !== -1 && targetIndex !== -1) {
+        const reordered = [...widgets];
+        const [removed] = reordered.splice(draggedIndex, 1);
+        reordered.splice(targetIndex, 0, removed);
+        setWidgets(reordered);
+      }
+    }
+  };
+}
+
+// ==========================================
+// 5. THE APP COMPONENT (Entry Point)
+// ==========================================
+
 export default function App() {
-  // Theme & Layout States
-  const { theme, setTheme } = useTheme();
-  const darkMode = theme === 'dark';
+  const store = useTaskStore();
+  const { tasks, columns, widgets, darkMode, setDarkMode, addTask, updateTask, deleteTask, addColumn, deleteColumn, reorderWidgets } = store;
 
-
-  const [view, setView] = useState('Board'); // 'Board' | 'List' | 'Table' | 'Calendar'
-
-  // Data States
-  const [tasks, setTasks] = useState(INITIAL_TASKS);
-  const [columns, setColumns] = useState(INITIAL_COLUMNS);
-
-  // Selection and Side Panel
-  const [selectedTaskId, setSelectedTaskId] = useState(null);
+  // Navigation & View States
+  const [view, setView] = useState<'Board' | 'List' | 'Table' | 'Calendar' | 'Dashboard'>('Board');
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [bulkSelection, setBulkSelection] = useState([]);
-
-  // Toolbar Filter/Sort States
+  const [bulkSelection, setBulkSelection] = useState<string[]>([]);
+  
+  // Filtering, Sorting & Search States
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAssignee, setFilterAssignee] = useState('All');
   const [filterPriority, setFilterPriority] = useState('All');
   const [filterTag, setFilterTag] = useState('All');
-  const [sortBy, setSortBy] = useState('None'); // 'None' | 'dueDate' | 'priority' | 'title'
-  const [groupBy, setGroupBy] = useState('Status'); // 'Status' | 'Priority' | 'Assignee'
+  const [sortBy, setSortBy] = useState<'None' | 'dueDate' | 'priority' | 'title'>('None');
 
-  // Modal / Creator States
+  // Creator state
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
-  const [newColumnName, setNewColumnName] = useState('');
-  const [isAddingColumn, setIsAddingColumn] = useState(false);
 
-  // Active task details helper
   const activeTask = useMemo(() => {
     return tasks.find(t => t.id === selectedTaskId) || null;
   }, [tasks, selectedTaskId]);
 
-  // Open sidebar with specific task
-  const handleOpenTaskDetails = (taskId) => {
+  const handleOpenTaskDetails = (taskId: string) => {
     setSelectedTaskId(taskId);
     setIsSidebarOpen(true);
   };
 
-  // Close sidebar
   const handleCloseTaskDetails = () => {
     setIsSidebarOpen(false);
     setSelectedTaskId(null);
   };
 
-  // Drag and Drop implementation
-  const [draggedTaskId, setDraggedTaskId] = useState(null);
-  const [activeDragOverColumn, setActiveDragOverColumn] = useState(null);
+  // Drag-and-drop state controllers (Kanban columns)
+  const [activeDragOverColumn, setActiveDragOverColumn] = useState<string | null>(null);
 
-  const handleDragStart = (e, taskId) => {
-    setDraggedTaskId(taskId);
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
     e.dataTransfer.setData('text/plain', taskId);
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e, columnId) => {
+  const handleDropToColumn = (e: React.DragEvent, targetCol: string) => {
     e.preventDefault();
-    if (activeDragOverColumn !== columnId) {
-      setActiveDragOverColumn(columnId);
-    }
-  };
-
-  const handleDrop = (e, targetColumnId) => {
-    e.preventDefault();
-    const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId;
+    const taskId = e.dataTransfer.getData('text/plain');
     if (taskId) {
-      setTasks(prevTasks => prevTasks.map(t => {
-        if (t.id === taskId) {
-          return { ...t, status: targetColumnId };
-        }
-        return t;
-      }));
+      const match = tasks.find(t => t.id === taskId);
+      if (match) {
+        updateTask({ ...match, status: targetCol });
+      }
     }
-    setDraggedTaskId(null);
     setActiveDragOverColumn(null);
   };
 
-  const handleDragEnd = () => {
-    setDraggedTaskId(null);
-    setActiveDragOverColumn(null);
+  // Bulk Status Move and Delete
+  const handleBulkStatusChange = (status: string) => {
+    bulkSelection.forEach(id => {
+      const match = tasks.find(t => t.id === id);
+      if (match) {
+        updateTask({ ...match, status });
+      }
+    });
+    setBulkSelection([]);
   };
 
-  // Add Task Function
-  const handleAddTask = (taskData) => {
-    const newTask = {
-      id: `task-${Date.now()}`,
-      title: taskData.title || 'Untitled Task',
-      description: taskData.description || '',
-      status: taskData.status || columns[0],
-      assignee: taskData.assignee || MEMBERS[0],
-      priority: taskData.priority || 'Medium',
-      dueDate: taskData.dueDate || new Date().toISOString().split('T')[0],
-      subtasks: taskData.subtasks || [],
-      comments: [],
-      labels: taskData.labels || [],
-      dealReference: taskData.dealReference || null,
-      attachments: []
-    };
-    setTasks(prev => [newTask, ...prev]);
-    setIsNewTaskModalOpen(false);
-  };
-
-  // Delete Task
-  const handleDeleteTask = (taskId) => {
-    setTasks(prev => prev.filter(t => t.id !== taskId));
-    if (selectedTaskId === taskId) {
-      handleCloseTaskDetails();
-    }
-    setBulkSelection(prev => prev.filter(id => id !== taskId));
-  };
-
-  // Update Task detail directly
-  const handleUpdateTask = (updatedTask) => {
-    setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
-  };
-
-  // Add Column
-  const handleAddColumn = (e) => {
-    e.preventDefault();
-    if (newColumnName.trim() && !columns.includes(newColumnName.trim())) {
-      setColumns([...columns, newColumnName.trim()]);
-      setNewColumnName('');
-      setIsAddingColumn(false);
-    }
-  };
-
-  // Delete Column (removes and resets tasks in it to the first column)
-  const handleDeleteColumn = (columnName) => {
-    if (columns.length <= 1) return;
-    const remainingColumns = columns.filter(c => c !== columnName);
-    const fallbackColumn = remainingColumns[0];
-
-    setColumns(remainingColumns);
-    setTasks(prev => prev.map(t => t.status === columnName ? { ...t, status: fallbackColumn } : t));
-  };
-
-  // Bulk Actions
   const handleBulkDelete = () => {
-    setTasks(prev => prev.filter(t => !bulkSelection.includes(t.id)));
+    bulkSelection.forEach(id => deleteTask(id));
     setBulkSelection([]);
   };
 
-  const handleBulkStatusChange = (newStatus) => {
-    setTasks(prev => prev.map(t => bulkSelection.includes(t.id) ? { ...t, status: newStatus } : t));
-    setBulkSelection([]);
-  };
-
-  // Filtering and Sorting Process
+  // Memoized query filter processing
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
-      const matchSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          task.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchAssignee = filterAssignee === 'All' || task.assignee.id === filterAssignee;
       const matchPriority = filterPriority === 'All' || task.priority === filterPriority;
       const matchTag = filterTag === 'All' || task.labels.includes(filterTag);
-
+      
       return matchSearch && matchAssignee && matchPriority && matchTag;
     }).sort((a, b) => {
       if (sortBy === 'dueDate') {
-        return new Date(a.dueDate) - new Date(b.dueDate);
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       }
       if (sortBy === 'priority') {
-        const priorityWeight = { 'Urgent': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
-        return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0);
+        const pWeights = { 'Urgent': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+        return (pWeights[b.priority] || 0) - (pWeights[a.priority] || 0);
       }
       if (sortBy === 'title') {
         return a.title.localeCompare(b.title);
       }
-      return 0; // None
+      return 0;
     });
   }, [tasks, searchQuery, filterAssignee, filterPriority, filterTag, sortBy]);
 
   return (
-    <div className={`flex flex-col h-[calc(100vh-64px)] w-full font-sans transition-colors duration-200 ${darkMode ? 'bg-[#090812]' : 'bg-transparent'}`}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif', overflow: 'hidden' }}>
+      
+      {/* Decorative Blur Backdrops */}
+      
+      
 
-      <div className={`flex flex-1 overflow-hidden relative ${darkMode ? 'bg-transparent' : 'bg-transparent'}`}>
-
-        {/* MAIN WORKSPACE CONTENT PANEL */}
+      {/* Main Structural Wrapper */}
+      <div className="flex h-screen overflow-hidden relative z-10">
+        
+        {/* WORKSPACE CENTRAL WORK AREA */}
         <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-
-          {/* TOP BAR / HEADER */}
-          <header className={`shrink-0 px-6 py-5 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-colors duration-200 ${darkMode ? 'bg-transparent border-white/5' : 'bg-transparent border-black/5'}`}>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-500/10 text-violet-500 rounded-lg md:hidden">
-                <Kanban className="w-5 h-5" />
-              </div>
-              <div>
-                <div className={`text-[11px] font-bold uppercase tracking-widest ${darkMode ? 'text-slate-400' : 'text-violet-600/70'}`}>CRM Pipeline</div>
-                <h2 className={`text-[22px] font-bold tracking-tight mt-0.5 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Enterprise Client Tasks</h2>
-              </div>
-            </div>
-
-            {/* Right section: Tabs Switcher & Actions */}
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Tab Selector */}
-              <div className={`flex items-center gap-1 p-1 rounded-lg border ${darkMode ? 'bg-[#100F18] border-white/5' : 'bg-white/40 border-black/5 backdrop-blur-sm'}`}>
+          
+          
+          {/* COMBINED TOOLBAR & VIEW CONTROLS */}
+          <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 16, background: 'var(--bg-primary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+              {/* View Switchers */}
+              <div style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
                 {[
-                  { name: 'Board', icon: Kanban },
-                  { name: 'List', icon: List },
-                  { name: 'Table', icon: Table2 },
-                  { name: 'Calendar', icon: CalendarIcon }
-                ].map(t => {
-                  const IconComp = t.icon;
-                  const isActive = view === t.name;
+                  { id: 'Board', label: 'Kanban', icon: Kanban },
+                  { id: 'Dashboard', label: 'Dashboard', icon: BarChart3 },
+                  { id: 'List', label: 'List', icon: List },
+                  { id: 'Table', label: 'Table', icon: Table2 },
+                  { id: 'Calendar', label: 'Calendar', icon: CalendarIcon }
+                ].map(v => {
+                  const Icon = v.icon;
                   return (
                     <button
-                      key={t.name}
-                      onClick={() => setView(t.name)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium transition-all ${isActive
-                          ? (darkMode ? 'bg-[#2D2A4A]/60 text-violet-300 shadow-sm' : 'bg-white text-violet-600 shadow-sm')
-                          : (darkMode ? 'text-slate-400 hover:text-slate-200 bg-transparent' : 'text-slate-600/70 hover:text-slate-900 bg-transparent')
-                        }`}
+                      key={v.id}
+                      onClick={() => setView(v.id as any)}
+                      style={{ 
+                        padding: '7px 16px', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
+                        background: view === v.id ? 'var(--purple-dim)' : 'transparent', 
+                        color: view === v.id ? 'var(--brand-accent)' : 'var(--text-muted)', 
+                        border: 'none', cursor: 'pointer', borderRight: '1px solid var(--border)', 
+                        fontFamily: 'Inter, sans-serif'
+                      }}
                     >
-                      <IconComp className="w-4 h-4 shrink-0" />
-                      <span className="whitespace-nowrap">{t.name}</span>
+                      <Icon className="w-4 h-4" />
+                      <span className="hidden sm:inline">{v.label}</span>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Theme Toggle for small viewport */}
-              <button
-                onClick={() => setTheme(darkMode ? 'light' : 'dark')}
-                className="md:hidden p-2 rounded-lg border dark:border-slate-800 dark:bg-slate-900 text-slate-400 hover:text-slate-200"
-              >
-                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-
-              {/* Primary +New Task trigger */}
-              <button
-                onClick={() => setIsNewTaskModalOpen(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold shadow-md transition-all active:scale-[0.98] whitespace-nowrap shrink-0"
-              >
-                <Plus className="w-5 h-5 shrink-0 stroke-[2.5]" />
-                <span>Add Task</span>
-              </button>
-            </div>
-          </header>
-
-          {/* DYNAMIC TOOLBAR (Search, Filters, Sorters) */}
-          <div className={`shrink-0 px-6 py-4 border-b flex flex-wrap items-center justify-between gap-4 transition-colors duration-200 ${darkMode ? 'bg-transparent border-white/5' : 'bg-transparent border-black/5'}`}>
-            <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-
-              {/* Row 1: Search & Owner */}
-              <div className="flex flex-wrap items-center gap-4 flex-1">
-                {/* Search */}
-                <div className="relative min-w-[200px] w-full sm:w-64">
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {/* Search Bar */}
+                <div style={{ position: 'relative', width: '240px' }}>
                   <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Search tasks, descriptions..."
+                    placeholder="Search tasks..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full pl-9 pr-4 py-1.5 text-sm rounded-lg outline-none border focus:ring-1 transition-all h-[36px] ${darkMode
-                        ? 'bg-[#12111D] border-white/5 focus:border-violet-500 focus:ring-violet-500 text-white placeholder-slate-500'
-                        : 'bg-white/60 backdrop-blur border-black/5 focus:border-violet-400 focus:ring-violet-400 text-slate-800'
-                      }`}
+                    style={{ width: '100%', padding: '8px 12px 8px 36px', fontSize: 13, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }}
                   />
-                  {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5">
-                      <X className="w-4 h-4 text-slate-400 hover:text-slate-200" />
-                    </button>
-                  )}
                 </div>
+                <button
+                  onClick={() => setIsNewTaskModalOpen(true)}
+                  className="btn btn-primary"
+                  style={{ fontSize: 13, padding: '8px 16px' }}
+                >
+                  <Plus className="w-4 h-4" /> New Task
+                </button>
+              </div>
+            </div>
 
-                {/* Filter Assignee */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest whitespace-nowrap">Owner</span>
-                  <select
-                    value={filterAssignee}
-                    onChange={(e) => setFilterAssignee(e.target.value)}
-                    className={`px-3 py-1.5 text-sm rounded-lg border outline-none cursor-pointer h-[36px] ${darkMode ? 'bg-[#12111D] border-white/5 text-slate-300' : 'bg-white/60 backdrop-blur border-black/5 text-slate-700'
-                      }`}
-                  >
+            {/* Filters */}
+            {view !== 'Dashboard' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Owner</span>
+                  <select value={filterAssignee} onChange={(e) => setFilterAssignee(e.target.value)} style={{ padding: '6px 12px', fontSize: 13, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-primary)', outline: 'none' }}>
                     <option value="All">All Members</option>
-                    {MEMBERS.map(m => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
-                    ))}
+                    {MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                   </select>
                 </div>
-              </div>
-
-              {/* Row 2: Priority & Tag */}
-              <div className="flex flex-wrap items-center gap-4">
-                {/* Filter Priority */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest whitespace-nowrap">Priority</span>
-                  <select
-                    value={filterPriority}
-                    onChange={(e) => setFilterPriority(e.target.value)}
-                    className={`px-3 py-1.5 text-sm rounded-lg border outline-none cursor-pointer h-[36px] ${darkMode ? 'bg-[#12111D] border-white/5 text-slate-300' : 'bg-white/60 backdrop-blur border-black/5 text-slate-700'
-                      }`}
-                  >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Priority</span>
+                  <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} style={{ padding: '6px 12px', fontSize: 13, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-primary)', outline: 'none' }}>
                     <option value="All">All Priorities</option>
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -436,48 +586,29 @@ export default function App() {
                     <option value="Urgent">Urgent</option>
                   </select>
                 </div>
-
-                {/* Filter Tag */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest whitespace-nowrap">Tag</span>
-                  <select
-                    value={filterTag}
-                    onChange={(e) => setFilterTag(e.target.value)}
-                    className={`px-3 py-1.5 text-sm rounded-lg border outline-none cursor-pointer h-[36px] ${darkMode ? 'bg-[#12111D] border-white/5 text-slate-300' : 'bg-white/60 backdrop-blur border-black/5 text-slate-700'
-                      }`}
-                  >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tag</span>
+                  <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} style={{ padding: '6px 12px', fontSize: 13, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-primary)', outline: 'none' }}>
                     <option value="All">All Tags</option>
-                    {PRESET_LABELS.map(tag => (
-                      <option key={tag} value={tag}>{tag}</option>
-                    ))}
+                    {PRESET_LABELS.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+                  </select>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}><ArrowUpDown className="w-3 h-3 inline mr-1"/> Sort</span>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} style={{ padding: '6px 12px', fontSize: 13, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-primary)', outline: 'none' }}>
+                    <option value="None">None</option>
+                    <option value="dueDate">Due Date</option>
+                    <option value="priority">Priority</option>
+                    <option value="title">Title</option>
                   </select>
                 </div>
               </div>
-            </div>
-
-            {/* Sort & Group */}
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest whitespace-nowrap">
-                <ArrowUpDown className="w-3 h-3 inline mr-1" />
-                Sort by:
-              </span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className={`px-3 py-1.5 text-sm rounded-lg border outline-none cursor-pointer h-[36px] ${darkMode ? 'bg-[#12111D] border-white/5 text-slate-300' : 'bg-white/60 backdrop-blur border-black/5 text-slate-700'
-                  }`}
-              >
-                <option value="None">None</option>
-                <option value="dueDate">Due Date</option>
-                <option value="priority">Priority</option>
-                <option value="title">Title</option>
-              </select>
-            </div>
+            )}
           </div>
 
           {/* BULK ACTIONS STRIP */}
           {bulkSelection.length > 0 && (
-            <div className="shrink-0 bg-violet-600/10 border-b border-violet-500/20 px-6 py-2.5 flex items-center justify-between transition-all">
+            <div className="bg-violet-600/10 border-b border-violet-500/20 px-6 py-2.5 flex items-center justify-between transition-all">
               <div className="flex items-center gap-2 text-xs font-semibold text-violet-400">
                 <CheckCircle2 className="w-4 h-4 text-violet-500 animate-pulse" />
                 <span>{bulkSelection.length} tasks selected</span>
@@ -488,7 +619,7 @@ export default function App() {
                   defaultValue=""
                   className="px-2 py-1 text-xs rounded border border-violet-500/30 bg-slate-900 text-slate-300 outline-none"
                 >
-                  <option value="" disabled>Move to...</option>
+                  <option value="" disabled>Move status to...</option>
                   {columns.map(col => (
                     <option key={col} value={col}>{col}</option>
                   ))}
@@ -511,97 +642,112 @@ export default function App() {
             </div>
           )}
 
-          {/* DYNAMIC VIEWS container */}
+          {/* DYNAMIC VIEWS CONTAINER */}
           <div className="flex-1 overflow-auto p-6 relative">
             {view === 'Board' && (
-              <BoardView
+              <BoardView 
                 columns={columns}
                 tasks={filteredTasks}
                 darkMode={darkMode}
                 activeDragOverColumn={activeDragOverColumn}
+                setActiveDragOverColumn={setActiveDragOverColumn}
                 handleDragStart={handleDragStart}
-                handleDragOver={handleDragOver}
-                handleDrop={handleDrop}
-                handleDragEnd={handleDragEnd}
+                handleDropToColumn={handleDropToColumn}
                 handleOpenTaskDetails={handleOpenTaskDetails}
-                handleDeleteColumn={handleDeleteColumn}
-                isAddingColumn={isAddingColumn}
-                setIsAddingColumn={setIsAddingColumn}
-                newColumnName={newColumnName}
-                setNewColumnName={setNewColumnName}
-                handleAddColumn={handleAddColumn}
+                deleteColumn={deleteColumn}
+                addColumn={addColumn}
+              />
+            )}
+
+            {view === 'Dashboard' && (
+              <DashboardView 
+                tasks={tasks}
+                widgets={widgets}
+                darkMode={darkMode}
+                reorderWidgets={reorderWidgets}
               />
             )}
 
             {view === 'List' && (
-              <ListView
+              <ListView 
                 tasks={filteredTasks}
                 darkMode={darkMode}
                 bulkSelection={bulkSelection}
                 setBulkSelection={setBulkSelection}
                 handleOpenTaskDetails={handleOpenTaskDetails}
-                handleDeleteTask={handleDeleteTask}
+                handleDeleteTask={deleteTask}
                 columns={columns}
-                handleUpdateTask={handleUpdateTask}
+                handleUpdateTask={updateTask}
               />
             )}
 
             {view === 'Table' && (
-              <TableView
+              <TableView 
                 tasks={filteredTasks}
                 darkMode={darkMode}
                 bulkSelection={bulkSelection}
                 setBulkSelection={setBulkSelection}
                 handleOpenTaskDetails={handleOpenTaskDetails}
-                handleDeleteTask={handleDeleteTask}
+                handleDeleteTask={deleteTask}
                 columns={columns}
-                handleUpdateTask={handleUpdateTask}
+                handleUpdateTask={updateTask}
               />
             )}
 
             {view === 'Calendar' && (
-              <CalendarView
+              <CalendarView 
                 tasks={filteredTasks}
                 darkMode={darkMode}
                 handleOpenTaskDetails={handleOpenTaskDetails}
-                handleAddTask={handleAddTask}
+                handleAddTask={(data) => {
+                  const safeTask: Task = {
+                    id: `task-${Date.now()}`,
+                    title: data.title,
+                    description: '',
+                    status: columns[0],
+                    assignee: MEMBERS[0],
+                    priority: 'Medium',
+                    dueDate: data.dueDate,
+                    subtasks: [],
+                    comments: [],
+                    labels: [],
+                    dealReference: null,
+                    attachments: []
+                  };
+                  addTask(safeTask);
+                }}
               />
             )}
           </div>
 
         </main>
 
-        {/* SIDEBAR DETAIL SLIDE-OVER */}
-        <div className={`fixed inset-y-0 right-0 w-full sm:w-[540px] shadow-2xl z-50 transform transition-transform duration-300 ease-out flex flex-col ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
-          } ${darkMode ? 'bg-slate-900 border-l border-slate-800 text-slate-100' : 'bg-white border-l border-slate-200 text-slate-900'}`}>
-          {activeTask && (
-            <TaskDetailSidebar
-              task={activeTask}
-              onClose={handleCloseTaskDetails}
-              onUpdate={handleUpdateTask}
-              onDelete={handleDeleteTask}
-              columns={columns}
-              members={MEMBERS}
-              darkMode={darkMode}
-            />
-          )}
-        </div>
 
-        {/* Backdrop for detail sidebar */}
-        {isSidebarOpen && (
-          <div
-            onClick={handleCloseTaskDetails}
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40"
-          />
-        )}
 
       </div>
 
-      {/* NEW TASK MODAL */}
+      {/* NEW TASK CREATION MODAL */}
       {isNewTaskModalOpen && (
-        <NewTaskModal
+        <NewTaskModal 
           onClose={() => setIsNewTaskModalOpen(false)}
-          onSubmit={handleAddTask}
+          onSubmit={(validatedData) => {
+            const finalTask: Task = {
+              id: `task-${Date.now()}`,
+              title: validatedData.title || 'Untitled Action Item',
+              description: validatedData.description || '',
+              status: validatedData.status || columns[0],
+              assignee: validatedData.assignee || MEMBERS[0],
+              priority: validatedData.priority as any || 'Medium',
+              dueDate: validatedData.dueDate || new Date().toISOString().split('T')[0],
+              subtasks: [],
+              comments: [],
+              labels: validatedData.labels || [],
+              dealReference: null,
+              attachments: []
+            };
+            addTask(finalTask);
+            setIsNewTaskModalOpen(false);
+          }}
           columns={columns}
           members={MEMBERS}
           darkMode={darkMode}
@@ -612,26 +758,35 @@ export default function App() {
   );
 }
 
-// --- SUB-COMPONENTS BELOW ---
+// ==========================================
+// 6. KANBAN BOARD VIEW SUB-COMPONENT
+// ==========================================
 
-// 1. BOARD VIEW
+interface BoardViewProps {
+  columns: string[];
+  tasks: Task[];
+  darkMode: boolean;
+  activeDragOverColumn: string | null;
+  setActiveDragOverColumn: (col: string | null) => void;
+  handleDragStart: (e: React.DragEvent, id: string) => void;
+  handleDropToColumn: (e: React.DragEvent, targetCol: string) => void;
+  handleOpenTaskDetails: (id: string) => void;
+  deleteColumn: (name: string) => void;
+  addColumn: (name: string) => void;
+}
+
 function BoardView({
   columns,
   tasks,
   darkMode,
   activeDragOverColumn,
+  setActiveDragOverColumn,
   handleDragStart,
-  handleDragOver,
-  handleDrop,
-  handleDragEnd,
+  handleDropToColumn,
   handleOpenTaskDetails,
-  handleDeleteColumn,
-  isAddingColumn,
-  setIsAddingColumn,
-  newColumnName,
-  setNewColumnName,
-  handleAddColumn
-}) {
+  deleteColumn,
+  addColumn
+}: BoardViewProps) {
   const STAGE_COLOR_PALETTE = [
     { color: 'new', headerColor: '#3b82f6' },
     { color: 'engaged', headerColor: '#7c5cbf' },
@@ -642,165 +797,164 @@ function BoardView({
     { color: 'lost', headerColor: '#f43f5e' },
   ];
 
+  const [addingColumn, setAddingColumn] = useState(false);
+  const [newColumnName, setNewColumnName] = useState('');
+
   return (
-    <div className="flex gap-[20px] h-full select-none pb-4 items-start w-full overflow-x-auto custom-scrollbar">
+    <div style={{ display: 'flex', gap: 16, overflowX: 'visible', paddingBottom: 8, height: '100%', alignItems: 'stretch' }}>
       {columns.map((col, index) => {
         const columnTasks = tasks.filter(t => t.status === col);
-        const isDragOver = activeDragOverColumn === col;
         const palette = STAGE_COLOR_PALETTE[index % STAGE_COLOR_PALETTE.length];
+        const isDragOver = activeDragOverColumn === col;
 
         return (
           <div
             key={col}
-            className="w-[360px] shrink-0"
-            onDragOver={(e) => handleDragOver(e, col)}
-            onDrop={(e) => handleDrop(e, col)}
-            style={{ opacity: 1 }}
+            style={{ width: 300, flexShrink: 0, display: 'flex', flexDirection: 'column' }}
+            onDragOver={(e) => { e.preventDefault(); setActiveDragOverColumn(col); }}
+            onDragLeave={() => { if(activeDragOverColumn === col) setActiveDragOverColumn(null); }}
+            onDrop={(e) => handleDropToColumn(e, col)}
           >
             {/* Column Header */}
-            <div
-              className="flex items-center justify-between px-5 py-4 rounded-t-[12px] bg-[var(--bg-card)] border-r border-b border-l border-[var(--border)] border-t-[4px] shadow-sm"
-              style={{ borderTopColor: palette.headerColor }}
-            >
-              <span className="text-[15px] font-bold text-[var(--text-secondary)]">{col}</span>
-              <div className="flex items-center gap-2">
-                <span className={`pipeline-col-count ${palette.color} text-[13px] font-bold px-2.5 py-0.5 rounded-lg`}>
-                  {columnTasks.length}
-                </span>
-                <button
-                  onClick={() => handleDeleteColumn(col)}
-                  disabled={columns.length <= 1}
-                  title="Delete column"
-                  className={`text-sm bg-transparent border-none cursor-pointer transition-opacity ${columns.length <= 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
-                  style={{ color: columns.length <= 1 ? 'var(--text-muted)' : 'var(--rose)' }}
-                >
-                  ✕
-                </button>
+            <div style={{ 
+              background: 'var(--bg-card)', 
+              borderRight: '1px solid var(--border)', 
+              borderBottom: '1px solid var(--border)', 
+              borderLeft: '1px solid var(--border)', 
+              borderTop: `3px solid ${palette.headerColor}`, 
+              borderRadius: '10px 10px 0 0', 
+              padding: '12px 16px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between'
+            }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{col}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className={`pipeline-col-count ${palette.color}`} style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8 }}>{columnTasks.length}</span>
+                <button onClick={() => deleteColumn(col)} disabled={columns.length <= 1} style={{ background: 'transparent', border: 'none', cursor: columns.length <= 1 ? 'not-allowed' : 'pointer', color: columns.length <= 1 ? 'var(--text-muted)' : 'var(--rose)', fontSize: 12 }}>✕</button>
               </div>
             </div>
 
-            {/* Cards Space */}
-            <div
-              className="flex flex-col gap-4 p-4 min-h-[150px] rounded-b-[12px] border-r border-b border-l border-t-0 transition-all duration-200"
-              style={{
-                background: isDragOver ? 'var(--purple-dim)' : 'var(--bg-glass)',
-                borderColor: isDragOver ? 'var(--purple)' : 'var(--border)'
-              }}
-            >
+            {/* Cards */}
+            <div style={{
+              background: isDragOver ? 'var(--purple-dim)' : 'var(--bg-glass)',
+              borderRight: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`,
+              borderBottom: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`,
+              borderLeft: `1px solid ${isDragOver ? 'var(--purple)' : 'var(--border)'}`,
+              borderTop: 'none', 
+              borderRadius: '0 0 10px 10px', 
+              padding: '12px',
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 12, 
+              minHeight: 120, 
+              transition: 'background 0.15s, border-color 0.15s',
+              flex: 1,
+              overflowY: 'auto'
+            }}>
               {columnTasks.map(task => (
                 <div
                   key={task.id}
+                  className="deal-card"
                   draggable
                   onDragStart={(e) => handleDragStart(e, task.id)}
-                  onDragEnd={handleDragEnd}
                   onClick={() => handleOpenTaskDetails(task.id)}
-                  className="relative p-5 rounded-[16px] cursor-grab active:cursor-grabbing bg-[var(--bg-card)] border border-[var(--border)] shadow-sm hover:shadow-md hover:border-[#7b2fff]/40 hover:-translate-y-0.5 transition-all duration-200 group"
+                  style={{ position: 'relative', padding: '14px', cursor: 'grab' }}
                 >
-                  <div className="text-[16px] font-bold mb-1.5 text-[var(--text-primary)] group-hover:text-[#7b2fff] transition-colors">
-                    {task.title}
-                  </div>
-
-                  {task.description && (
-                    <div className="text-[13px] mb-3 line-clamp-2 text-[var(--text-muted)] leading-relaxed">
-                      {task.description}
-                    </div>
-                  )}
-
-                  {/* Tags display on card */}
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>{task.title}</div>
+                  {task.description && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{task.description}</div>}
+                  
                   {task.labels && task.labels.length > 0 && (
-                    <div className="flex gap-1.5 flex-wrap mb-4">
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
                       {task.labels.map(l => (
-                        <span key={l} className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]">
-                          {l}
-                        </span>
+                        <span key={l} style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>{l}</span>
                       ))}
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between mt-auto pt-2 border-t border-[var(--border)]">
-                    <span className="text-[14px] font-bold tracking-wide" style={{
-                      color: task.priority === 'Urgent' ? 'var(--rose)' : task.priority === 'High' ? 'var(--amber)' : 'var(--emerald)'
-                    }}>
-                      {task.priority}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[12px] font-medium text-[var(--text-muted)] flex items-center gap-1">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                        {task.dueDate}
-                      </span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: task.priority === 'Urgent' ? 'var(--rose)' : task.priority === 'High' ? 'var(--amber)' : 'var(--emerald)' }}>{task.priority}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{task.dueDate}</span>
                       {task.assignee && (
-                        <img
-                          src={task.assignee.avatar}
-                          alt={task.assignee.name}
-                          className="w-8 h-8 rounded-full object-cover ring-2 ring-[var(--bg-card)] shadow-sm"
-                          title={task.assignee.name}
-                        />
+                        <img src={task.assignee.avatar} alt={task.assignee.name} style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} />
                       )}
                     </div>
                   </div>
                 </div>
               ))}
-
-              {columnTasks.length === 0 && (
-                <div className="py-10 text-center text-[13px] font-medium rounded-[12px] border-2 border-dashed text-[var(--text-muted)] border-[var(--border)]">
-                  Empty status
-                </div>
-              )}
-
-              <div className="mt-auto p-3 text-center text-[13px] font-semibold rounded-[12px] border-2 border-dashed bg-transparent cursor-pointer transition-all duration-200 text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-card)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)]">
-                + Add Task
-              </div>
+              
+              <button style={{ border: '1px dashed var(--border)', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', background: 'transparent', cursor: 'pointer', transition: 'all 0.2s', marginTop: 'auto' }}>+ Add Task</button>
             </div>
           </div>
         );
       })}
 
       {/* Add Column */}
-      <div className="w-[300px] shrink-0">
-        {isAddingColumn ? (
-          <form
-            onSubmit={handleAddColumn}
-            className="flex flex-col gap-3 p-4 rounded-[12px] border bg-[var(--bg-card)] border-[var(--border)] shadow-sm"
-          >
+      <div style={{ width: 220, flexShrink: 0 }}>
+        {addingColumn ? (
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <input
               autoFocus
               value={newColumnName}
               onChange={e => setNewColumnName(e.target.value)}
               onKeyDown={e => {
-                if (e.key === 'Escape') { setIsAddingColumn(false); setNewColumnName(''); }
+                if (e.key === 'Enter') { addColumn(newColumnName); setAddingColumn(false); setNewColumnName(''); }
+                if (e.key === 'Escape') { setAddingColumn(false); setNewColumnName(''); }
               }}
-              placeholder="Column title..."
-              className="w-full px-3 py-2.5 text-[14px] font-medium rounded-lg border outline-none bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text-primary)] focus:border-[#7b2fff]/50 transition-colors"
+              placeholder="Column name..."
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '8px 10px',
+                background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8,
+                color: 'var(--text-primary)', fontSize: 13, outline: 'none', fontFamily: 'Inter, sans-serif',
+              }}
             />
-            <div className="flex gap-2">
-              <button type="submit" className="btn btn-primary flex-1 py-2 text-[13px]">
-                Add Column
-              </button>
-              <button
-                type="button"
-                onClick={() => { setIsAddingColumn(false); setNewColumnName(''); }}
-                className="btn btn-ghost px-4 py-2 text-[13px]"
-              >
-                Cancel
-              </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => { addColumn(newColumnName); setAddingColumn(false); setNewColumnName(''); }} className="btn btn-primary" style={{ padding: '6px 14px', fontSize: 12 }}>Add</button>
+              <button onClick={() => { setAddingColumn(false); setNewColumnName(''); }} className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: 12 }}>Cancel</button>
             </div>
-          </form>
+          </div>
         ) : (
           <button
-            onClick={() => setIsAddingColumn(true)}
-            className="w-full h-[60px] text-[14px] font-bold rounded-[12px] border-2 border-dashed bg-transparent cursor-pointer text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--bg-card)] hover:text-[var(--text-primary)] transition-all duration-200"
-          >
-            + Add New Column
-          </button>
+            onClick={() => setAddingColumn(true)}
+            style={{
+              width: '100%', height: 52, border: '1px dashed var(--border)', borderRadius: 10,
+              background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
+              fontSize: 13, fontWeight: 600, fontFamily: 'Inter, sans-serif',
+            }}
+          >+ Add Column</button>
         )}
       </div>
     </div>
   );
 }
 
-// 2. LIST VIEW
-function ListView({ tasks, darkMode, bulkSelection, setBulkSelection, handleOpenTaskDetails, handleDeleteTask, columns, handleUpdateTask }) {
-  const handleToggleSelectAll = () => {
+// ==========================================
+// 7. COMPACT LIST VIEW SUB-COMPONENT
+// ==========================================
+
+interface ListViewProps {
+  tasks: Task[];
+  darkMode: boolean;
+  bulkSelection: string[];
+  setBulkSelection: React.Dispatch<React.SetStateAction<string[]>>;
+  handleOpenTaskDetails: (id: string) => void;
+  handleDeleteTask: (id: string) => void;
+  columns: string[];
+  handleUpdateTask: (task: Task) => void;
+}
+
+function ListView({
+  tasks,
+  darkMode,
+  bulkSelection,
+  setBulkSelection,
+  handleOpenTaskDetails,
+  handleDeleteTask,
+  columns,
+  handleUpdateTask
+}: ListViewProps) {
+  const toggleSelectAll = () => {
     if (bulkSelection.length === tasks.length) {
       setBulkSelection([]);
     } else {
@@ -808,7 +962,7 @@ function ListView({ tasks, darkMode, bulkSelection, setBulkSelection, handleOpen
     }
   };
 
-  const handleToggleSelectOne = (taskId) => {
+  const toggleSelectOne = (taskId: string) => {
     if (bulkSelection.includes(taskId)) {
       setBulkSelection(prev => prev.filter(id => id !== taskId));
     } else {
@@ -817,187 +971,237 @@ function ListView({ tasks, darkMode, bulkSelection, setBulkSelection, handleOpen
   };
 
   return (
-    <div className="min-w-[950px] flex flex-col">
-      {/* Table Header */}
-      <div className={`flex items-center px-6 py-3 text-xs font-bold uppercase tracking-wider mb-3 rounded-xl ${darkMode ? 'bg-[#12111D] text-[#8c829e] border border-white/10' : 'bg-white text-slate-500 border border-slate-200 shadow-sm'
-        }`}>
-        <div className="w-12 flex justify-center shrink-0">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 800, padding: '16px 0' }}>
+      {/* Header bar layout */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        padding: '0 20px', 
+        fontSize: 12, 
+        fontWeight: 700, 
+        color: 'var(--text-muted)',
+        marginBottom: 8
+      }}>
+        <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
           <input
             type="checkbox"
             checked={tasks.length > 0 && bulkSelection.length === tasks.length}
-            onChange={handleToggleSelectAll}
-            className={`w-4 h-4 rounded cursor-pointer ${darkMode
-                ? 'bg-[#1A1625] border-white/20 checked:bg-violet-600'
-                : 'border-slate-300 text-violet-600 focus:ring-violet-500'
-              }`}
-            style={darkMode ? { appearance: 'none', WebkitAppearance: 'none' } : {}}
+            onChange={toggleSelectAll}
+            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
           />
         </div>
-        <div className="flex-1 pr-4 min-w-0">Title / Task Description</div>
-        <div className="w-40 shrink-0">Status</div>
-        <div className="w-36 shrink-0">Priority</div>
-        <div className="w-40 shrink-0">Due Date</div>
-        <div className="w-44 shrink-0">Assignee</div>
-        <div className="w-48 shrink-0">Linked Deal</div>
-        <div className="w-16 shrink-0 text-center">Action</div>
+        <div style={{ flex: 1, paddingLeft: 12 }}>Task Details</div>
+        <div style={{ width: 140 }}>Status</div>
+        <div style={{ width: 120 }}>Priority</div>
+        <div style={{ width: 140 }}>Due Date</div>
+        <div style={{ width: 140 }}>Assignee</div>
+        <div style={{ width: 60, textAlign: 'center' }}>Action</div>
       </div>
 
-      {/* Task Rows (Individual Cards) */}
-      <div className="flex flex-col space-y-3">
-        {tasks.map(task => {
-          const isSelected = bulkSelection.includes(task.id);
-          return (
-            <div
-              key={task.id}
-              className={`flex items-center px-6 py-5 rounded-xl border transition-all group shadow-sm hover:shadow-md ${darkMode
-                  ? `border-white/10 ${isSelected ? 'bg-violet-900/20 border-violet-500/50' : 'bg-[#12111D] hover:bg-white/[0.04]'}`
-                  : `border-slate-200 ${isSelected ? 'bg-violet-50 border-violet-300' : 'bg-white hover:bg-slate-50'}`
-                }`}
-            >
-              {/* Checkbox */}
-              <div className="w-12 flex justify-center shrink-0">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => handleToggleSelectOne(task.id)}
-                  className={`w-4 h-4 rounded cursor-pointer ${darkMode
-                      ? 'bg-transparent border border-white/30 checked:bg-white checked:border-white'
-                      : 'border-slate-300 text-violet-600 focus:ring-violet-500'
-                    }`}
-                  style={darkMode ? { appearance: 'none', WebkitAppearance: 'none', boxShadow: isSelected ? 'inset 0 0 0 2px #12111D' : 'none' } : {}}
-                />
-              </div>
+      {/* Task Rows as Cards */}
+      {tasks.map(task => {
+        const isSelected = bulkSelection.includes(task.id);
+        return (
+          <div
+            key={task.id}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              padding: '16px 20px', 
+              background: isSelected ? 'var(--bg-secondary)' : 'var(--bg-card)', 
+              border: `1px solid ${isSelected ? 'var(--brand-accent)' : 'var(--border)'}`, 
+              borderRadius: 12,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+              transition: 'all 0.2s ease',
+              cursor: 'default'
+            }}
+            onMouseOver={(e) => {
+              if(!isSelected) e.currentTarget.style.borderColor = 'var(--border-bright)';
+            }}
+            onMouseOut={(e) => {
+              if(!isSelected) e.currentTarget.style.borderColor = 'var(--border)';
+            }}
+          >
+            <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => toggleSelectOne(task.id)}
+                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
+              />
+            </div>
 
-              {/* Title & Description */}
-              <div className="flex-1 pr-6 min-w-0 flex flex-col justify-center">
-                <button
-                  onClick={() => handleOpenTaskDetails(task.id)}
-                  className={`text-left font-semibold text-[15px] truncate transition-colors ${darkMode ? 'text-slate-100 hover:text-violet-400' : 'text-slate-900 hover:text-violet-600'
-                    }`}
-                >
-                  {task.title}
-                </button>
-                {task.description && (
-                  <div className={`text-[13px] truncate mt-1 ${darkMode ? 'text-[#8c829e]' : 'text-slate-500'
-                    }`}>
-                    {task.description}
-                  </div>
-                )}
-              </div>
-
-              {/* Status */}
-              <div className="w-40 shrink-0 pr-6">
-                <div className="relative">
-                  <select
-                    value={task.status}
-                    onChange={(e) => handleUpdateTask({ ...task, status: e.target.value })}
-                    className={`w-full appearance-none pl-3.5 pr-8 py-2 text-[13px] font-medium rounded-lg border outline-none cursor-pointer ${darkMode
-                        ? 'bg-[#1A1625] border-white/10 text-slate-300 focus:border-violet-500/50'
-                        : 'bg-slate-50 border-slate-200 text-slate-700 focus:border-violet-400'
-                      }`}
-                  >
-                    {columns.map(col => (
-                      <option key={col} value={col}>{col}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${darkMode ? 'text-[#8c829e]' : 'text-slate-400'}`} />
-                </div>
-              </div>
-
-              {/* Priority */}
-              <div className="w-36 shrink-0 pr-6">
-                <div className="relative">
-                  <select
-                    value={task.priority}
-                    onChange={(e) => handleUpdateTask({ ...task, priority: e.target.value })}
-                    className={`w-full appearance-none pl-3.5 pr-8 py-2 text-[13px] font-medium rounded-lg border outline-none cursor-pointer ${darkMode
-                        ? 'bg-[#1A1625] border-white/10 text-slate-300 focus:border-violet-500/50'
-                        : 'bg-slate-50 border-slate-200 text-slate-700 focus:border-violet-400'
-                      }`}
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                    <option value="Urgent">Urgent</option>
-                  </select>
-                  <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${darkMode ? 'text-[#8c829e]' : 'text-slate-400'}`} />
-                </div>
-              </div>
-
-              {/* Due Date */}
-              <div className="w-40 shrink-0 pr-6">
-                <input
-                  type="date"
-                  value={task.dueDate}
-                  onChange={(e) => handleUpdateTask({ ...task, dueDate: e.target.value })}
-                  className={`w-full px-3.5 py-2 text-[13px] font-medium rounded-lg border outline-none cursor-pointer ${darkMode
-                      ? 'bg-[#1A1625] border-white/10 text-slate-300 focus:border-violet-500/50 [color-scheme:dark]'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 focus:border-violet-400'
-                    }`}
-                />
-              </div>
-
-              {/* Assignee */}
-              <div className="w-44 shrink-0 pr-6 flex items-center gap-3">
-                <img
-                  src={task.assignee.avatar}
-                  alt={task.assignee.name}
-                  className={`w-8 h-8 rounded-full object-cover ring-2 ${darkMode ? 'ring-[#1A1625]' : 'ring-white'}`}
-                />
-                <span className={`text-[13px] font-semibold truncate ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                  {task.assignee.name}
-                </span>
-              </div>
-
-              {/* Linked Deal */}
-              <div className="w-48 shrink-0 pr-6">
-                {task.dealReference ? (
-                  <div className={`inline-flex items-center gap-2 max-w-full px-3 py-1.5 rounded-lg text-xs font-semibold border ${darkMode
-                      ? 'bg-violet-500/10 border-violet-500/20 text-violet-300'
-                      : 'bg-violet-50 border-violet-200 text-violet-700'
-                    }`}>
-                    <Briefcase className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">{task.dealReference.name}</span>
-                  </div>
-                ) : (
-                  <span className={`text-[13px] ${darkMode ? 'text-[#8c829e]' : 'text-slate-400'}`}>—</span>
-                )}
-              </div>
-
-              {/* Action */}
-              <div className="w-16 shrink-0 text-center flex justify-center">
-                <button
-                  onClick={() => handleDeleteTask(task.id)}
-                  className={`p-2 rounded-lg transition-colors ${darkMode
-                      ? 'text-[#8c829e] hover:text-rose-400 hover:bg-rose-500/10'
-                      : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                    }`}
-                  title="Delete task"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+            {/* Title / Labels */}
+            <div style={{ flex: 1, paddingLeft: 12, display: 'flex', alignItems: 'center', gap: 16, minWidth: 0 }}>
+              <button
+                onClick={() => handleOpenTaskDetails(task.id)}
+                style={{ 
+                  textAlign: 'left', 
+                  fontWeight: 700, 
+                  fontSize: 14, 
+                  color: 'var(--text-primary)', 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer',
+                  padding: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.color = 'var(--brand-accent)'}
+                onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+              >
+                {task.title}
+              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {task.labels.map(lbl => (
+                  <span key={lbl} style={{ 
+                    fontSize: 10, 
+                    fontWeight: 800, 
+                    textTransform: 'uppercase', 
+                    padding: '4px 8px', 
+                    borderRadius: 6, 
+                    background: 'var(--purple-dim)', 
+                    color: 'var(--brand-accent)',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {lbl}
+                  </span>
+                ))}
               </div>
             </div>
-          );
-        })}
 
-        {tasks.length === 0 && (
-          <div className={`py-24 text-center flex flex-col items-center justify-center rounded-xl border ${darkMode ? 'bg-[#12111D] border-white/10' : 'bg-white border-slate-200'}`}>
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${darkMode ? 'bg-white/5' : 'bg-slate-50'}`}>
-              <CheckCircle2 className={`w-7 h-7 ${darkMode ? 'text-[#8c829e]' : 'text-slate-400'}`} />
+            {/* Status Select */}
+            <div style={{ width: 140, paddingRight: 16 }}>
+              <select
+                value={task.status}
+                onChange={(e) => handleUpdateTask({ ...task, status: e.target.value })}
+                style={{ 
+                  width: '100%', 
+                  padding: '8px 12px', 
+                  fontSize: 13, 
+                  fontWeight: 600,
+                  borderRadius: 8, 
+                  border: '1px solid var(--border)', 
+                  background: 'var(--bg-primary)', 
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                {columns.map(col => (
+                  <option key={col} value={col}>{col}</option>
+                ))}
+              </select>
             </div>
-            <p className={`text-[15px] font-medium ${darkMode ? 'text-[#8c829e]' : 'text-slate-500'}`}>No tasks match the current filters.</p>
+
+            {/* Priority Select */}
+            <div style={{ width: 120, paddingRight: 16 }}>
+              <select
+                value={task.priority}
+                onChange={(e) => handleUpdateTask({ ...task, priority: e.target.value as any })}
+                style={{ 
+                  width: '100%', 
+                  padding: '8px 12px', 
+                  fontSize: 13, 
+                  fontWeight: 600,
+                  borderRadius: 8, 
+                  border: '1px solid var(--border)', 
+                  background: 'var(--bg-primary)', 
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Urgent">Urgent</option>
+              </select>
+            </div>
+
+            {/* Due Date */}
+            <div style={{ width: 140, paddingRight: 16 }}>
+              <input
+                type="date"
+                value={task.dueDate}
+                onChange={(e) => handleUpdateTask({ ...task, dueDate: e.target.value })}
+                style={{ 
+                  width: '100%', 
+                  padding: '8px 12px', 
+                  fontSize: 13, 
+                  fontWeight: 600,
+                  borderRadius: 8, 
+                  border: '1px solid var(--border)', 
+                  background: 'var(--bg-primary)', 
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            {/* Assignee */}
+            <div style={{ width: 140, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <img src={task.assignee.avatar} alt={task.assignee.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {task.assignee.name.split(' ')[0]}
+              </span>
+            </div>
+
+            {/* Action */}
+            <div style={{ width: 60, display: 'flex', justifyContent: 'center' }}>
+              <button
+                onClick={() => handleDeleteTask(task.id)}
+                style={{ 
+                  padding: 8, 
+                  borderRadius: 8, 
+                  background: 'transparent', 
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.color = 'var(--rose)'; e.currentTarget.style.background = 'var(--rose-dim)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                title="Remove task"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        );
+      })}
+
+      {tasks.length === 0 && (
+        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+          No records matching selected criteria exist.
+        </div>
+      )}
     </div>
   );
 }
 
-// 3. TABLE VIEW (Notion style grid)
-function TableView({ tasks, darkMode, bulkSelection, setBulkSelection, handleOpenTaskDetails, handleDeleteTask, columns, handleUpdateTask }) {
+// ==========================================
+// 8. NOTION-STYLE GRID TABLE VIEW SUB-COMPONENT
+// ==========================================
 
-  const handleToggleSelectAll = () => {
+interface TableViewProps extends ListViewProps {}
+
+function TableView({
+  tasks,
+  darkMode,
+  bulkSelection,
+  setBulkSelection,
+  handleOpenTaskDetails,
+  handleDeleteTask,
+  columns,
+  handleUpdateTask
+}: TableViewProps) {
+  const toggleSelectAll = () => {
     if (bulkSelection.length === tasks.length) {
       setBulkSelection([]);
     } else {
@@ -1005,7 +1209,7 @@ function TableView({ tasks, darkMode, bulkSelection, setBulkSelection, handleOpe
     }
   };
 
-  const handleToggleSelectOne = (taskId) => {
+  const toggleSelectOne = (taskId: string) => {
     if (bulkSelection.includes(taskId)) {
       setBulkSelection(prev => prev.filter(id => id !== taskId));
     } else {
@@ -1014,77 +1218,133 @@ function TableView({ tasks, darkMode, bulkSelection, setBulkSelection, handleOpe
   };
 
   return (
-    <div className={`border rounded-xl overflow-hidden min-w-[800px] ${darkMode ? 'border-slate-800 bg-slate-900/20' : 'border-slate-200 bg-white'
-      }`}>
-      <table className="w-full text-left border-collapse">
+    <div style={{ 
+      background: 'var(--bg-card)', 
+      border: '1px solid var(--border)', 
+      borderRadius: 16, 
+      overflow: 'hidden', 
+      minWidth: 800, 
+      boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+      marginTop: 16
+    }}>
+      <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
         <thead>
-          <tr className={`border-b text-[11px] font-bold uppercase tracking-wider text-slate-400 ${darkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-50 border-slate-200'
-            }`}>
-            <th className="p-3 w-10 text-center">
+          <tr style={{ 
+            borderBottom: '1px solid var(--border)', 
+            fontSize: 11, 
+            fontWeight: 800, 
+            textTransform: 'uppercase', 
+            letterSpacing: '0.5px', 
+            color: 'var(--text-muted)',
+            background: 'var(--bg-secondary)'
+          }}>
+            <th style={{ padding: '16px 20px', width: 48, textAlign: 'center' }}>
               <input
                 type="checkbox"
                 checked={tasks.length > 0 && bulkSelection.length === tasks.length}
-                onChange={handleToggleSelectAll}
-                className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                onChange={toggleSelectAll}
+                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
               />
             </th>
-            <th className="p-3">Title / Task Description</th>
-            <th className="p-3 w-40">Status</th>
-            <th className="p-3 w-32">Priority</th>
-            <th className="p-3 w-36">Due Date</th>
-            <th className="p-3 w-36">Assignee</th>
-            <th className="p-3 w-28">Linked Deal</th>
-            <th className="p-3 w-16 text-center">Action</th>
+            <th style={{ padding: '16px 20px' }}>Title / Core Goal Description</th>
+            <th style={{ padding: '16px 20px', width: 140 }}>Status</th>
+            <th style={{ padding: '16px 20px', width: 130 }}>Priority</th>
+            <th style={{ padding: '16px 20px', width: 150 }}>Due Date</th>
+            <th style={{ padding: '16px 20px', width: 150 }}>Lead Owner</th>
+            <th style={{ padding: '16px 20px', width: 120 }}>Deal Context</th>
+            <th style={{ padding: '16px 20px', width: 60, textAlign: 'center' }}>Action</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800/30 dark:divide-slate-800/60 text-xs">
+        <tbody>
           {tasks.map(task => {
             const isSelected = bulkSelection.includes(task.id);
             return (
-              <tr
+              <tr 
                 key={task.id}
-                className={`hover:bg-slate-800/10 dark:hover:bg-slate-800/30 transition-colors ${isSelected ? (darkMode ? 'bg-slate-800/40' : 'bg-violet-50/40') : ''
-                  }`}
+                style={{ 
+                  borderBottom: '1px solid var(--border)', 
+                  background: isSelected ? 'var(--bg-secondary)' : 'transparent',
+                  transition: 'background 0.2s',
+                  fontSize: 13
+                }}
+                onMouseOver={(e) => {
+                  if(!isSelected) e.currentTarget.style.background = 'var(--bg-glass)';
+                }}
+                onMouseOut={(e) => {
+                  if(!isSelected) e.currentTarget.style.background = 'transparent';
+                }}
               >
-                <td className="p-3 text-center">
+                <td style={{ padding: '16px 20px', textAlign: 'center' }}>
                   <input
                     type="checkbox"
                     checked={isSelected}
-                    onChange={() => handleToggleSelectOne(task.id)}
-                    className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                    onChange={() => toggleSelectOne(task.id)}
+                    style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--brand-accent)' }}
                   />
                 </td>
-                <td className="p-3 font-semibold">
-                  <div className="flex flex-col gap-1">
+                <td style={{ padding: '16px 20px', fontWeight: 600 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <button
                       onClick={() => handleOpenTaskDetails(task.id)}
-                      className="text-left font-bold hover:text-violet-400 hover:underline transition-all"
+                      style={{ 
+                        textAlign: 'left', 
+                        fontWeight: 700, 
+                        fontSize: 14, 
+                        color: 'var(--text-primary)', 
+                        background: 'none', 
+                        border: 'none', 
+                        cursor: 'pointer', 
+                        padding: 0,
+                        transition: 'color 0.2s'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.color = 'var(--brand-accent)'}
+                      onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                     >
                       {task.title}
                     </button>
-                    <span className="text-[10px] text-slate-500 truncate max-w-sm">
-                      {task.description || 'No additional description details.'}
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 300 }}>
+                      {task.description || 'No additional summary details entered.'}
                     </span>
                   </div>
                 </td>
-                <td className="p-3">
+                <td style={{ padding: '16px 20px' }}>
                   <select
                     value={task.status}
                     onChange={(e) => handleUpdateTask({ ...task, status: e.target.value })}
-                    className={`px-2 py-1 text-xs rounded border outline-none cursor-pointer w-full max-w-[125px] ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
-                      }`}
+                    style={{ 
+                      width: '100%', 
+                      padding: '8px 12px', 
+                      fontSize: 13, 
+                      fontWeight: 600,
+                      borderRadius: 8, 
+                      border: '1px solid var(--border)', 
+                      background: 'var(--bg-primary)', 
+                      color: 'var(--text-primary)',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
                   >
                     {columns.map(col => (
                       <option key={col} value={col}>{col}</option>
                     ))}
                   </select>
                 </td>
-                <td className="p-3">
+                <td style={{ padding: '16px 20px' }}>
                   <select
                     value={task.priority}
-                    onChange={(e) => handleUpdateTask({ ...task, priority: e.target.value })}
-                    className={`px-2 py-1 text-xs rounded border outline-none cursor-pointer w-full max-w-[100px] ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
-                      }`}
+                    onChange={(e) => handleUpdateTask({ ...task, priority: e.target.value as any })}
+                    style={{ 
+                      width: '100%', 
+                      padding: '8px 12px', 
+                      fontSize: 13, 
+                      fontWeight: 600,
+                      borderRadius: 8, 
+                      border: '1px solid var(--border)', 
+                      background: 'var(--bg-primary)', 
+                      color: 'var(--text-primary)',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -1092,38 +1352,74 @@ function TableView({ tasks, darkMode, bulkSelection, setBulkSelection, handleOpe
                     <option value="Urgent">Urgent</option>
                   </select>
                 </td>
-                <td className="p-3">
+                <td style={{ padding: '16px 20px' }}>
                   <input
                     type="date"
                     value={task.dueDate}
                     onChange={(e) => handleUpdateTask({ ...task, dueDate: e.target.value })}
-                    className={`px-2 py-1 text-xs rounded border outline-none cursor-pointer w-full max-w-[125px] ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
-                      }`}
+                    style={{ 
+                      width: '100%', 
+                      padding: '8px 12px', 
+                      fontSize: 13, 
+                      fontWeight: 600,
+                      borderRadius: 8, 
+                      border: '1px solid var(--border)', 
+                      background: 'var(--bg-primary)', 
+                      color: 'var(--text-primary)',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
                   />
                 </td>
-                <td className="p-3">
-                  <div className="flex items-center gap-2">
-                    <img src={task.assignee.avatar} alt={task.assignee.name} className="w-5 h-5 rounded-full object-cover" />
-                    <span className="font-medium truncate max-w-[100px]">{task.assignee.name}</span>
+                <td style={{ padding: '16px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <img src={task.assignee.avatar} alt={task.assignee.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 100 }}>
+                      {task.assignee.name.split(' ')[0]}
+                    </span>
                   </div>
                 </td>
-                <td className="p-3">
+                <td style={{ padding: '16px 20px' }}>
                   {task.dealReference ? (
-                    <div className="flex items-center gap-1 text-[11px] text-violet-400 font-bold bg-violet-500/10 px-1.5 py-0.5 rounded w-max">
-                      <Briefcase className="w-3 h-3" />
-                      <span className="truncate max-w-[80px]">{task.dealReference.name}</span>
+                    <div style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: 6, 
+                      fontSize: 11, 
+                      fontWeight: 800, 
+                      color: 'var(--brand-accent)', 
+                      background: 'var(--purple-dim)', 
+                      padding: '4px 8px', 
+                      borderRadius: 6 
+                    }}>
+                      <Briefcase size={12} />
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 80 }}>{task.dealReference.name}</span>
                     </div>
                   ) : (
-                    <span className="text-slate-500 text-[11px]">—</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>—</span>
                   )}
                 </td>
-                <td className="p-3 text-center">
+                <td style={{ padding: '16px 20px', textAlign: 'center' }}>
                   <button
                     onClick={() => handleDeleteTask(task.id)}
-                    className="p-1.5 rounded hover:bg-rose-500/10 text-slate-400 hover:text-rose-500"
-                    title="Delete task"
+                    style={{ 
+                      padding: 8, 
+                      borderRadius: 8, 
+                      background: 'transparent', 
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s',
+                      margin: '0 auto'
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.color = 'var(--rose)'; e.currentTarget.style.background = 'var(--rose-dim)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                    title="Remove task"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 size={16} />
                   </button>
                 </td>
               </tr>
@@ -1133,791 +1429,703 @@ function TableView({ tasks, darkMode, bulkSelection, setBulkSelection, handleOpe
       </table>
 
       {tasks.length === 0 && (
-        <div className="py-20 text-center text-slate-500">
-          No records matching the filter presets are available.
+        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+          No records matching the current layout properties.
         </div>
       )}
     </div>
   );
 }
 
-// 4. CALENDAR VIEW (Scheduling grid)
-function CalendarView({ tasks, darkMode, handleOpenTaskDetails, handleAddTask }) {
-  const [currentYear, setCurrentYear] = useState(2026);
-  const [currentMonth, setCurrentMonth] = useState(6); // July (0-indexed 6 is July)
+// ==========================================
+// 9. HIGH-FIDELITY CRM CALENDAR SUB-COMPONENT
+// ==========================================
 
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+interface CalendarViewProps {
+  tasks: Task[];
+  darkMode: boolean;
+  handleOpenTaskDetails: (id: string) => void;
+  handleAddTask: (data: { title: string; dueDate: string }) => void;
+}
 
-  // Days calculations
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+function CalendarView({
+  tasks,
+  darkMode,
+  handleOpenTaskDetails,
+  handleAddTask
+}: CalendarViewProps) {
+  const today = new Date();
+  const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [isMonthView, setIsMonthView] = useState(false);
 
-  // Create relative month calendar slots
-  const calendarSlots = useMemo(() => {
-    const slots = [];
-    // Padding from previous month
-    const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
-    for (let i = firstDayIndex - 1; i >= 0; i--) {
-      slots.push({
-        dayNumber: prevMonthDays - i,
-        isCurrentMonth: false,
-        dateString: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(prevMonthDays - i).padStart(2, '0')}`
-      });
-    }
-    // Current month days
-    for (let d = 1; d <= daysInMonth; d++) {
-      slots.push({
-        dayNumber: d,
-        isCurrentMonth: true,
-        dateString: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-      });
-    }
-    return slots;
-  }, [currentYear, currentMonth, daysInMonth, firstDayIndex]);
-
-  const handleNextMonth = () => {
-    if (currentMonth === 11) {
-      setCurrentMonth(0);
-      setCurrentYear(prev => prev + 1);
-    } else {
-      setCurrentMonth(prev => prev + 1);
-    }
+  const formatYMD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   };
 
-  const handlePrevMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear(prev => prev - 1);
-    } else {
-      setCurrentMonth(prev => prev - 1);
-    }
-  };
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  
+  const days: { empty: boolean; day?: number; isToday?: boolean; evts?: Task[] }[] = [];
+  for (let i = 0; i < firstDayOfMonth; i++) days.push({ empty: true });
+  for (let i = 1; i <= daysInMonth; i++) {
+    const dateStr = formatYMD(new Date(year, month, i));
+    days.push({ 
+      empty: false, 
+      day: i, 
+      isToday: year === today.getFullYear() && month === today.getMonth() && i === today.getDate(), 
+      evts: tasks.filter(t => t.dueDate === dateStr)
+    });
+  }
 
-  const handleDayClick = (dateString) => {
-    const title = prompt('Enter a short title for the new task:');
-    if (title && title.trim()) {
-      handleAddTask({
-        title,
-        dueDate: dateString
-      });
+  const selectedStr = formatYMD(selectedDate);
+  const dayEvents = tasks.filter(t => t.dueDate === selectedStr);
+  const monthEvents = tasks.filter(t => t.dueDate.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`));
+  const displayEvents = isMonthView ? monthEvents : dayEvents;
+
+  const handleDayClick = (dateStr: string) => {
+    const title = prompt('Enter task objective name:');
+    if (title?.trim()) {
+      handleAddTask({ title: title.trim(), dueDate: dateStr });
     }
   };
 
   return (
-    <div className="flex flex-col h-full space-y-4">
-      {/* Calendar Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-violet-500" />
-          <h3 className="font-bold text-base">
-            {monthNames[currentMonth]} {currentYear}
-          </h3>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: '0 8px' }}>
+      
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ fontSize: 24, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-primary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: 10, background: 'var(--purple-dim)', color: 'var(--brand-accent)' }}>
+              <CalendarDays size={24} />
+            </div>
+            Scheduling Calendar
+          </div>
+          <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 6, marginLeft: 50 }}>
+            Plan and coordinate tasks across your pipeline timeline.
+          </div>
         </div>
-        <div className="flex gap-1">
-          <button
-            onClick={handlePrevMonth}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border ${darkMode ? 'border-slate-800 hover:bg-slate-800 text-slate-300' : 'border-slate-200 hover:bg-slate-100 text-slate-700'
-              }`}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button 
+            onClick={() => handleDayClick(selectedStr)}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6, 
+              padding: '10px 18px', 
+              borderRadius: 10, 
+              background: 'var(--text-primary)', 
+              color: 'var(--bg-primary)', 
+              border: 'none',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
           >
-            Previous
-          </button>
-          <button
-            onClick={handleNextMonth}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border ${darkMode ? 'border-slate-800 hover:bg-slate-800 text-slate-300' : 'border-slate-200 hover:bg-slate-100 text-slate-700'
-              }`}
-          >
-            Next
+            + Schedule Task
           </button>
         </div>
       </div>
 
-      {/* Grid */}
-      <div className={`grid grid-cols-7 border rounded-xl overflow-hidden ${darkMode ? 'border-slate-800 bg-slate-900/20' : 'border-slate-200 bg-white'
-        }`}>
-        {/* Days label header */}
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div
-            key={day}
-            className={`p-2.5 text-center text-xs font-bold tracking-wide border-b ${darkMode ? 'bg-slate-900/50 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'
-              }`}
-          >
-            {day}
-          </div>
-        ))}
-
-        {/* Month grid items */}
-        {calendarSlots.map((slot, idx) => {
-          const dayTasks = tasks.filter(t => t.dueDate === slot.dateString);
-          return (
-            <div
-              key={idx}
-              onClick={() => handleDayClick(slot.dateString)}
-              className={`min-h-[110px] p-2 border-r border-b relative group cursor-pointer transition-colors ${slot.isCurrentMonth
-                  ? (darkMode ? 'bg-slate-900/10 hover:bg-slate-800/10 border-slate-800/60' : 'bg-white hover:bg-slate-50 border-slate-200/60')
-                  : (darkMode ? 'bg-slate-950/40 text-slate-600 border-slate-900' : 'bg-slate-50 text-slate-400 border-slate-100')
-                }`}
+      {/* Calendar + Day View Split */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 24 }}>
+        
+        {/* Calendar Left Panel */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <button 
+              onClick={() => setViewDate(new Date(year, month - 1, 1))}
+              style={{ padding: '8px', borderRadius: '50%', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              {/* Day number with hover-action visual trigger */}
-              <div className="flex items-center justify-between mb-1.5">
-                <span className={`text-[11px] font-bold ${slot.isCurrentMonth ? (darkMode ? 'text-slate-300' : 'text-slate-700') : 'opacity-40'
-                  }`}>
-                  {slot.dayNumber}
-                </span>
-                <span className="opacity-0 group-hover:opacity-100 text-[9px] text-violet-500 font-bold transition-all">
-                  + Add
-                </span>
-              </div>
+              <ChevronLeft size={20} />
+            </button>
+            <h2 
+              onClick={() => setIsMonthView(true)} 
+              style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0, cursor: 'pointer' }} 
+              title="Click to view all tasks in this month"
+            >
+              {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </h2>
+            <button 
+              onClick={() => setViewDate(new Date(year, month + 1, 1))}
+              style={{ padding: '8px', borderRadius: '50%', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
 
-              {/* Plotted tasks */}
-              <div className="space-y-1 overflow-y-auto max-h-[70px] custom-scrollbar">
-                {dayTasks.map(task => (
-                  <div
-                    key={task.id}
-                    onClick={(e) => {
-                      e.stopPropagation(); // Avoid triggering dayClick trigger
-                      handleOpenTaskDetails(task.id);
-                    }}
-                    className="p-1 rounded text-[10px] font-semibold truncate hover:ring-1 hover:ring-violet-500 transition-all shadow-sm flex items-center gap-1 bg-violet-500/10 border border-violet-500/20 text-violet-400"
-                    title={task.title}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500 flex-shrink-0" />
-                    <span className="truncate">{task.title}</span>
-                  </div>
-                ))}
-              </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 10, flex: 1 }}>
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+              <div key={d} style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', fontWeight: 700, paddingBottom: 12, textTransform: 'uppercase', letterSpacing: '1px' }}>{d}</div>
+            ))}
+            {days.map((d, i) => {
+              if (d.empty) return <div key={i} />;
+              const isSelected = !isMonthView && selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === d.day;
+              return (
+                <div 
+                  key={i} 
+                  onClick={() => { setSelectedDate(new Date(year, month, d.day!)); setIsMonthView(false); }} 
+                  style={{
+                    position: 'relative', height: 90, padding: '10px', borderRadius: 12, cursor: 'pointer',
+                    border: isSelected ? '2px solid var(--brand-accent)' : '1px solid var(--border)',
+                    background: isSelected ? 'var(--purple-dim)' : d.isToday ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                    transition: 'all 0.2s',
+                    display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+                  }}
+                >
+                  <span style={{
+                    fontSize: 14, fontWeight: isSelected || d.isToday ? 800 : 600,
+                    color: isSelected ? 'var(--brand-accent)' : d.isToday ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    background: d.isToday && !isSelected ? 'var(--border)' : 'transparent',
+                    padding: d.isToday && !isSelected ? '2px 8px' : '0', borderRadius: 12,
+                  }}>{d.day}</span>
+                  
+                  {d.evts && d.evts.length > 0 && (
+                    <div style={{ marginTop: 'auto', display: 'flex', flexWrap: 'wrap', gap: 4, width: '100%' }}>
+                      {d.evts.slice(0, 3).map((t, idx) => {
+                        const colorMap: any = { Urgent: 'var(--rose)', High: 'var(--amber)', Medium: 'var(--brand-accent)', Low: 'var(--emerald)' };
+                        return <div key={idx} style={{ height: 6, flex: 1, minWidth: 10, background: colorMap[t.priority] || 'var(--text-muted)', borderRadius: 4, opacity: t.status === 'Done' ? 0.4 : 1 }} title={t.title} />;
+                      })}
+                      {d.evts.length > 3 && <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 800, marginLeft: 2 }}>+{d.evts.length - 3}</span>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Daily Schedule Right Panel */}
+        <div style={{ 
+          background: 'var(--bg-card)', 
+          border: '1px solid var(--border)', 
+          borderRadius: 16, 
+          padding: 24, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          height: '100%',
+          minHeight: 600
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+                {isMonthView ? `${viewDate.toLocaleString('default', { month: 'long' })} ${year}` : `${selectedDate.toLocaleString('default', { month: 'long' })} ${selectedDate.getDate()}`}
+              </h3>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4, fontWeight: 600 }}>{isMonthView ? 'Monthly Schedule' : 'Daily Schedule'}</div>
             </div>
-          );
-        })}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span style={{ padding: '4px 10px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 20, fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>
+                {displayEvents.length} items
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', flex: 1, paddingRight: 4 }}>
+            {displayEvents.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted)', border: '2px dashed var(--border)', borderRadius: 16 }}>
+                <CalendarDays size={32} style={{ opacity: 0.5, marginBottom: 16 }} />
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>Nothing scheduled</div>
+                <div style={{ fontSize: 13, marginTop: 6, fontWeight: 500 }}>{isMonthView ? 'No tasks planned for this month.' : 'No tasks planned for this date.'}</div>
+                <button 
+                  style={{ marginTop: 20, fontSize: 13, color: 'var(--brand-accent)', fontWeight: 700, background: 'transparent', border: 'none', cursor: 'pointer' }}
+                  onClick={() => handleDayClick(selectedStr)}
+                >
+                  + Schedule Task
+                </button>
+              </div>
+            ) : (
+              displayEvents.map(t => {
+                const colorMap: any = { Urgent: 'var(--rose)', High: 'var(--amber)', Medium: 'var(--brand-accent)', Low: 'var(--emerald)' };
+                const tColor = colorMap[t.priority] || 'var(--text-muted)';
+                return (
+                  <div 
+                    key={t.id} 
+                    onClick={() => handleOpenTaskDetails(t.id)}
+                    style={{ 
+                      padding: '16px 20px', 
+                      background: 'var(--bg-primary)', 
+                      border: '1px solid var(--border)', 
+                      borderRadius: 14, 
+                      position: 'relative', 
+                      overflow: 'hidden', 
+                      cursor: 'pointer',
+                      transition: 'border-color 0.2s'
+                    }} 
+                    onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--border-bright)'}
+                    onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+                  >
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: tColor }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: tColor }}>{t.priority} PRIORITY</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+                        {t.status}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 10 }}>{t.title}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <img src={t.assignee.avatar} alt={t.assignee.name} style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover' }} />
+                          {t.assignee.name.split(' ')[0]}
+                        </span>
+                        {isMonthView && <span style={{ color: 'var(--text-muted)' }}>Due: {t.dueDate}</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-// 5. TASK DETAIL MODAL / SIDEBAR CONTENT
-function TaskDetailSidebar({ task, onClose, onUpdate, onDelete, columns, members, darkMode }) {
-  const [activeTab, setActiveTab] = useState('Details');
-  const [commentInput, setCommentInput] = useState('');
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
+// ==========================================
+// 10. RECHARTS-MIMICKING CRM ANALYTICS VIEW
+// ==========================================
+
+interface DashboardViewProps {
+  tasks: Task[];
+  widgets: DashboardWidget[];
+  darkMode: boolean;
+  reorderWidgets: (draggedId: string, targetId: string) => void;
+}
+
+function DashboardView({
+  tasks,
+  widgets,
+  darkMode,
+  reorderWidgets
+}: DashboardViewProps) {
+  // SVG charts calculation helpers
+  const stats = useMemo(() => {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.status === 'Done').length;
+    const progress = tasks.filter(t => t.status === 'In Progress').length;
+    const review = tasks.filter(t => t.status === 'Review').length;
+    const todo = tasks.filter(t => t.status === 'To Do').length;
+
+    const highOrUrgent = tasks.filter(t => t.priority === 'High' || t.priority === 'Urgent').length;
+
+    const statusMap = { 'To Do': todo, 'In Progress': progress, 'Review': review, 'Done': completed };
+    const priorityMap = {
+      Low: tasks.filter(t => t.priority === 'Low').length,
+      Medium: tasks.filter(t => t.priority === 'Medium').length,
+      High: tasks.filter(t => t.priority === 'High').length,
+      Urgent: tasks.filter(t => t.priority === 'Urgent').length
+    };
+
+    return { total, completed, progress, review, todo, highOrUrgent, statusMap, priorityMap };
+  }, [tasks]);
+
+  const [draggedWidgetId, setDraggedWidgetId] = useState<string | null>(null);
+
+  const handleWidgetDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedWidgetId(id);
+    e.dataTransfer.setData('text/widget', id);
+  };
+
+  const handleWidgetDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    const draggedId = e.dataTransfer.getData('text/widget') || draggedWidgetId;
+    if (draggedId && draggedId !== targetId) {
+      reorderWidgets(draggedId, targetId);
+    }
+    setDraggedWidgetId(null);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: '0 8px' }}>
+      
+
+
+      {/* Grid container */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 20 }}>
+        {widgets.map(widget => (
+          <div
+            key={widget.id}
+            draggable
+            onDragStart={(e) => handleWidgetDragStart(e, widget.id)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => handleWidgetDrop(e, widget.id)}
+            style={{ 
+              gridColumn: widget.w === 12 ? 'span 12' : 'span 6',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 16,
+              cursor: 'grab',
+              transition: 'box-shadow 0.2s',
+              overflow: 'hidden'
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)')}
+            onMouseOut={(e) => (e.currentTarget.style.boxShadow = 'none')}
+          >
+            {/* Widget Header */}
+            <div style={{ 
+              padding: '12px 16px', 
+              borderBottom: '1px solid var(--border)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              background: 'var(--bg-glass)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 4, height: 12, background: 'var(--brand-accent)', borderRadius: 4 }} />
+                <h4 style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.5px', margin: 0 }}>{widget.title}</h4>
+              </div>
+              <Maximize2 size={14} color="var(--text-muted)" />
+            </div>
+
+            {/* Render appropriate widget templates */}
+            <div style={{ padding: 20, minHeight: `${widget.h}px` }}>
+              
+              {/* Widget A: Key Overview Numbers */}
+              {widget.type === 'overview' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16 }}>
+                  {[
+                    { label: 'Total tasks', count: stats.total, color: 'var(--brand-accent)', trend: 'Live updates' },
+                    { label: 'Completed', count: stats.completed, color: 'var(--emerald)', trend: `${Math.round((stats.completed/stats.total)*100 || 0)}% completion rate` },
+                    { label: 'Active Pipeline', count: stats.progress + stats.review, color: 'var(--amber)', trend: 'Pending alignment' },
+                    { label: 'High Priority', count: stats.highOrUrgent, color: 'var(--rose)', trend: 'Requires attention' }
+                  ].map((item, idx) => (
+                    <div key={idx} style={{ 
+                      padding: 16, 
+                      borderRadius: 12, 
+                      border: '1px solid var(--border)', 
+                      background: 'var(--bg-glass)' 
+                    }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{item.label}</div>
+                      <div style={{ fontSize: 28, fontWeight: 800, margin: '8px 0', color: item.color, fontFamily: 'Outfit, sans-serif' }}>{item.count}</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>{item.trend}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Widget B: Status Bar Chart */}
+              {widget.type === 'status-chart' && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg viewBox="0 0 400 180" style={{ width: '100%', maxHeight: 180 }}>
+                    <line x1="40" y1="20" x2="380" y2="20" stroke="var(--border)" strokeWidth="1" strokeDasharray="4 4" />
+                    <line x1="40" y1="70" x2="380" y2="70" stroke="var(--border)" strokeWidth="1" strokeDasharray="4 4" />
+                    <line x1="40" y1="120" x2="380" y2="120" stroke="var(--border)" strokeWidth="1" strokeDasharray="4 4" />
+                    <line x1="40" y1="150" x2="380" y2="150" stroke="var(--border-bright)" strokeWidth="1" />
+
+                    <text x="30" y="24" fill="var(--text-muted)" fontSize="10" textAnchor="end">100%</text>
+                    <text x="30" y="74" fill="var(--text-muted)" fontSize="10" textAnchor="end">50%</text>
+                    <text x="30" y="124" fill="var(--text-muted)" fontSize="10" textAnchor="end">10%</text>
+                    <text x="30" y="154" fill="var(--text-muted)" fontSize="10" textAnchor="end">0</text>
+
+                    {Object.entries(stats.statusMap).map(([statusKey, val], index) => {
+                      const barWidth = 35;
+                      const spacing = 80;
+                      const x = 60 + index * spacing;
+                      const heightPercent = stats.total > 0 ? (val / stats.total) * 120 : 0;
+                      const y = 150 - heightPercent;
+                      
+                      return (
+                        <g key={statusKey} style={{ cursor: 'pointer' }}>
+                          <rect x={x} y={y} width={barWidth} height={heightPercent} fill={index === 3 ? 'var(--emerald)' : 'var(--brand-accent)'} rx="4" opacity="0.85" />
+                          <text x={x + barWidth/2} y={y - 6} fill="var(--text-primary)" fontSize="11" fontWeight="bold" textAnchor="middle">{val}</text>
+                          <text x={x + barWidth/2} y="168" fill="var(--text-muted)" fontSize="10" fontWeight="bold" textAnchor="middle">{statusKey}</text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
+              )}
+
+              {/* Widget C: Priority Distribution Donut */}
+              {widget.type === 'priority-chart' && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-around', gap: 16 }}>
+                  <svg style={{ width: 130, height: 130, transform: 'rotate(-90deg)' }}>
+                    <circle cx="65" cy="65" r="50" fill="transparent" stroke="var(--bg-secondary)" strokeWidth="14" />
+                    {(() => {
+                      const priorityWeights = [
+                        { label: 'Low', count: stats.priorityMap.Low, color: 'var(--emerald)' },
+                        { label: 'Medium', count: stats.priorityMap.Medium, color: 'var(--brand-accent)' },
+                        { label: 'High', count: stats.priorityMap.High, color: 'var(--amber)' },
+                        { label: 'Urgent', count: stats.priorityMap.Urgent, color: 'var(--rose)' }
+                      ];
+                      const totalCount = stats.total || 1;
+                      let accumulatedPercent = 0;
+                      
+                      return priorityWeights.map((pw, i) => {
+                        const percent = pw.count / totalCount;
+                        const strokeDasharray = `${percent * 314.15} 314.15`;
+                        const strokeDashoffset = `-${accumulatedPercent * 314.15}`;
+                        accumulatedPercent += percent;
+                        return (
+                          <circle
+                            key={i}
+                            cx="65"
+                            cy="65"
+                            r="50"
+                            fill="transparent"
+                            stroke={pw.color}
+                            strokeWidth="14"
+                            strokeDasharray={strokeDasharray}
+                            strokeDashoffset={strokeDashoffset}
+                            strokeLinecap="round"
+                            style={{ transition: 'all 0.3s' }}
+                          />
+                        );
+                      });
+                    })()}
+                  </svg>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12, fontWeight: 600 }}>
+                    {[
+                      { label: 'Urgent Priority', count: stats.priorityMap.Urgent, color: 'var(--rose)' },
+                      { label: 'High Priority', count: stats.priorityMap.High, color: 'var(--amber)' },
+                      { label: 'Medium Priority', count: stats.priorityMap.Medium, color: 'var(--brand-accent)' },
+                      { label: 'Low Priority', count: stats.priorityMap.Low, color: 'var(--emerald)' }
+                    ].map((p, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color }} />
+                        <span style={{ color: 'var(--text-muted)' }}>{p.label}:</span>
+                        <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{p.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Widget D: Interactive team resource density allocation */}
+              {widget.type === 'team-activity' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Assignee Task Distribution Density</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {MEMBERS.map(member => {
+                      const memberTasksCount = tasks.filter(t => t.assignee.id === member.id).length;
+                      const pct = stats.total > 0 ? (memberTasksCount / stats.total) * 100 : 0;
+                      return (
+                        <div key={member.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <img src={member.avatar} alt={member.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+                              <span style={{ color: 'var(--text-primary)' }}>{member.name}</span>
+                              <span style={{ color: 'var(--text-muted)' }}>{memberTasksCount} assigned goals ({Math.round(pct)}%)</span>
+                            </div>
+                            <div style={{ width: '100%', height: 6, background: 'var(--bg-primary)', borderRadius: 3, overflow: 'hidden' }}>
+                              <div 
+                                style={{ height: '100%', background: 'var(--brand-accent)', width: `${pct}%`, transition: 'width 0.3s' }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 11. NOTION-STYLE DETAIL SLIDE-OVER SIDEBAR
+// ==========================================
+
+interface TaskDetailSidebarProps {
+  task: Task;
+  onClose: () => void;
+  onUpdate: (task: Task) => void;
+  onDelete: (id: string) => void;
+  columns: string[];
+  members: Assignee[];
+  darkMode: boolean;
+}
+
+function TaskDetailSidebar({
+  task,
+  onClose,
+  onUpdate,
+  onDelete,
+  columns,
+  members,
+  darkMode
+}: TaskDetailSidebarProps) {
+  const [comInput, setComInput] = useState('');
+  const [newSubTitle, setNewSubTitle] = useState('');
+  const [isEditTitle, setIsEditTitle] = useState(false);
   const [titleEditVal, setTitleEditVal] = useState(task.title);
 
-  // Sync state with selected task
   useEffect(() => {
     setTitleEditVal(task.title);
-    setIsEditingTitle(false);
+    setIsEditTitle(false);
   }, [task]);
 
-  // Title save handler
   const saveTitle = () => {
     if (titleEditVal.trim()) {
       onUpdate({ ...task, title: titleEditVal });
-      setIsEditingTitle(false);
+      setIsEditTitle(false);
     }
   };
 
-  // Subtasks actions
-  const toggleSubtask = (subId) => {
-    const updatedSubtasks = task.subtasks.map(s => s.id === subId ? { ...s, completed: !s.completed } : s);
-    onUpdate({ ...task, subtasks: updatedSubtasks });
+  const toggleSubtask = (subId: string) => {
+    const updated = task.subtasks.map(s => s.id === subId ? { ...s, completed: !s.completed } : s);
+    onUpdate({ ...task, subtasks: updated });
   };
 
-  const addSubtask = (e) => {
+  const addSubtask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newSubtaskTitle.trim()) {
-      const newSub = {
-        id: `sub-${Date.now()}`,
-        title: newSubtaskTitle.trim(),
-        completed: false
-      };
-      onUpdate({ ...task, subtasks: [...(task.subtasks || []), newSub] });
-      setNewSubtaskTitle('');
+    if (newSubTitle.trim()) {
+      const newSub: SubTask = { id: `sub-${Date.now()}`, title: newSubTitle.trim(), completed: false };
+      onUpdate({ ...task, subtasks: [...task.subtasks, newSub] });
+      setNewSubTitle('');
     }
   };
 
-  const deleteSubtask = (subId) => {
+  const deleteSubtask = (subId: string) => {
     onUpdate({ ...task, subtasks: task.subtasks.filter(s => s.id !== subId) });
   };
 
-  // Comments addition
-  const addComment = (e) => {
+  const submitComment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (commentInput.trim()) {
-      const newComment = {
+    if (comInput.trim()) {
+      const newCom: Comment = {
         id: `c-${Date.now()}`,
         author: 'Workspace Owner',
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', // Mock logged in user avatar
-        text: commentInput.trim(),
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        text: comInput.trim(),
         timestamp: 'Just now'
       };
-      onUpdate({ ...task, comments: [...(task.comments || []), newComment] });
-      setCommentInput('');
+      onUpdate({ ...task, comments: [...task.comments, newCom] });
+      setComInput('');
     }
   };
 
-  // Label tags toggle handler
-  const toggleLabel = (labelName) => {
-    const hasLabel = task.labels.includes(labelName);
-    const updatedLabels = hasLabel 
-      ? task.labels.filter(l => l !== labelName) 
-      : [...task.labels, labelName];
-    onUpdate({ ...task, labels: updatedLabels });
+  const toggleLabel = (lbl: string) => {
+    const updated = task.labels.includes(lbl) 
+      ? task.labels.filter(l => l !== lbl) 
+      : [...task.labels, lbl];
+    onUpdate({ ...task, labels: updated });
   };
 
-  const firstTag = task.labels && task.labels.length > 0 ? task.labels[0] : 'TASK';
-
   return (
-    <div className={`flex flex-col h-full font-sans ${darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}`}>
-      
-      {/* Top Header Section (Clean Content Hub Style) */}
-      <div className={`pt-8 pb-0 px-8 bg-white dark:bg-slate-900`}>
-        <div className="flex justify-between items-start mb-6">
-          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-violet-100 text-violet-600 border border-violet-200/50 dark:bg-violet-900/30 dark:border-violet-800/50 dark:text-violet-300 shadow-sm">
-            {firstTag}
-          </span>
-          <div className="flex gap-2 items-center">
-            <button
-              onClick={() => onDelete(task.id)}
-              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-rose-500 transition-colors"
-              title="Delete this task"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={onClose}
-              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
+    <div className="flex flex-col h-full">
+      {/* Detail panel top bar */}
+      <div className={`p-4 border-b flex items-center justify-between ${
+        darkMode ? 'border-slate-800' : 'border-slate-200'
+      }`}>
+        <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+          <Briefcase className="w-4 h-4" />
+          <span>Workspace Detail Panel</span>
         </div>
-
-        {isEditingTitle ? (
-          <div className="flex items-center gap-3 mb-4">
-            <input
-              type="text"
-              value={titleEditVal}
-              onChange={(e) => setTitleEditVal(e.target.value)}
-              className={`flex-1 font-extrabold text-3xl px-4 py-2 rounded-xl border outline-none focus:ring-2 focus:ring-violet-500/50 ${
-                darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
-              }`}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') saveTitle();
-                if (e.key === 'Escape') setIsEditingTitle(false);
-              }}
-              autoFocus
-            />
-            <button 
-              onClick={saveTitle}
-              className="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold transition-colors shadow-sm"
-            >
-              Save
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 mb-6 group cursor-pointer" onClick={() => setIsEditingTitle(true)}>
-            <h2 className="font-extrabold text-3xl lg:text-4xl leading-tight tracking-tight text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-              {task.title}
-            </h2>
-            <Edit2 className="w-5 h-5 opacity-0 group-hover:opacity-100 text-slate-400 transition-all mt-1" />
-          </div>
-        )}
-
-        {/* Tabs */}
-        <div className="flex gap-8 border-b border-slate-200 dark:border-slate-800 mt-2">
-          {['Details', `Subtasks (${task.subtasks?.length || 0})`, `Comments (${task.comments?.length || 0})`].map(tabStr => {
-            const tabName = tabStr.split(' ')[0];
-            const isActive = activeTab === tabName;
-            return (
-              <button
-                key={tabName}
-                onClick={() => setActiveTab(tabName)}
-                className={`pb-4 px-1 text-[14px] font-bold tracking-wide relative transition-colors ${
-                  isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-                }`}
-              >
-                {tabStr}
-                {isActive && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 dark:bg-violet-400" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main Tab Content */}
-      <div className="flex-1 overflow-y-auto p-8 bg-slate-50/30 dark:bg-slate-950/20 custom-scrollbar">
-        
-        {activeTab === 'Details' && (
-          <div className="space-y-8 max-w-4xl">
-            {/* Description Block */}
-            <div className="space-y-2.5">
-              <h4 className="text-[11px] font-bold uppercase text-slate-500 tracking-widest">Brief / Description</h4>
-              <textarea
-                value={task.description}
-                placeholder="Add detailed task notes here..."
-                onChange={(e) => onUpdate({ ...task, description: e.target.value })}
-                className={`w-full p-4 rounded-xl border outline-none text-[14px] leading-relaxed resize-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all min-h-[120px] ${
-                  darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
-                }`}
-              />
-            </div>
-
-            {/* Grid Layout properties */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-              {/* Status */}
-              <div className="space-y-2.5">
-                <h4 className="text-[11px] font-bold uppercase text-slate-500 tracking-widest">Workflow Status</h4>
-                <select
-                  value={task.status}
-                  onChange={(e) => onUpdate({ ...task, status: e.target.value })}
-                  className={`w-full px-4 py-2.5 rounded-xl border outline-none cursor-pointer text-[14px] font-semibold transition-all focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 ${
-                    darkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-900 shadow-sm'
-                  }`}
-                >
-                  {columns.map(col => <option key={col} value={col}>{col}</option>)}
-                </select>
-              </div>
-
-              {/* Priority */}
-              <div className="space-y-2.5">
-                <h4 className="text-[11px] font-bold uppercase text-slate-500 tracking-widest">Priority Level</h4>
-                <select
-                  value={task.priority}
-                  onChange={(e) => onUpdate({ ...task, priority: e.target.value })}
-                  className={`w-full px-4 py-2.5 rounded-xl border outline-none cursor-pointer text-[14px] font-semibold transition-all focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 ${
-                    darkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-900 shadow-sm'
-                  }`}
-                >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                  <option value="Urgent">Urgent</option>
-                </select>
-              </div>
-
-              {/* Assignee */}
-              <div className="space-y-2.5">
-                <h4 className="text-[11px] font-bold uppercase text-slate-500 tracking-widest">Assigned Owner</h4>
-                <select
-                  value={task.assignee.id}
-                  onChange={(e) => {
-                    const selectedMember = members.find(m => m.id === e.target.value);
-                    onUpdate({ ...task, assignee: selectedMember });
-                  }}
-                  className={`w-full px-4 py-2.5 rounded-xl border outline-none cursor-pointer text-[14px] font-semibold transition-all focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 ${
-                    darkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-900 shadow-sm'
-                  }`}
-                >
-                  {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                </select>
-              </div>
-
-              {/* Due Date */}
-              <div className="space-y-2.5">
-                <h4 className="text-[11px] font-bold uppercase text-slate-500 tracking-widest">Due Date</h4>
-                <input
-                  type="date"
-                  value={task.dueDate}
-                  onChange={(e) => onUpdate({ ...task, dueDate: e.target.value })}
-                  className={`w-full px-4 py-2.5 rounded-xl border outline-none cursor-pointer text-[14px] font-semibold transition-all focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 ${
-                    darkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-900 shadow-sm'
-                  }`}
-                />
-              </div>
-            </div>
-
-            {/* Labels */}
-            <div className="space-y-4 pt-4">
-              <h4 className="text-[13px] font-bold uppercase text-[#332A55] dark:text-slate-400 tracking-wider">Classification Tags</h4>
-              <div className="flex flex-wrap gap-2">
-                {PRESET_LABELS.map(lbl => {
-                  const isActive = task.labels.includes(lbl);
-                  return (
-                    <button
-                      key={lbl}
-                      onClick={() => toggleLabel(lbl)}
-                      className={`px-4 py-2 rounded-lg text-[13px] font-bold tracking-wide transition-all ${
-                        isActive 
-                          ? 'bg-violet-600 text-white shadow-md' 
-                          : (darkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')
-                      }`}
-                    >
-                      {lbl}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Deal Reference */}
-            <div className="space-y-4 pt-4">
-              <h4 className="text-[13px] font-bold uppercase text-[#332A55] dark:text-slate-400 tracking-wider">Linked CRM Deals</h4>
-              {task.dealReference ? (
-                <div className={`p-5 rounded-2xl border flex items-center justify-between ${
-                  darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-emerald-500/15 text-emerald-500 rounded-xl">
-                      <Briefcase className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="text-[16px] font-bold">{task.dealReference.name}</div>
-                      <div className="text-[13px] text-slate-500 mt-1">Value: {task.dealReference.value} • Stage: {task.dealReference.stage}</div>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => onUpdate({ ...task, dealReference: null })}
-                    className="text-[13px] font-bold text-rose-500 hover:bg-rose-500/10 px-4 py-2 rounded-lg transition-colors"
-                  >
-                    Unlink
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => onUpdate({
-                    ...task,
-                    dealReference: { name: 'Acme Premium License Upgrade', value: '$25,000', stage: 'Negotiation' }
-                  })}
-                  className={`w-full p-5 border-2 border-dashed rounded-2xl text-[14px] font-bold flex items-center justify-center gap-2 hover:border-violet-500/50 hover:text-violet-500 transition-colors ${
-                    darkMode ? 'border-slate-800 text-slate-400 bg-slate-900/20' : 'border-slate-300 text-slate-500 bg-slate-50/50'
-                  }`}
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>Link Account Deal</span>
-                </button>
-              )}
-            </div>
-            
-            {/* Attachments Section */}
-            <div className="space-y-4 pt-4">
-              <h4 className="text-[13px] font-bold uppercase text-[#332A55] dark:text-slate-400 tracking-wider">Attachments</h4>
-              <div className="space-y-3">
-                {task.attachments && task.attachments.map(att => (
-                  <div 
-                    key={att.id}
-                    className={`p-4 rounded-xl border flex items-center justify-between ${
-                      darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                        <Paperclip className="w-5 h-5 text-slate-500" />
-                      </div>
-                      <div>
-                        <div className="text-[14px] font-bold">{att.name}</div>
-                        <div className="text-[12px] text-slate-500 mt-0.5">{att.size} • {att.type}</div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const filteredAtts = task.attachments.filter(a => a.id !== att.id);
-                        onUpdate({ ...task, attachments: filteredAtts });
-                      }}
-                      className="p-2 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => {
-                  const demoAtt = { id: `at-${Date.now()}`, name: 'scanned_contract_revised.pdf', size: '1.8 MB', type: 'PDF' };
-                  onUpdate({ ...task, attachments: [...(task.attachments || []), demoAtt] });
-                }}
-                className={`w-full py-4 border-2 border-dashed rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 hover:border-violet-500/50 hover:text-violet-500 transition-colors ${
-                  darkMode ? 'border-slate-800 text-slate-400 bg-slate-900/20' : 'border-slate-300 text-slate-500 bg-slate-50/50'
-                }`}
-              >
-                <Paperclip className="w-5 h-5" />
-                <span>Upload Document Mockup</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'Subtasks' && (
-          <div className="space-y-8 max-w-4xl">
-            <div className="flex items-center justify-between bg-violet-50 dark:bg-violet-900/10 p-6 rounded-2xl border border-violet-100 dark:border-violet-900/30">
-              <h4 className="text-[15px] font-bold text-violet-900 dark:text-violet-300">Progress Tracker</h4>
-              {task.subtasks && task.subtasks.length > 0 && (
-                <span className="text-xl font-black text-violet-600 dark:text-violet-400">
-                  {Math.round((task.subtasks.filter(s => s.completed).length / task.subtasks.length) * 100)}% Complete
-                </span>
-              )}
-            </div>
-
-            {task.subtasks && task.subtasks.length > 0 && (
-              <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-500 ease-out"
-                  style={{ width: `${(task.subtasks.filter(s => s.completed).length / task.subtasks.length) * 100}%` }}
-                />
-              </div>
-            )}
-
-            <div className="space-y-3 mt-8">
-              {task.subtasks && task.subtasks.map(s => (
-                <div 
-                  key={s.id} 
-                  className={`flex items-center justify-between p-4 rounded-xl border transition-all group ${
-                    darkMode ? 'bg-slate-900/30 border-slate-800 hover:bg-slate-900' : 'bg-white border-slate-200 hover:shadow-md'
-                  }`}
-                >
-                  <label className="flex items-center gap-4 cursor-pointer flex-1 select-none">
-                    <input
-                      type="checkbox"
-                      checked={s.completed}
-                      onChange={() => toggleSubtask(s.id)}
-                      className="w-5 h-5 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-                    />
-                    <span className={`text-[15px] font-medium transition-colors ${s.completed ? 'line-through text-slate-400' : (darkMode ? 'text-slate-200' : 'text-slate-800')}`}>
-                      {s.title}
-                    </span>
-                  </label>
-                  <button
-                    onClick={() => deleteSubtask(s.id)}
-                    className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
-                    title="Remove subtask"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <form onSubmit={addSubtask} className="flex gap-4 mt-6">
-              <input
-                type="text"
-                required
-                placeholder="Add next checklist objective..."
-                value={newSubtaskTitle}
-                onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                className={`flex-1 px-5 py-4 text-[15px] font-medium rounded-xl border outline-none focus:ring-2 focus:ring-violet-500/50 ${
-                  darkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
-                }`}
-              />
-              <button
-                type="submit"
-                className="px-8 py-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-[15px] shadow-lg transition-colors"
-              >
-                Add Step
-              </button>
-            </form>
-          </div>
-        )}
-
-        {activeTab === 'Comments' && (
-          <div className="space-y-8 max-w-4xl h-full flex flex-col">
-            <div className="flex-1 space-y-6">
-              {task.comments && task.comments.map(c => (
-                <div key={c.id} className="flex gap-4">
-                  <img src={c.avatar} alt={c.author} className="w-12 h-12 rounded-full object-cover mt-1 shadow-sm" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="font-bold text-[15px]">{c.author}</span>
-                      <span className="text-[12px] font-medium text-slate-400">{c.timestamp}</span>
-                    </div>
-                    <p className={`p-4 rounded-2xl text-[14px] leading-relaxed shadow-sm ${
-                      darkMode ? 'bg-slate-900/80 border border-slate-800 text-slate-300' : 'bg-white border border-slate-100 text-slate-700'
-                    }`}>
-                      {c.text}
-                    </p>
-                  </div>
-                </div>
-              ))}
-              
-              {(!task.comments || task.comments.length === 0) && (
-                <div className="py-20 text-center text-slate-400 font-medium text-[15px]">
-                  No comments yet. Start the conversation!
-                </div>
-              )}
-            </div>
-
-            <form onSubmit={addComment} className={`mt-auto p-4 rounded-2xl border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-              <textarea
-                value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value)}
-                placeholder="Write an update..."
-                className={`w-full p-2 text-[15px] bg-transparent border-none outline-none resize-none min-h-[80px] ${
-                  darkMode ? 'text-slate-200' : 'text-slate-800'
-                }`}
-              />
-              <div className="flex justify-end pt-3 border-t border-[var(--border)] mt-2">
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-[14px] shadow-md transition-colors"
-                >
-                  Post Comment
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-      </div>
-
-      {/* Footer / Actions Container */}
-      <div className={`p-6 flex justify-end gap-3 border-t ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-        <button
-          onClick={onClose}
-          className={`px-6 py-2.5 rounded-xl font-bold text-[14px] transition-colors border ${
-            darkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-          }`}
-        >
-          Close
-        </button>
-        <button
-          onClick={onClose} 
-          className="px-8 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-[14px] shadow-sm transition-colors"
-        >
-          Done
-        </button>
-      </div>
-
-    </div>
-  );
-}
-
-// 6. PRIORITY BADGE DECORATOR HELPER
-function PriorityBadge({ priority, darkMode }) {
-  const styles = {
-    Low: darkMode ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    Medium: darkMode ? 'bg-indigo-950/20 text-indigo-400 border-indigo-500/30' : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    High: darkMode ? 'bg-amber-950/20 text-amber-500 border-amber-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    Urgent: darkMode ? 'bg-rose-950/20 text-rose-500 border-rose-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-  };
-
-  const icons = {
-    Low: <Check className="w-2.5 h-2.5" />,
-    Medium: <Clock className="w-2.5 h-2.5" />,
-    High: <AlertTriangle className="w-2.5 h-2.5" />,
-    Urgent: <Flame className="w-2.5 h-2.5 animate-pulse" />
-  };
-
-  return (
-    <span className={`flex items-center gap-1.5 text-[9px] px-2 py-1 rounded-md border font-bold uppercase tracking-widest ${styles[priority] || styles.Medium}`}>
-      {icons[priority] || icons.Medium}
-      <span>{priority}</span>
-    </span>
-  );
-}
-
-// 7. NEW TASK CREATOR MODAL
-function NewTaskModal({ onClose, onSubmit, columns, members, darkMode }) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState(columns[0]);
-  const [priority, setPriority] = useState('Medium');
-  const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
-  const [assignee, setAssignee] = useState(members[0]);
-  const [selectedLabels, setSelectedLabels] = useState([]);
-
-  const toggleLabel = (lbl) => {
-    if (selectedLabels.includes(lbl)) {
-      setSelectedLabels(prev => prev.filter(l => l !== lbl));
-    } else {
-      setSelectedLabels(prev => [...prev, lbl]);
-    }
-  };
-
-  const handleSubmitForm = (e) => {
-    e.preventDefault();
-    if (!title.trim()) return;
-    onSubmit({
-      title,
-      description,
-      status,
-      priority,
-      dueDate,
-      assignee,
-      labels: selectedLabels
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-      {/* Backdrop */}
-      <div onClick={onClose} className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm" />
-
-      {/* Modal Card */}
-      <div className={`relative w-full max-w-xl rounded-2xl shadow-2xl border flex flex-col overflow-hidden max-h-[90vh] ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
-        }`}>
-
-        {/* Header */}
-        <div className={`p-4 border-b flex justify-between items-center ${darkMode ? 'border-slate-800' : 'border-slate-200'
-          }`}>
-          <h3 className="text-base font-bold flex items-center gap-2">
-            <Plus className="w-5 h-5 text-violet-500" />
-            <span>Create New Task</span>
-          </h3>
+        <div className="flex items-center gap-2">
           <button
-            onClick={onClose}
-            className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200"
+            onClick={() => onDelete(task.id)}
+            className="p-1.5 rounded hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <Trash2 className="w-4 h-4" />
+          </button>
+          <button onClick={onClose} className="p-1.5 rounded hover:bg-slate-800 text-slate-400">
+            <X className="w-4 h-4" />
           </button>
         </div>
+      </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmitForm} className="p-6 space-y-4 overflow-y-auto">
-
-          {/* Title */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Task Title</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Align indemnity with Legal advisors"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className={`w-full px-3 py-2 text-xs rounded-xl border outline-none focus:ring-1 ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-400'
+      {/* Detail Scrollable body */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+        
+        {/* Title area */}
+        <div>
+          {isEditTitle ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={titleEditVal}
+                onChange={(e) => setTitleEditVal(e.target.value)}
+                className={`flex-1 font-bold text-base px-3 py-1.5 rounded-xl border focus:ring-1 outline-none ${
+                  darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-900'
                 }`}
-            />
-          </div>
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveTitle();
+                  if (e.key === 'Escape') setIsEditTitle(false);
+                }}
+              />
+              <button onClick={saveTitle} className="px-2.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-bold">
+                Save
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-start justify-between group">
+              <h3 className="font-extrabold text-base leading-snug hover:text-violet-400 cursor-pointer" onClick={() => setIsEditTitle(true)}>
+                {task.title}
+              </h3>
+              <button onClick={() => setIsEditTitle(true)} className="opacity-0 group-hover:opacity-100 p-1 text-slate-400">
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
 
-          {/* Description */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Notes / Details</label>
-            <textarea
-              placeholder="Add key context descriptions..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className={`w-full p-3 rounded-xl border outline-none text-xs h-20 resize-none focus:ring-1 ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-400'
-                }`}
-            />
-          </div>
-
-          {/* Inline Properties row */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Status select */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Start Status</label>
+        {/* Task Properties Grid */}
+        <div className={`p-4 rounded-2xl space-y-3 border ${
+          darkMode ? 'bg-slate-950/30 border-slate-800/80' : 'bg-slate-50 border-slate-200/50'
+        }`}>
+          {/* Status Select */}
+          <div className="grid grid-cols-3 items-center">
+            <span className="text-xs font-bold text-slate-500 uppercase">Status</span>
+            <div className="col-span-2">
               <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className={`w-full px-3 py-2 text-xs rounded-xl border outline-none cursor-pointer ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
-                  }`}
+                value={task.status}
+                onChange={(e) => onUpdate({ ...task, status: e.target.value })}
+                className={`px-2.5 py-1 text-xs rounded border outline-none cursor-pointer w-full max-w-[200px] ${
+                  darkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-800 shadow-sm'
+                }`}
               >
                 {columns.map(col => (
                   <option key={col} value={col}>{col}</option>
                 ))}
               </select>
             </div>
+          </div>
 
-            {/* Priority Select */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Priority Level</label>
+          {/* Assignee */}
+          <div className="grid grid-cols-3 items-center">
+            <span className="text-xs font-bold text-slate-500 uppercase">Assignee</span>
+            <div className="col-span-2">
               <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                className={`w-full px-3 py-2 text-xs rounded-xl border outline-none cursor-pointer ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
-                  }`}
+                value={task.assignee.id}
+                onChange={(e) => {
+                  const match = members.find(m => m.id === e.target.value);
+                  if (match) onUpdate({ ...task, assignee: match });
+                }}
+                className={`px-2.5 py-1 text-xs rounded border outline-none cursor-pointer w-full max-w-[200px] ${
+                  darkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-800 shadow-sm'
+                }`}
+              >
+                {members.map(m => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Priority */}
+          <div className="grid grid-cols-3 items-center">
+            <span className="text-xs font-bold text-slate-500 uppercase">Priority</span>
+            <div className="col-span-2">
+              <select
+                value={task.priority}
+                onChange={(e) => onUpdate({ ...task, priority: e.target.value as any })}
+                className={`px-2.5 py-1 text-xs rounded border outline-none cursor-pointer w-full max-w-[200px] ${
+                  darkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-800 shadow-sm'
+                }`}
               >
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
@@ -1927,53 +2135,491 @@ function NewTaskModal({ onClose, onSubmit, columns, members, darkMode }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            {/* Due Date */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Due Date</label>
+          {/* Due date */}
+          <div className="grid grid-cols-3 items-center">
+            <span className="text-xs font-bold text-slate-500 uppercase">Due Date</span>
+            <div className="col-span-2">
               <input
                 type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className={`w-full px-3 py-2 text-xs rounded-xl border outline-none cursor-pointer ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
-                  }`}
+                value={task.dueDate}
+                onChange={(e) => onUpdate({ ...task, dueDate: e.target.value })}
+                className={`px-2.5 py-1 text-xs rounded border outline-none cursor-pointer w-full max-w-[200px] ${
+                  darkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-800 shadow-sm'
+                }`}
               />
             </div>
+          </div>
+        </div>
 
-            {/* Assignee select */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Lead Assignee</label>
-              <select
-                value={assignee.id}
-                onChange={(e) => {
-                  const sMember = members.find(m => m.id === e.target.value);
-                  setAssignee(sMember);
-                }}
-                className={`w-full px-3 py-2 text-xs rounded-xl border outline-none cursor-pointer ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+        {/* Dynamic Label Tag Toggles */}
+        <div>
+          <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider mb-2">Category Labels</h4>
+          <div className="flex flex-wrap gap-1.5">
+            {PRESET_LABELS.map(lbl => {
+              const hasIt = task.labels.includes(lbl);
+              return (
+                <button
+                  key={lbl}
+                  onClick={() => toggleLabel(lbl)}
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide transition-colors ${
+                    hasIt 
+                      ? 'bg-violet-600 text-white' 
+                      : darkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
+                >
+                  {lbl}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Description Textarea */}
+        <div>
+          <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider mb-2">Description Notes</h4>
+          <textarea
+            value={task.description}
+            onChange={(e) => onUpdate({ ...task, description: e.target.value })}
+            placeholder="Add comprehensive notes and alignment details..."
+            className={`w-full p-3 text-xs rounded-xl border outline-none min-h-[100px] resize-none focus:ring-1 ${
+              darkMode 
+                ? 'bg-slate-950 border-slate-800/80 text-slate-200 focus:border-violet-500' 
+                : 'bg-slate-50 border-slate-200 focus:border-violet-400'
+            }`}
+          />
+        </div>
+
+        {/* Subtask checklist progress */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider">Subtask Checklist</h4>
+            {task.subtasks.length > 0 && (
+              <span className="text-xs font-bold text-violet-400">
+                {Math.round((task.subtasks.filter(s => s.completed).length / task.subtasks.length) * 100)}% Done
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            {task.subtasks.map(s => (
+              <div key={s.id} className="flex items-center justify-between p-2 rounded-xl bg-slate-900/10 dark:bg-slate-950/20 group">
+                <label className="flex items-center gap-2.5 cursor-pointer flex-1 select-none text-xs">
+                  <input
+                    type="checkbox"
+                    checked={s.completed}
+                    onChange={() => toggleSubtask(s.id)}
+                    className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                  />
+                  <span className={`${s.completed ? 'line-through text-slate-500' : 'text-slate-300'}`}>
+                    {s.title}
+                  </span>
+                </label>
+                <button onClick={() => deleteSubtask(s.id)} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-500">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={addSubtask} className="flex gap-2">
+            <input
+              type="text"
+              required
+              placeholder="Add next checklist objective..."
+              value={newSubTitle}
+              onChange={(e) => setNewSubTitle(e.target.value)}
+              className={`flex-1 px-3 py-1.5 text-xs rounded-lg border outline-none ${
+                darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+              }`}
+            />
+            <button type="submit" className="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white font-extrabold text-xs rounded-lg">
+              Add
+            </button>
+          </form>
+        </div>
+
+        {/* Linked CRM deal reference details */}
+        <div>
+          <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider mb-2">CRM Contract Deals</h4>
+          {task.dealReference ? (
+            <div className={`p-4 rounded-xl border flex items-center justify-between ${
+              darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2.5">
+                <Briefcase className="w-5 h-5 text-emerald-400" />
+                <div>
+                  <div className="text-xs font-bold">{task.dealReference.name}</div>
+                  <div className="text-[10px] text-slate-500">{task.dealReference.value} • {task.dealReference.stage}</div>
+                </div>
+              </div>
+              <button 
+                onClick={() => onUpdate({ ...task, dealReference: null })}
+                className="text-[10px] text-rose-500 hover:underline"
               >
-                {members.map(m => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
+                Unlink
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => onUpdate({
+                ...task,
+                dealReference: { name: 'Acme Premium License Shard Deal', value: '$75,000', stage: 'Negotiation' }
+              })}
+              className={`w-full py-2.5 border border-dashed rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-violet-500/50 hover:text-violet-400 transition-colors ${
+                darkMode ? 'border-slate-800 text-slate-400' : 'border-slate-300 text-slate-600'
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              <span>Link Account Deal Target</span>
+            </button>
+          )}
+        </div>
+
+        {/* Comment log thread */}
+        <div className="space-y-4">
+          <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider">Comments Log ({task.comments.length})</h4>
+          
+          <div className="space-y-3">
+            {task.comments.map(c => (
+              <div key={c.id} className="flex gap-2.5 text-xs">
+                <img src={c.avatar} alt={c.author} className="w-6 h-6 rounded-full object-cover mt-0.5" />
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold">{c.author}</span>
+                    <span className="text-[9px] text-slate-500">{c.timestamp}</span>
+                  </div>
+                  <p className={`p-2.5 rounded-xl border leading-relaxed ${
+                    darkMode ? 'bg-slate-950/50 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+                  }`}>
+                    {c.text}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={submitComment} className="flex gap-2 items-end">
+            <textarea
+              required
+              value={comInput}
+              onChange={(e) => setComInput(e.target.value)}
+              placeholder="Write a status update..."
+              className={`flex-1 p-2.5 text-xs rounded-xl border outline-none h-16 resize-none focus:ring-1 ${
+                darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-400'
+              }`}
+            />
+            <button type="submit" className="px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-extrabold text-xs rounded-xl">
+              Post
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 12. PRIORITY BADGE DECORATOR HELPER
+// ==========================================
+
+function PriorityBadge({ priority }: { priority: string }) {
+  const styles = {
+    Low: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    Medium: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+    High: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    Urgent: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+  };
+
+  const icons = {
+    Low: <Check className="w-2.5 h-2.5" />,
+    Medium: <Clock className="w-2.5 h-2.5" />,
+    High: <AlertTriangle className="w-2.5 h-2.5" />,
+    Urgent: <Flame className="w-2.5 h-2.5 animate-pulse" />
+  };
+
+  const currentStyle = styles[priority as keyof typeof styles] || styles.Medium;
+  const currentIcon = icons[priority as keyof typeof icons] || icons.Medium;
+
+  return (
+    <span className={`flex items-center gap-1 text-[8px] px-1.5 py-0.5 rounded border font-extrabold uppercase tracking-wider ${currentStyle}`}>
+      {currentIcon}
+      <span>{priority}</span>
+    </span>
+  );
+}
+
+// ==========================================
+// 13. NEW TASK CREATOR MODAL (Zod Schema Guarded)
+// ==========================================
+
+interface NewTaskModalProps {
+  onClose: () => void;
+  onSubmit: (data: Partial<Task>) => void;
+  columns: string[];
+  members: Assignee[];
+  darkMode: boolean;
+}
+
+function NewTaskModal({ 
+  onClose, 
+  onSubmit, 
+  darkMode, 
+  columns, 
+  members 
+}: { 
+  onClose: () => void; 
+  onSubmit: (t: Partial<Task>) => void;
+  darkMode: boolean;
+  columns: string[];
+  members: Assignee[];
+}) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState(columns[0] || 'To Do');
+  const [priority, setPriority] = useState<'Low'|'Medium'|'High'|'Urgent'>('Medium');
+  const [dueDate, setDueDate] = useState('');
+  const [assignee, setAssignee] = useState<Assignee>(members[0]);
+  const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  
+  const [formErrors, setFormErrors] = useState<{title?: string; dueDate?: string}>({});
+
+  const toggleLabel = (lbl: string) => {
+    setSelectedLabels(prev => prev.includes(lbl) ? prev.filter(l => l !== lbl) : [...prev, lbl]);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const errors: any = {};
+    if (title.trim().length < 3) errors.title = 'Title must be at least 3 characters.';
+    if (!dueDate) errors.dueDate = 'Due date is required.';
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    const result = TaskZodSchema.safeParse({
+      title, description, status, priority, dueDate
+    });
+
+    if (!result.success) {
+      setFormErrors(result.error.format() as any);
+      return;
+    }
+
+    result.data.assignee = assignee;
+    result.data.labels = selectedLabels;
+    result.data.subtasks = [];
+    result.data.comments = [];
+    result.data.attachments = [];
+    result.data.dealReference = null;
+    
+    onSubmit(result.data);
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} />
+
+      <div style={{ 
+        position: 'relative', 
+        width: '100%', 
+        maxWidth: 640, 
+        background: 'var(--bg-card)', 
+        border: '1px solid var(--border)', 
+        borderRadius: 24, 
+        boxShadow: '0 24px 64px rgba(0,0,0,0.4)', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        overflow: 'hidden', 
+        maxHeight: '90vh' 
+      }}>
+        
+        <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-primary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: 'var(--purple-dim)', color: 'var(--brand-accent)' }}>
+              <Plus size={18} />
+            </div>
+            Create New Workspace Task
+          </h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', padding: 6, borderRadius: 8, cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }} className="custom-scrollbar">
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Task Title / Core Objective</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Audit regional indemnity liabilities"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (formErrors.title) setFormErrors(prev => ({ ...prev, title: '' }));
+              }}
+              style={{ 
+                width: '100%', 
+                padding: '10px 14px', 
+                fontSize: 14, 
+                borderRadius: 12, 
+                border: `1px solid ${formErrors.title ? 'var(--rose)' : 'var(--border)'}`, 
+                background: 'var(--bg-secondary)', 
+                color: 'var(--text-primary)',
+                outline: 'none',
+                fontWeight: 600
+              }}
+            />
+            {formErrors.title && <p style={{ margin: 0, fontSize: 12, color: 'var(--rose)', fontWeight: 600 }}>{formErrors.title}</p>}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Summary Context</label>
+            <textarea
+              placeholder="Describe core actions or pipeline metrics..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '10px 14px', 
+                borderRadius: 12, 
+                border: '1px solid var(--border)', 
+                background: 'var(--bg-secondary)', 
+                color: 'var(--text-primary)',
+                outline: 'none', 
+                fontSize: 14, 
+                minHeight: 80, 
+                resize: 'vertical',
+                fontWeight: 500
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Initial Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                style={{ 
+                  width: '100%', 
+                  padding: '10px 14px', 
+                  fontSize: 14, 
+                  fontWeight: 600,
+                  borderRadius: 12, 
+                  border: '1px solid var(--border)', 
+                  background: 'var(--bg-secondary)', 
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                {columns.map(col => <option key={col} value={col}>{col}</option>)}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Priority Weight</label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as any)}
+                style={{ 
+                  width: '100%', 
+                  padding: '10px 14px', 
+                  fontSize: 14, 
+                  fontWeight: 600,
+                  borderRadius: 12, 
+                  border: '1px solid var(--border)', 
+                  background: 'var(--bg-secondary)', 
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Urgent">Urgent</option>
               </select>
             </div>
           </div>
 
-          {/* Preset Labels */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Class Label Tags</label>
-            <div className="flex flex-wrap gap-1">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Target Due Date</label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => {
+                  setDueDate(e.target.value);
+                  if (formErrors.dueDate) setFormErrors(prev => ({ ...prev, dueDate: '' }));
+                }}
+                style={{ 
+                  width: '100%', 
+                  padding: '10px 14px', 
+                  fontSize: 14, 
+                  fontWeight: 600,
+                  borderRadius: 12, 
+                  border: `1px solid ${formErrors.dueDate ? 'var(--rose)' : 'var(--border)'}`, 
+                  background: 'var(--bg-secondary)', 
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              />
+              {formErrors.dueDate && <p style={{ margin: 0, fontSize: 12, color: 'var(--rose)', fontWeight: 600 }}>{formErrors.dueDate}</p>}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Action Assignee</label>
+              <select
+                value={assignee.id}
+                onChange={(e) => {
+                  const match = members.find(m => m.id === e.target.value);
+                  if (match) setAssignee(match);
+                }}
+                style={{ 
+                  width: '100%', 
+                  padding: '10px 14px', 
+                  fontSize: 14, 
+                  fontWeight: 600,
+                  borderRadius: 12, 
+                  border: '1px solid var(--border)', 
+                  background: 'var(--bg-secondary)', 
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Label tags</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {PRESET_LABELS.map(lbl => {
-                const isSel = selectedLabels.includes(lbl);
+                const isSelected = selectedLabels.includes(lbl);
                 return (
                   <button
                     key={lbl}
                     type="button"
                     onClick={() => toggleLabel(lbl)}
-                    className={`px-2 py-1 rounded text-xs font-bold transition-colors ${isSel
-                        ? 'bg-violet-600 text-white'
-                        : (darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-400' : 'bg-slate-100 hover:bg-slate-200 text-slate-600')
-                      }`}
+                    style={{ 
+                      padding: '6px 12px', 
+                      borderRadius: 8, 
+                      fontSize: 13, 
+                      fontWeight: 800, 
+                      transition: 'all 0.2s',
+                      background: isSelected ? 'var(--brand-accent)' : 'var(--bg-secondary)',
+                      color: isSelected ? '#ffffff' : 'var(--text-muted)',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
                   >
                     {lbl}
                   </button>
@@ -1982,22 +2628,38 @@ function NewTaskModal({ onClose, onSubmit, columns, members, darkMode }) {
             </div>
           </div>
 
-          {/* Modal Actions */}
-          <div className={`pt-4 border-t flex justify-end gap-3 ${darkMode ? 'border-slate-800' : 'border-slate-200'
-            }`}>
+          <div style={{ paddingTop: 16, marginTop: 8, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
             <button
               type="button"
               onClick={onClose}
-              className={`px-4 py-2 text-xs font-bold rounded-xl border transition-colors ${darkMode ? 'border-slate-800 hover:bg-slate-800 text-slate-300' : 'border-slate-200 hover:bg-slate-100 text-slate-700'
-                }`}
+              style={{ 
+                padding: '10px 20px', 
+                fontSize: 14, 
+                fontWeight: 700, 
+                borderRadius: 12, 
+                border: 'none', 
+                background: 'transparent',
+                color: 'var(--text-muted)',
+                cursor: 'pointer'
+              }}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg active:scale-95 transition-all"
+              style={{ 
+                padding: '10px 24px', 
+                fontSize: 14, 
+                fontWeight: 800, 
+                borderRadius: 12, 
+                background: 'var(--brand-accent)', 
+                color: '#fff', 
+                border: 'none', 
+                boxShadow: '0 4px 12px rgba(124,92,191,0.3)',
+                cursor: 'pointer'
+              }}
             >
-              Save New Task
+              Save New Workspace Task
             </button>
           </div>
 
