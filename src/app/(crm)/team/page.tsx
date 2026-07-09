@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trophy, Shield, Activity, Users } from 'lucide-react';
 
 // ─── Design tokens — mapped to CRM CSS variables ──────────────────
@@ -19,25 +19,6 @@ const T = {
   font:        "'Inter', sans-serif",
 };
 
-// ─── Mock data ────────────────────────────────────────────────────
-const REPS = [
-  { id:'1', name:'Alex Johnson', email:'alex.j@tagverse.com', initials:'AJ', color:'#10b981', role:'Admin', status:'Active', lastActive:'2m ago', dealsClosed:42, revenue:125000, responseTime:'1.2h', points:4200, level:5 },
-  { id:'2', name:'Sarah Miller', email:'sarah.m@tagverse.com', initials:'SM', color:'#f59e0b', role:'Sales Rep', status:'Active', lastActive:'1h ago', dealsClosed:28, revenue:84000, responseTime:'2.5h', points:2850, level:4 },
-  { id:'3', name:'Mike Davis', email:'mike.d@tagverse.com', initials:'MD', color:'#3b82f6', role:'Sales Rep', status:'Invited', lastActive:'-', dealsClosed:35, revenue:95000, responseTime:'1.8h', points:3500, level:4 },
-  { id:'4', name:'Elena Rodriguez', email:'elena.r@tagverse.com', initials:'ER', color:'#8b5cf6', role:'Viewer', status:'Inactive', lastActive:'3d ago', dealsClosed:15, revenue:30000, responseTime:'4.1h', points:2100, level:3 },
-  { id:'5', name:'David Chen', email:'david.c@tagverse.com', initials:'DC', color:'#ec4899', role:'Manager', status:'Active', lastActive:'15m ago', dealsClosed:20, revenue:75000, responseTime:'0.8h', points:2600, level:3 },
-  { id:'6', name:'Lisa Taylor', email:'lisa.t@tagverse.com', initials:'LT', color:'#06b6d4', role:'Admin', status:'Active', lastActive:'1d ago', dealsClosed:5, revenue:250000, responseTime:'3.2h', points:5500, level:6 },
-];
-
-const FEED = [
-  { id:'a1', repId:'1', action:'updated permissions for', target:'Sarah Miller', time:'10m ago' },
-  { id:'a2', repId:'4', action:'logged in from', target:'new device', time:'45m ago' },
-  { id:'a3', repId:'2', action:'exported', target:'Q3 Sales Report', time:'2h ago' },
-  { id:'a4', repId:'6', action:'invited', target:'Mike Davis', time:'5h ago' },
-  { id:'a5', repId:'3', action:'changed role to', target:'Sales Rep', time:'1d ago' },
-  { id:'a6', repId:'5', action:'removed access for', target:'Contracts Module', time:'1d ago' },
-];
-
 const ROLES_INIT = [
   { id:'r1', name:'Admin', modules:{ contracts:{v:true,e:true,d:true}, payments:{v:true,e:true,d:true}, marketing:{v:true,e:true,d:true}, workspace:{v:true,e:true,d:true}, analytics:{v:true,e:true,d:true} }},
   { id:'r2', name:'Manager', modules:{ contracts:{v:true,e:true,d:false}, payments:{v:true,e:true,d:false}, marketing:{v:true,e:true,d:false}, workspace:{v:true,e:false,d:false}, analytics:{v:true,e:true,d:false} }},
@@ -46,7 +27,7 @@ const ROLES_INIT = [
 ];
 
 // ─── Shared primitives ────────────────────────────────────────────
-function Avatar({ rep, size = 34 }: { rep: typeof REPS[0]; size?: number }) {
+function Avatar({ rep, size = 34 }: { rep: any; size?: number }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
@@ -78,12 +59,12 @@ function Card({ children, style = {} }: { children: React.ReactNode; style?: Rea
 }
 
 // ─── MEMBERS TAB ──────────────────────────────────────────────────
-function MembersTab() {
+function MembersTab({ reps }: { reps: any[] }) {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All Roles');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
 
-  const filtered = REPS.filter(r => {
+  const filtered = reps.filter(r => {
     if (search && !r.name.toLowerCase().includes(search.toLowerCase()) && !r.email.toLowerCase().includes(search.toLowerCase())) return false;
     if (roleFilter !== 'All Roles' && r.role !== roleFilter) return false;
     if (statusFilter !== 'All Statuses' && r.status !== statusFilter) return false;
@@ -274,27 +255,32 @@ function RolesMatrix() {
 }
 
 // ─── ACTIVITY FEED ────────────────────────────────────────────────
-function ActivityFeed() {
-  const [memberFilter, setMemberFilter] = useState('All');
+function ActivityFeed({ reps, feed }: { reps: any[], feed: any[] }) {
+  const [filter, setFilter] = useState('All Activity');
 
-  const filtered = memberFilter === 'All' ? FEED : FEED.filter(f => f.repId === memberFilter);
+  const filtered = feed.filter(f => {
+    if (filter !== 'All Activity' && f.action !== filter) return false;
+    return true;
+  });
 
   return (
-    <div style={{ maxWidth: 700, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: T.text, fontFamily: T.font }}>Activity log</h2>
-          <p style={{ fontSize: 13, color: T.textMuted, marginTop: 3 }}>Live stream of team actions</p>
-        </div>
-        <select value={memberFilter} onChange={e => setMemberFilter(e.target.value)} style={{ background: T.surfaceEl, border: T.border, borderRadius: T.radiusSm, padding: '8px 12px', color: T.text, fontSize: 13, fontFamily: T.font, outline: 'none', cursor: 'pointer' }}>
-          <option value="All">All Members</option>
-          {REPS.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+        <select value={filter} onChange={e => setFilter(e.target.value)} style={{ background: T.surfaceEl, border: T.border, borderRadius: T.radiusSm, padding: '10px 14px', color: T.text, fontSize: 13, fontFamily: T.font, outline: 'none', cursor: 'pointer' }}>
+          <option>All Activity</option>
+          <option>updated permissions for</option>
+          <option>logged in from</option>
+          <option>exported</option>
+          <option>invited</option>
+          <option>changed role to</option>
+          <option>removed access for</option>
         </select>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {filtered.map(item => {
-          const rep = REPS.find(r => r.id === item.repId) || REPS[0];
+          const rep = reps.find(r => r.id === item.repId);
+          if (!rep) return null;
           return (
             <Card key={item.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 16px' }}>
               <Avatar rep={rep} size={36} />
@@ -327,6 +313,24 @@ const VIEWS = [
 
 export default function TeamPage() {
   const [view, setView] = useState('members');
+  const [reps, setReps] = useState<any[]>([]);
+  const [feed, setFeed] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/team')
+      .then(res => res.json())
+      .then(data => {
+        setReps(data.reps || []);
+        setFeed(data.feed || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
   const ActiveView = VIEWS.find(v => v.id === view)?.component || MembersTab;
 
   return (
@@ -336,7 +340,7 @@ export default function TeamPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: T.border, background: T.surface }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: T.text, margin: 0, fontFamily: T.font }}>Team</h1>
-          <Tag label={`${REPS.length} Members`} color={T.accent} />
+          {!loading && <Tag label={`${reps.length} Members`} color={T.accent} />}
         </div>
         <button style={{ display: 'flex', alignItems: 'center', gap: 8, background: T.accent, color: '#fff', border: 'none', borderRadius: T.radiusSm, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: T.font, transition: 'background 0.2s' }}>
           + Invite Member
@@ -373,8 +377,14 @@ export default function TeamPage() {
         </nav>
 
         {/* Content */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '24px 32px' }}>
-          <ActiveView />
+        <div style={{ flex: 1, position: 'relative', overflowY: 'auto' }}>
+          {loading ? (
+             <div style={{ padding: 40, textAlign: 'center', color: T.textMuted }}>Loading team data...</div>
+          ) : (
+            <div style={{ position: 'absolute', inset: 0, padding: 32, overflowY: 'auto' }}>
+              <ActiveView reps={reps} feed={feed} />
+            </div>
+          )}
         </div>
       </div>
     </div>
