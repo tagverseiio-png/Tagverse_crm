@@ -17,7 +17,8 @@ const updateSchema = z.object({
   assignedToId: z.string().optional(),
 });
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { session, error } = await requireSession();
   if (error) return error;
 
@@ -42,7 +43,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { session, error } = await requireSession();
   if (error) return error;
 
