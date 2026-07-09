@@ -430,6 +430,7 @@ export default function App() {
 
   // Creator state
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
+  const [newTaskInitialDate, setNewTaskInitialDate] = useState<string | undefined>(undefined);
 
   const activeTask = useMemo(() => {
     return tasks.find(t => t.id === selectedTaskId) || null;
@@ -566,7 +567,10 @@ export default function App() {
                   />
                 </div>
                 <button
-                  onClick={() => setIsNewTaskModalOpen(true)}
+                  onClick={() => {
+                    setNewTaskInitialDate(undefined);
+                    setIsNewTaskModalOpen(true);
+                  }}
                   className="btn btn-primary"
                   style={{ fontSize: 13, padding: '8px 16px' }}
                 >
@@ -712,22 +716,9 @@ export default function App() {
                 tasks={filteredTasks}
                 darkMode={darkMode}
                 handleOpenTaskDetails={handleOpenTaskDetails}
-                handleAddTask={(data) => {
-                  const safeTask: Task = {
-                    id: `task-${Date.now()}`,
-                    title: data.title,
-                    description: '',
-                    status: columns[0],
-                    assignee: MEMBERS[0],
-                    priority: 'Medium',
-                    dueDate: data.dueDate,
-                    subtasks: [],
-                    comments: [],
-                    labels: [],
-                    dealReference: null,
-                    attachments: []
-                  };
-                  addTask(safeTask);
+                onOpenNewTaskModal={(dateStr) => {
+                  setNewTaskInitialDate(dateStr);
+                  setIsNewTaskModalOpen(true);
                 }}
               />
             )}
@@ -742,6 +733,7 @@ export default function App() {
       {/* NEW TASK CREATION MODAL */}
       {isNewTaskModalOpen && (
         <NewTaskModal 
+          initialDueDate={newTaskInitialDate}
           onClose={() => setIsNewTaskModalOpen(false)}
           onSubmit={(validatedData) => {
             const finalTask: Task = {
@@ -1463,14 +1455,14 @@ interface CalendarViewProps {
   tasks: Task[];
   darkMode: boolean;
   handleOpenTaskDetails: (id: string) => void;
-  handleAddTask: (data: { title: string; dueDate: string }) => void;
+  onOpenNewTaskModal: (dateStr: string) => void;
 }
 
 function CalendarView({
   tasks,
   darkMode,
   handleOpenTaskDetails,
-  handleAddTask
+  onOpenNewTaskModal
 }: CalendarViewProps) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -1507,10 +1499,7 @@ function CalendarView({
   const displayEvents = isMonthView ? monthEvents : dayEvents;
 
   const handleDayClick = (dateStr: string) => {
-    const title = prompt('Enter task objective name:');
-    if (title?.trim()) {
-      handleAddTask({ title: title.trim(), dueDate: dateStr });
-    }
+    onOpenNewTaskModal(dateStr);
   };
 
   return (
@@ -2377,6 +2366,7 @@ interface NewTaskModalProps {
   columns: string[];
   members: Assignee[];
   darkMode: boolean;
+  initialDueDate?: string;
 }
 
 function NewTaskModal({ 
@@ -2384,19 +2374,14 @@ function NewTaskModal({
   onSubmit, 
   darkMode, 
   columns, 
-  members 
-}: { 
-  onClose: () => void; 
-  onSubmit: (t: Partial<Task>) => void;
-  darkMode: boolean;
-  columns: string[];
-  members: Assignee[];
-}) {
+  members,
+  initialDueDate
+}: NewTaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState(columns[0] || 'To Do');
   const [priority, setPriority] = useState<'Low'|'Medium'|'High'|'Urgent'>('Medium');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(initialDueDate || '');
   const [assignee, setAssignee] = useState<Assignee>(members[0]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   
@@ -2443,37 +2428,33 @@ function NewTaskModal({
       <div style={{ 
         position: 'relative', 
         width: '100%', 
-        maxWidth: 640, 
-        background: 'var(--bg-card)', 
-        border: '1px solid var(--border)', 
-        borderRadius: 24, 
-        boxShadow: '0 24px 64px rgba(0,0,0,0.4)', 
+        maxWidth: 550, 
+        background: '#fbfafc', 
+        borderRadius: 20, 
+        boxShadow: '0 24px 64px rgba(0,0,0,0.2)', 
         display: 'flex', 
         flexDirection: 'column', 
         overflow: 'hidden', 
         maxHeight: '90vh' 
       }}>
         
-        <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-primary)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: 'var(--purple-dim)', color: 'var(--brand-accent)' }}>
-              <Plus size={18} />
-            </div>
-            Create New Workspace Task
+        <div style={{ padding: '24px 32px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: 22, fontWeight: 700, fontFamily: 'Georgia, serif', color: '#1e1b4b', letterSpacing: '-0.5px' }}>
+            Schedule New Task
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', padding: 6, borderRadius: 8, cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <X size={20} />
+          <button onClick={onClose} style={{ background: '#f4ebff', border: 'none', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', color: '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
+            <X size={18} strokeWidth={2.5} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }} className="custom-scrollbar">
+        <form onSubmit={handleSubmit} style={{ padding: '0px 32px 32px', display: 'flex', flexDirection: 'column', gap: 20, overflowY: 'auto' }} className="custom-scrollbar">
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Task Title / Core Objective</label>
+            <label style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#9333ea' }}>Task Title</label>
             <input
               type="text"
               required
-              placeholder="e.g. Audit regional indemnity liabilities"
+              placeholder="e.g. Audit regional liabilities"
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
@@ -2481,56 +2462,34 @@ function NewTaskModal({
               }}
               style={{ 
                 width: '100%', 
-                padding: '10px 14px', 
+                padding: '12px 16px', 
                 fontSize: 14, 
-                borderRadius: 12, 
-                border: `1px solid ${formErrors.title ? 'var(--rose)' : 'var(--border)'}`, 
-                background: 'var(--bg-secondary)', 
-                color: 'var(--text-primary)',
+                borderRadius: 10, 
+                border: `1px solid ${formErrors.title ? '#ef4444' : '#e9d5ff'}`, 
+                background: '#f4ebff', 
+                color: '#4c1d95',
                 outline: 'none',
-                fontWeight: 600
-              }}
-            />
-            {formErrors.title && <p style={{ margin: 0, fontSize: 12, color: 'var(--rose)', fontWeight: 600 }}>{formErrors.title}</p>}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Summary Context</label>
-            <textarea
-              placeholder="Describe core actions or pipeline metrics..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              style={{ 
-                width: '100%', 
-                padding: '10px 14px', 
-                borderRadius: 12, 
-                border: '1px solid var(--border)', 
-                background: 'var(--bg-secondary)', 
-                color: 'var(--text-primary)',
-                outline: 'none', 
-                fontSize: 14, 
-                minHeight: 80, 
-                resize: 'vertical',
                 fontWeight: 500
               }}
             />
+            {formErrors.title && <p style={{ margin: 0, fontSize: 12, color: '#ef4444', fontWeight: 600 }}>{formErrors.title}</p>}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Initial Status</label>
+              <label style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#9333ea' }}>Initial Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 style={{ 
                   width: '100%', 
-                  padding: '10px 14px', 
+                  padding: '12px 16px', 
                   fontSize: 14, 
-                  fontWeight: 600,
-                  borderRadius: 12, 
-                  border: '1px solid var(--border)', 
-                  background: 'var(--bg-secondary)', 
-                  color: 'var(--text-primary)',
+                  fontWeight: 500,
+                  borderRadius: 10, 
+                  border: '1px solid #e9d5ff', 
+                  background: '#f4ebff', 
+                  color: '#4c1d95',
                   cursor: 'pointer',
                   outline: 'none'
                 }}
@@ -2540,19 +2499,19 @@ function NewTaskModal({
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Priority Weight</label>
+              <label style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#9333ea' }}>Priority</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
                 style={{ 
                   width: '100%', 
-                  padding: '10px 14px', 
+                  padding: '12px 16px', 
                   fontSize: 14, 
-                  fontWeight: 600,
-                  borderRadius: 12, 
-                  border: '1px solid var(--border)', 
-                  background: 'var(--bg-secondary)', 
-                  color: 'var(--text-primary)',
+                  fontWeight: 500,
+                  borderRadius: 10, 
+                  border: '1px solid #e9d5ff', 
+                  background: '#f4ebff', 
+                  color: '#4c1d95',
                   cursor: 'pointer',
                   outline: 'none'
                 }}
@@ -2565,9 +2524,39 @@ function NewTaskModal({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#9333ea' }}>Label Tags</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginTop: 4 }}>
+              {PRESET_LABELS.map((lbl, idx) => {
+                const isSelected = selectedLabels.includes(lbl);
+                const colors = ['#4f46e5', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'];
+                const color = colors[idx % colors.length];
+                return (
+                  <button
+                    key={lbl}
+                    type="button"
+                    onClick={() => toggleLabel(lbl)}
+                    title={lbl}
+                    style={{ 
+                      width: 28, 
+                      height: 28, 
+                      borderRadius: '50%', 
+                      background: color,
+                      border: isSelected ? `3px solid #1e1b4b` : '2px solid transparent',
+                      boxShadow: isSelected ? '0 0 0 2px #fff inset' : 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      transition: 'transform 0.1s'
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Target Due Date</label>
+              <label style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#9333ea' }}>Date</label>
               <input
                 type="date"
                 value={dueDate}
@@ -2577,22 +2566,22 @@ function NewTaskModal({
                 }}
                 style={{ 
                   width: '100%', 
-                  padding: '10px 14px', 
+                  padding: '12px 16px', 
                   fontSize: 14, 
-                  fontWeight: 600,
-                  borderRadius: 12, 
-                  border: `1px solid ${formErrors.dueDate ? 'var(--rose)' : 'var(--border)'}`, 
-                  background: 'var(--bg-secondary)', 
-                  color: 'var(--text-primary)',
+                  fontWeight: 500,
+                  borderRadius: 10, 
+                  border: `1px solid ${formErrors.dueDate ? '#ef4444' : '#e9d5ff'}`, 
+                  background: '#f4ebff', 
+                  color: '#4c1d95',
                   cursor: 'pointer',
                   outline: 'none'
                 }}
               />
-              {formErrors.dueDate && <p style={{ margin: 0, fontSize: 12, color: 'var(--rose)', fontWeight: 600 }}>{formErrors.dueDate}</p>}
+              {formErrors.dueDate && <p style={{ margin: 0, fontSize: 12, color: '#ef4444', fontWeight: 600 }}>{formErrors.dueDate}</p>}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Action Assignee</label>
+              <label style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#9333ea' }}>Assignee</label>
               <select
                 value={assignee.id}
                 onChange={(e) => {
@@ -2601,13 +2590,13 @@ function NewTaskModal({
                 }}
                 style={{ 
                   width: '100%', 
-                  padding: '10px 14px', 
+                  padding: '12px 16px', 
                   fontSize: 14, 
-                  fontWeight: 600,
-                  borderRadius: 12, 
-                  border: '1px solid var(--border)', 
-                  background: 'var(--bg-secondary)', 
-                  color: 'var(--text-primary)',
+                  fontWeight: 500,
+                  borderRadius: 10, 
+                  border: '1px solid #e9d5ff', 
+                  background: '#f4ebff', 
+                  color: '#4c1d95',
                   cursor: 'pointer',
                   outline: 'none'
                 }}
@@ -2617,47 +2606,40 @@ function NewTaskModal({
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <label style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>Label tags</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {PRESET_LABELS.map(lbl => {
-                const isSelected = selectedLabels.includes(lbl);
-                return (
-                  <button
-                    key={lbl}
-                    type="button"
-                    onClick={() => toggleLabel(lbl)}
-                    style={{ 
-                      padding: '6px 12px', 
-                      borderRadius: 8, 
-                      fontSize: 13, 
-                      fontWeight: 800, 
-                      transition: 'all 0.2s',
-                      background: isSelected ? 'var(--brand-accent)' : 'var(--bg-secondary)',
-                      color: isSelected ? '#ffffff' : 'var(--text-muted)',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {lbl}
-                  </button>
-                );
-              })}
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#9333ea' }}>Description</label>
+            <textarea
+              placeholder="Provide more details..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '12px 16px', 
+                borderRadius: 10, 
+                border: '1px solid #e9d5ff', 
+                background: '#f4ebff', 
+                color: '#4c1d95',
+                outline: 'none', 
+                fontSize: 14, 
+                minHeight: 60, 
+                resize: 'vertical',
+                fontWeight: 500
+              }}
+            />
           </div>
 
-          <div style={{ paddingTop: 16, marginTop: 8, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+          <div style={{ paddingTop: 8, display: 'flex', justifyContent: 'flex-end', gap: 16 }}>
             <button
               type="button"
               onClick={onClose}
               style={{ 
-                padding: '10px 20px', 
+                padding: '10px 24px', 
                 fontSize: 14, 
                 fontWeight: 700, 
-                borderRadius: 12, 
-                border: 'none', 
+                borderRadius: 24, 
+                border: '1px solid #e9d5ff', 
                 background: 'transparent',
-                color: 'var(--text-muted)',
+                color: '#1e1b4b',
                 cursor: 'pointer'
               }}
             >
@@ -2668,16 +2650,16 @@ function NewTaskModal({
               style={{ 
                 padding: '10px 24px', 
                 fontSize: 14, 
-                fontWeight: 800, 
-                borderRadius: 12, 
-                background: 'var(--brand-accent)', 
+                fontWeight: 700, 
+                borderRadius: 24, 
+                background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)', 
                 color: '#fff', 
                 border: 'none', 
-                boxShadow: '0 4px 12px rgba(124,92,191,0.3)',
+                boxShadow: '0 4px 12px rgba(124,92,237,0.3)',
                 cursor: 'pointer'
               }}
             >
-              Save New Workspace Task
+              Schedule Task
             </button>
           </div>
 

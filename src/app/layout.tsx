@@ -14,25 +14,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Blocking script: runs before paint to prevent theme flash */}
-        <script
-          id="theme-initializer"
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var saved = localStorage.getItem('crm-theme') || 'light';
-                var resolved = saved;
-                if (saved === 'system') {
-                  resolved = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-                }
-                if (resolved === 'light') {
-                  document.documentElement.setAttribute('data-theme', 'light');
-                }
-              })();
-            `,
-          }}
-        />
       </head>
       <body>
         <AuthProvider>
