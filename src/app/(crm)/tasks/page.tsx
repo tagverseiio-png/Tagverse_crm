@@ -280,14 +280,22 @@ function useTaskStore() {
             id: t.id,
             title: t.title,
             description: t.description || '',
-            status: t.status === 'todo' ? 'To Do' : t.status === 'in-progress' ? 'In Progress' : t.status === 'done' ? 'Done' : t.status.charAt(0).toUpperCase() + t.status.slice(1),
+            status: t.status === 'todo' || t.status === 'to-do' ? 'To Do' : 
+                    t.status === 'in-progress' ? 'In Progress' : 
+                    t.status === 'review' ? 'Review' :
+                    t.status === 'done' ? 'Done' : 
+                    t.status,
             assignee: {
               id: t.assignedTo?.id || 'u-unknown',
               name: t.assignedTo?.name || 'Unassigned User',
               avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
               email: ''
             },
-            priority: t.priority.charAt(0).toUpperCase() + t.priority.slice(1),
+            priority: t.priority === 'low' ? 'Low' : 
+                      t.priority === 'medium' ? 'Medium' : 
+                      t.priority === 'high' ? 'High' : 
+                      t.priority === 'urgent' ? 'Urgent' : 
+                      t.priority,
             dueDate: t.dueDate ? t.dueDate.split('T')[0] : new Date().toISOString().split('T')[0],
             subtasks: [],
             comments: [],
@@ -337,8 +345,8 @@ function useTaskStore() {
           body: JSON.stringify({
             title: newTask.title,
             description: newTask.description,
-            priority: newTask.priority.toLowerCase(),
-            status: newTask.status.toLowerCase().replace(' ', '-'),
+            priority: newTask.priority,
+            status: newTask.status,
             dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : undefined,
           })
         });
@@ -358,8 +366,8 @@ function useTaskStore() {
           body: JSON.stringify({
             title: updatedTask.title,
             description: updatedTask.description,
-            priority: updatedTask.priority.toLowerCase(),
-            status: updatedTask.status.toLowerCase().replace(' ', '-'),
+            priority: updatedTask.priority,
+            status: updatedTask.status,
             dueDate: updatedTask.dueDate ? new Date(updatedTask.dueDate).toISOString() : undefined,
           })
         });
