@@ -2,10 +2,11 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
 import { apiSuccess, apiErrorFromUnknown } from '@/lib/api/response';
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
+    const params = await props.params;
     const data = await req.json();
-    const { id } = await params;
+    const { id } = params;
     
     let scheduledAt = new Date();
     if (data.date) {
@@ -25,33 +26,56 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
        scheduledAt = new Date(`${datePart}T${timePart}Z`);
     }
 
-    const activity = await prisma.activity.update({
-      where: { id },
-      data: {
-        title: data.title,
-        status: data.status,
-        scheduledAt,
-        metadata: {
-          channel: data.channel,
-          author: data.author,
-          type: data.type,
-          company: data.company,
-          client: data.client,
-          color: data.color,
-        } as any,
+    try {
+      const activity = await prisma.activity.update({
+        where: { id },
+        data: {
+          title: data.title,
+          status: data.status,
+          scheduledAt,
+          metadata: {
+            channel: data.channel,
+            author: data.author,
+            type: data.type,
+            company: data.company,
+            client: data.client,
+            color: data.color,
+          } as any,
+        }
+      });
+      return apiSuccess(activity);
+    } catch (e: any) {
+      if (e.code === 'P2025' && (prisma as any).socialPost) {
+        const socialPost = await (prisma as any).socialPost.update({
+          where: { id },
+          data: {
+            platform: data.title ? data.title.replace('Social Post: ', '') : undefined,
+            scheduledAt,
+            content: data.description,
+          }
+        });
+        return apiSuccess(socialPost);
       }
-    });
-    
-    return apiSuccess(activity);
+      throw e;
+    }
   } catch (err) {
     return apiErrorFromUnknown(err);
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
-    await prisma.activity.delete({ where: { id } });
+    const params = await props.params;
+    const { id } = params;
+    
+    // Use deleteMany to avoid P2025 'Record not found' error
+    const activityResult = await prisma.activity.deleteMany({ where: { id } });
+    
+    // If it wasn't an Activity, it might be a SocialPost being deleted from the marketing calendar
+    if (activityResult.count === 0 && (prisma as any).socialPost) {
+      await (prisma as any).socialPost.deleteMany({ where: { id } });
+    }
+    
     return apiSuccess({ success: true });
   } catch (err) {
     return apiErrorFromUnknown(err);
