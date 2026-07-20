@@ -1,0 +1,61 @@
+Calendar Module Analysis - UI Elements and Data Flow
+
+Based on the structure of your provided calendar module code (e:\work\Automation\CRM\Tagverse_crm\Tagverse_crm\src\app\(crm)\calendar), here is a breakdown of the elements and data flows present in the page:
+
+==================================================
+UI Elements Analysis
+==================================================
+
+1. Top Toolbar & Navigation
+- Header: Title and subtitle.
+- View Toggle: Button group to switch between 'Day', 'Week', and 'Month' views.
+- Action Button: '+ Schedule Event' button to trigger the new event modal.
+
+2. Main Calendar Layout
+Split into a primary grid area on the left and an agenda side panel on the right.
+
+3. Calendar Grid (Left Area)
+- Navigation Header: Displays current view (e.g., "August 2026") with 'Prev', 'Today', and 'Next' buttons.
+- Month View: A responsive 7-column grid showing dates. Each cell displays a date number and a list of event/task indicator pills. Excess items are hidden behind a "X More" link.
+- Week/Day View: A vertical timeline from 8 AM to 8 PM.
+  ● Header row showing days/dates.
+  ● An "All-Day" section displaying tasks due on those dates.
+  ● Hourly time slots rendering event blocks based on their scheduled time.
+
+4. Agenda Side Panel (Right Area)
+- Selected Day Section: Shows a detailed list of events and tasks for the date clicked in the main grid, displaying titles, times, and attendee avatars.
+- Upcoming 7 Days Section: A scrolling list of events scheduled within the next week.
+
+5. Interactive Modals
+- Event Detail Popup: Opened by clicking an event. Shows comprehensive details (date, time, linked project, attendees) with distinct gradient styling based on the event's color. Includes 'Reschedule' and 'Delete' actions.
+- Reschedule Modal: A form allowing the user to update an existing event's title, date, time, linked project, color, and attendees.
+- Create Event Modal: Uses a similar form structure to the Reschedule modal for creating new calendar entries.
+
+==================================================
+Data Flow Diagrams (Visuals)
+==================================================
+
+1. Initialization & Data Fetching
++---------------+      +-------------------------+      +-------------------+      +------------------+
+|   Page Load   | ---> | Component mounts        | ---> | Promise.all:      | ---> | Update `events`  |
+|               |      | triggers fetchData()    |      | GET /api/calendar |      | & `tasks` states |
+|               |      |                         |      | GET /api/tasks    |      |                  |
++---------------+      +-------------------------+      +-------------------+      +------------------+
+
+2. Create New Event
++------------------+      +-------------------------+      +----------------------+      +-------------------+
+| User clicks      | ---> | Fills modal form &      | ---> | POST /api/calendar   | ---> | Call fetchData()  |
+| '+ Schedule'     |      | clicks '+ Schedule'     |      | with payload         |      | to refresh views  |
++------------------+      +-------------------------+      +----------------------+      +-------------------+
+
+3. View & Reschedule Existing Event
++------------------+      +-------------------------+      +----------------------+      +-------------------+
+| Click Event Pill | ---> | Opens EventDetailPopup  | ---> | Click 'Reschedule'   | ---> | Submit form fires |
+| in Grid/Agenda   |      | displaying local state  |      | opens Edit Modal     |      | PUT /api/activity |
++------------------+      +-------------------------+      +----------------------+      +-------------------+
+                                                                                             |
+                                                                                             v
+                                                                                   +-------------------+
+                                                                                   | fetchData() runs  |
+                                                                                   | to sync UI        |
+                                                                                   +-------------------+
