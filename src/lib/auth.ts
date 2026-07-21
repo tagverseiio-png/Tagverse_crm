@@ -9,6 +9,7 @@ export const authOptions: NextAuthOptions = {
   // drifts slightly from next-auth's — harmless since session strategy
   // is JWT and this adapter is only consulted for linked-account lookups.
   adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
+  secret: process.env.NEXTAUTH_SECRET,
   // Credentials provider requires JWT sessions (no DB session row for this flow).
   session: { strategy: 'jwt' },
   pages: {

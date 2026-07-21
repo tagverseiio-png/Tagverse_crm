@@ -38,6 +38,8 @@ type Campaign = {
   clicks: number;
   lastSynced: string | null;
   channel?: string; // Legacy API support
+  startDate?: string;
+  endDate?: string;
 };
 
 // ─── Modal Component ──────────────────────────────────────────────────────────
